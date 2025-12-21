@@ -16,20 +16,38 @@ from tools.veda_patterns import (
 PROJECT_ROOT = Path(__file__).parent.parent
 SCHEMA_DIR = PROJECT_ROOT / "vedalang" / "schema"
 
+EXPECTED_PATTERNS = [
+    "add_power_plant",
+    "add_renewable_plant",
+    "add_energy_commodity",
+    "add_emission_commodity",
+    "co2_price_trajectory",
+]
+
 
 class TestListPatterns:
     def test_list_returns_patterns(self):
         """Should return list of available patterns."""
         patterns = list_patterns()
         assert isinstance(patterns, list)
-        assert len(patterns) > 0
-        assert "add_power_plant" in patterns
+        assert len(patterns) >= 5
+
+    def test_all_expected_patterns_exist(self):
+        """All documented patterns should exist."""
+        patterns = list_patterns()
+        for expected in EXPECTED_PATTERNS:
+            assert expected in patterns, f"Missing pattern: {expected}"
 
     def test_get_pattern_info(self):
         """Should return pattern details."""
         info = get_pattern_info("add_power_plant")
         assert "description" in info
         assert "parameters" in info
+
+    def test_get_pattern_info_unknown_raises(self):
+        """Unknown pattern should raise PatternError."""
+        with pytest.raises(PatternError, match="Unknown pattern"):
+            get_pattern_info("nonexistent_pattern")
 
 
 class TestExpandPattern:
@@ -80,6 +98,78 @@ class TestExpandPattern:
         """Unknown pattern should raise PatternError."""
         with pytest.raises(PatternError, match="Unknown pattern"):
             expand_pattern("nonexistent_pattern", {})
+
+    def test_expand_renewable_plant(self):
+        """Expand add_renewable_plant pattern."""
+        result = expand_pattern(
+            "add_renewable_plant",
+            {
+                "plant_name": "PP_WIND",
+                "output_commodity": "ELC",
+                "technology_type": "wind_onshore",
+            },
+            output_format="vedalang"
+        )
+
+        parsed = yaml.safe_load(result)
+        assert "processes" in parsed
+        assert parsed["processes"][0]["name"] == "PP_WIND"
+        assert "RNEW" in parsed["processes"][0]["sets"]
+
+    def test_expand_energy_commodity(self):
+        """Expand add_energy_commodity pattern."""
+        result = expand_pattern(
+            "add_energy_commodity",
+            {"name": "NG", "unit": "PJ", "description": "Natural Gas"},
+            output_format="vedalang"
+        )
+
+        parsed = yaml.safe_load(result)
+        assert "commodities" in parsed
+        assert parsed["commodities"][0]["name"] == "NG"
+        assert parsed["commodities"][0]["type"] == "energy"
+
+    def test_expand_emission_commodity(self):
+        """Expand add_emission_commodity pattern."""
+        result = expand_pattern(
+            "add_emission_commodity",
+            {"name": "CO2"},
+            output_format="vedalang"
+        )
+
+        parsed = yaml.safe_load(result)
+        assert "commodities" in parsed
+        assert parsed["commodities"][0]["name"] == "CO2"
+        assert parsed["commodities"][0]["type"] == "emission"
+        assert parsed["commodities"][0]["unit"] == "Mt"
+
+    def test_expand_co2_price_trajectory_tableir(self):
+        """Expand co2_price_trajectory pattern (tableir format)."""
+        result = expand_pattern(
+            "co2_price_trajectory",
+            {"prices": {2025: 50, 2030: 100}, "region": "REG1"},
+            output_format="tableir"
+        )
+
+        parsed = yaml.safe_load(result)
+        assert parsed["tag"] == "~TFM_INS-TS"
+        assert len(parsed["rows"]) == 2
+        assert parsed["rows"][0]["YEAR"] == 2025
+        assert parsed["rows"][0]["COST"] == 50
+
+    def test_co2_price_trajectory_no_vedalang_template(self):
+        """co2_price_trajectory should not have a vedalang template."""
+        with pytest.raises(PatternError, match="does not have a vedalang template"):
+            expand_pattern(
+                "co2_price_trajectory",
+                {"prices": {2025: 50}},
+                output_format="vedalang"
+            )
+
+    def test_invalid_output_format_raises(self):
+        """Invalid output format should raise PatternError."""
+        with pytest.raises(PatternError, match="Invalid output_format"):
+            expand_pattern("add_power_plant", {}, output_format="invalid")
 
 
 class TestFullPipeline:
