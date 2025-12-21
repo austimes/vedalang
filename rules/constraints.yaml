@@ -1,0 +1,117 @@
+# VEDA Tag and Field Constraints
+# Defines valid combinations of tags, files, and required fields.
+# Used for validation and guidance during model construction.
+
+tag_constraints:
+  # ============================================================================
+  # FI (File Import) Tags - Define model structure
+  # ============================================================================
+  
+  "~FI_COMM":
+    description: Define commodities
+    valid_files:
+      - "SysSettings/*.xlsx"
+      - "BY_Trans/*.xlsx"
+    required_fields:
+      - Csets
+      - CommName
+    optional_fields:
+      - Unit
+      - CTSLvl
+      - PeakTS
+      - Desc
+    example_row:
+      Csets: NRG
+      CommName: ELC
+      Unit: PJ
+  
+  "~FI_PROCESS":
+    description: Define processes/technologies
+    valid_files:
+      - "SubRES_*/*.xlsx"
+      - "BY_Trans/*.xlsx"
+    required_fields:
+      - TechName
+      - Sets
+    optional_fields:
+      - TechDesc
+      - Tact
+      - Tcap
+      - Vintage
+    example_row:
+      TechName: PP_CCGT
+      Sets: ELE
+      Tact: PJ
+      Tcap: GW
+  
+  "~FI_T":
+    description: Define process topology (inputs, outputs, efficiency)
+    valid_files:
+      - "SubRES_*/*.xlsx"
+      - "BY_Trans/*.xlsx"
+    required_fields:
+      - TechName
+    conditional_fields:
+      - field: "Comm-IN"
+        or: "Comm-OUT"
+        description: Must have at least one input or output
+    optional_fields:
+      - EFF
+      - Share-I
+      - Share-O
+      - FLO_SHAR
+    example_row:
+      TechName: PP_CCGT
+      Comm-IN: NG
+      Comm-OUT: ELC
+      EFF: 0.55
+
+  # ============================================================================
+  # TFM (Transformation) Tags - Modify/extend model
+  # ============================================================================
+  
+  "~TFM_INS":
+    description: Insert/update data for existing processes
+    valid_files:
+      - "Scen_*/*.xlsx"
+      - "SysSettings/*.xlsx"
+    required_fields:
+      - TechName
+    note: Used for scenario-specific parameter changes
+
+  "~TFM_INS-TS":
+    description: Insert time-series data
+    valid_files:
+      - "Scen_*/*.xlsx"
+    required_fields:
+      - YEAR
+    note: Used for time-varying parameters like prices, demands
+
+# Field type definitions
+field_types:
+  TechName:
+    type: string
+    max_length: 32
+    pattern: "^[A-Z][A-Z0-9_]*$"
+    description: Technology/process identifier
+  
+  CommName:
+    type: string
+    max_length: 32
+    description: Commodity identifier
+  
+  Sets:
+    type: string
+    description: Comma-separated set memberships (e.g., "ELE,RNEW")
+  
+  EFF:
+    type: number
+    min: 0
+    max: 1
+    description: Process efficiency
+  
+  YEAR:
+    type: integer
+    min: 1990
+    max: 2100
+    description: Model year

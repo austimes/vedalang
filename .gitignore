@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# OS files
+.DS_Store
+
+# Generated output
+output/
+output_invalid/
+*.log
+
+# Embedded repos (use submodule if needed)
+xl2times/

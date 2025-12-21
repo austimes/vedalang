@@ -1,0 +1,158 @@
+# VedaLang Pattern Library
+# Reusable patterns for common energy system modeling constructs.
+# These patterns can be expanded with parameters to generate VedaLang or TableIR.
+
+patterns:
+  # ============================================================================
+  # Power Generation Patterns
+  # ============================================================================
+  
+  add_power_plant:
+    description: |
+      Define a thermal generation process that converts fuel to electricity.
+      Suitable for coal, gas, oil, and biomass power plants.
+    category: generation
+    parameters:
+      - name: plant_name
+        type: string
+        required: true
+        description: Unique identifier for the power plant (e.g., PP_CCGT_01)
+      - name: fuel_commodity
+        type: string
+        required: true
+        description: Input fuel commodity (e.g., NG, COAL, OIL)
+      - name: output_commodity
+        type: string
+        required: true
+        description: Output commodity (typically ELC)
+      - name: efficiency
+        type: number
+        required: false
+        default: 0.40
+        description: Thermal efficiency (0-1)
+      - name: capacity_unit
+        type: string
+        required: false
+        default: GW
+        description: Unit for capacity (GW, MW)
+      - name: activity_unit
+        type: string
+        required: false
+        default: PJ
+        description: Unit for activity/generation (PJ, TWh)
+    vedalang_template: |
+      processes:
+        - name: {{ plant_name }}
+          description: Thermal power plant
+          sets: [ELE]
+          activity_unit: {{ activity_unit }}
+          capacity_unit: {{ capacity_unit }}
+          inputs:
+            - commodity: {{ fuel_commodity }}
+              share: 1.0
+          outputs:
+            - commodity: {{ output_commodity }}
+              share: 1.0
+          efficiency: {{ efficiency }}
+    example:
+      plant_name: PP_CCGT
+      fuel_commodity: NG
+      output_commodity: ELC
+      efficiency: 0.55
+
+  add_renewable_plant:
+    description: |
+      Define a renewable generation process (solar, wind, hydro).
+      No fuel input required - uses availability factors.
+    category: generation
+    parameters:
+      - name: plant_name
+        type: string
+        required: true
+      - name: output_commodity
+        type: string
+        required: true
+        default: ELC
+      - name: technology_type
+        type: string
+        required: true
+        enum: [solar_pv, wind_onshore, wind_offshore, hydro_ror, hydro_dam]
+      - name: capacity_unit
+        type: string
+        default: GW
+    vedalang_template: |
+      processes:
+        - name: {{ plant_name }}
+          description: {{ technology_type }} renewable plant
+          sets: [ELE, RNEW]
+          capacity_unit: {{ capacity_unit }}
+          outputs:
+            - commodity: {{ output_commodity }}
+              share: 1.0
+
+  # ============================================================================
+  # Commodity Patterns
+  # ============================================================================
+  
+  add_energy_commodity:
+    description: Define an energy carrier commodity (fuel, electricity).
+    category: commodity
+    parameters:
+      - name: name
+        type: string
+        required: true
+      - name: unit
+        type: string
+        default: PJ
+      - name: description
+        type: string
+        default: ""
+    vedalang_template: |
+      commodities:
+        - name: {{ name }}
+          type: energy
+          unit: {{ unit }}
+          {% if description %}description: {{ description }}{% endif %}
+
+  add_emission_commodity:
+    description: Define an emission commodity (CO2, NOx, etc.).
+    category: commodity
+    parameters:
+      - name: name
+        type: string
+        required: true
+      - name: unit
+        type: string
+        default: Mt
+    vedalang_template: |
+      commodities:
+        - name: {{ name }}
+          type: emission
+          unit: {{ unit }}
+
+  # ============================================================================
+  # Scenario Patterns (TableIR level)
+  # ============================================================================
+  
+  co2_price_trajectory:
+    description: |
+      Define a CO2 price trajectory over time.
+      Used for carbon pricing scenarios.
+    category: scenario
+    parameters:
+      - name: prices
+        type: object
+        required: true
+        description: "Dictionary of year -> price (e.g., {2025: 50, 2030: 100})"
+      - name: region
+        type: string
+        default: REG1
+    tableir_template: |
+      tag: ~TFM_INS-TS
+      rows:
+        {% for year, price in prices.items() %}
+        - Region: {{ region }}
+          YEAR: {{ year }}
+          Pset_CO: CO2
+          COST: {{ price }}
+        {% endfor %}

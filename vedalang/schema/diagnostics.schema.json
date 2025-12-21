@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veda-devtools/schemas/diagnostics.schema.json",
+  "title": "xl2times Diagnostics",
+  "description": "Machine-readable diagnostics output from xl2times compilation",
+  "type": "object",
+  "required": ["version", "status", "diagnostics"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version for forward compatibility",
+      "const": "1.0.0"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "warning", "error"],
+      "description": "Overall compilation status"
+    },
+    "xl2times_version": {
+      "type": "string",
+      "description": "Version of xl2times that produced this output"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when compilation ran"
+    },
+    "diagnostics": {
+      "type": "array",
+      "description": "List of diagnostic messages",
+      "items": {
+        "$ref": "#/$defs/diagnostic"
+      }
+    },
+    "summary": {
+      "type": "object",
+      "description": "Aggregated counts by severity",
+      "properties": {
+        "error_count": { "type": "integer" },
+        "warning_count": { "type": "integer" },
+        "info_count": { "type": "integer" }
+      }
+    }
+  },
+  "$defs": {
+    "diagnostic": {
+      "type": "object",
+      "required": ["severity", "code", "message"],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warning", "info"],
+          "description": "Severity level of the diagnostic"
+        },
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]+$",
+          "description": "Stable diagnostic code for programmatic handling",
+          "examples": ["UNKNOWN_TAG", "MISSING_REQUIRED_COLUMN", "TABLE_HAS_FORMULAS", "DUPLICATE_COLUMN"]
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable description of the issue"
+        },
+        "source": {
+          "$ref": "#/$defs/sourceLocation",
+          "description": "Location in the source Excel file where the issue occurred"
+        },
+        "context": {
+          "type": "object",
+          "description": "Additional context specific to this diagnostic type",
+          "additionalProperties": true
+        },
+        "suggestion": {
+          "type": "string",
+          "description": "Suggested fix or action to resolve the issue"
+        }
+      }
+    },
+    "sourceLocation": {
+      "type": "object",
+      "description": "Location reference in an Excel file",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Path to the Excel file (relative to input directory)"
+        },
+        "sheet": {
+          "type": "string",
+          "description": "Name of the worksheet"
+        },
+        "range": {
+          "type": "string",
+          "description": "Excel range (e.g., 'A1:G10')"
+        },
+        "tag": {
+          "type": "string",
+          "description": "VEDA table tag (e.g., '~FI_PROCESS')"
+        },
+        "row": {
+          "type": "integer",
+          "description": "1-indexed row number within the table"
+        },
+        "column": {
+          "type": "string",
+          "description": "Column name"
+        }
+      }
+    }
+  }
+}

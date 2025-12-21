@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://veda-devtools/vedalang.schema.json",
+  "title": "VedaLang Model",
+  "description": "Schema for VedaLang source files - a typed DSL for VEDA models",
+  "type": "object",
+  "required": ["model"],
+  "properties": {
+    "model": {
+      "type": "object",
+      "required": ["name", "regions", "commodities", "processes"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Model name identifier"
+        },
+        "description": {
+          "type": "string",
+          "description": "Model description"
+        },
+        "regions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "List of region codes"
+        },
+        "commodities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/commodity" },
+          "description": "Commodity definitions"
+        },
+        "processes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/process" },
+          "description": "Process definitions"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "commodity": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string", "description": "Commodity identifier" },
+        "type": { 
+          "type": "string",
+          "enum": ["energy", "material", "emission", "demand"],
+          "description": "Commodity type category"
+        },
+        "unit": { "type": "string", "description": "Unit of measurement" },
+        "description": { "type": "string" }
+      }
+    },
+    "process": {
+      "type": "object",
+      "required": ["name", "sets"],
+      "properties": {
+        "name": { "type": "string", "description": "Process identifier" },
+        "description": { "type": "string" },
+        "sets": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Process set memberships (e.g., ELE, IND)"
+        },
+        "activity_unit": { "type": "string", "default": "PJ" },
+        "capacity_unit": { "type": "string", "default": "GW" },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/flow" },
+          "description": "Input commodity flows"
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/flow" },
+          "description": "Output commodity flows"
+        },
+        "efficiency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Process efficiency (0-1)"
+        }
+      }
+    },
+    "flow": {
+      "type": "object",
+      "required": ["commodity"],
+      "properties": {
+        "commodity": { "type": "string", "description": "Reference to commodity name" },
+        "share": { "type": "number", "minimum": 0, "maximum": 1, "default": 1.0 }
+      }
+    }
+  }
+}

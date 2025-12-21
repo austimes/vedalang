@@ -1,0 +1,31 @@
+# Minimal VedaLang example: A simple thermal power plant
+model:
+  name: MiniModel
+  description: A minimal test model with one power plant
+  
+  regions:
+    - REG1
+  
+  commodities:
+    - name: ELC
+      type: energy
+      unit: PJ
+      description: Electricity
+    - name: NG
+      type: energy
+      unit: PJ
+      description: Natural Gas
+  
+  processes:
+    - name: PP_CCGT
+      description: Combined Cycle Gas Turbine
+      sets: [ELE]
+      activity_unit: PJ
+      capacity_unit: GW
+      inputs:
+        - commodity: NG
+          share: 1.0
+      outputs:
+        - commodity: ELC
+          share: 1.0
+      efficiency: 0.55

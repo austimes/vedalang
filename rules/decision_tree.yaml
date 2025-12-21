@@ -1,0 +1,123 @@
+# Intent Decision Tree
+# Routes natural language intents to appropriate patterns and constructs.
+# Used by agents to determine how to implement user requests.
+
+intents:
+  # ============================================================================
+  # Generation-related intents
+  # ============================================================================
+  
+  add_generation:
+    keywords:
+      - power plant
+      - generator
+      - thermal plant
+      - electricity generation
+    follow_up_questions:
+      - What type of plant? (coal, gas, nuclear, renewable)
+      - What is the fuel source?
+      - What efficiency should be assumed?
+    patterns:
+      thermal: add_power_plant
+      renewable: add_renewable_plant
+    decision_logic: |
+      If fuel_type in [coal, gas, oil, biomass, nuclear]:
+        use add_power_plant with appropriate fuel_commodity
+      Else if technology in [solar, wind, hydro]:
+        use add_renewable_plant
+
+  add_coal_plant:
+    keywords:
+      - coal plant
+      - coal-fired
+      - coal power
+    pattern: add_power_plant
+    defaults:
+      fuel_commodity: COAL
+      efficiency: 0.38
+      
+  add_gas_plant:
+    keywords:
+      - gas plant
+      - CCGT
+      - combined cycle
+      - natural gas
+    pattern: add_power_plant
+    defaults:
+      fuel_commodity: NG
+      efficiency: 0.55
+
+  add_solar:
+    keywords:
+      - solar
+      - PV
+      - photovoltaic
+    pattern: add_renewable_plant
+    defaults:
+      technology_type: solar_pv
+
+  add_wind:
+    keywords:
+      - wind
+      - wind farm
+      - wind turbine
+    pattern: add_renewable_plant
+    defaults:
+      technology_type: wind_onshore
+
+  # ============================================================================
+  # Commodity-related intents
+  # ============================================================================
+  
+  add_fuel:
+    keywords:
+      - add fuel
+      - define fuel
+      - new commodity
+      - energy carrier
+    pattern: add_energy_commodity
+    follow_up_questions:
+      - What is the fuel name/identifier?
+      - What unit should be used (PJ, TWh)?
+
+  add_emissions:
+    keywords:
+      - CO2
+      - emissions
+      - greenhouse gas
+      - carbon
+    pattern: add_emission_commodity
+    defaults:
+      name: CO2
+      unit: Mt
+
+  # ============================================================================
+  # Scenario-related intents
+  # ============================================================================
+  
+  set_carbon_price:
+    keywords:
+      - carbon price
+      - CO2 price
+      - carbon tax
+      - emissions price
+    pattern: co2_price_trajectory
+    follow_up_questions:
+      - What price levels by year?
+      - Which regions should this apply to?
+
+# Disambiguation rules
+disambiguation:
+  - trigger: "plant"
+    clarify: "Do you mean a power plant (generation) or an industrial plant (demand)?"
+  
+  - trigger: "add capacity"
+    clarify: "Do you want to add a new technology or increase existing capacity?"
+
+# Common mistakes to catch
+common_errors:
+  - pattern: "efficiency > 1"
+    message: "Efficiency should be between 0 and 1 (e.g., 0.55 for 55%)"
+  
+  - pattern: "missing fuel for thermal"
+    message: "Thermal plants require a fuel input commodity"

@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veda-devtools/schemas/manifest.schema.json",
+  "title": "xl2times Manifest",
+  "description": "Manifest describing what xl2times parsed and how it interpreted the input",
+  "type": "object",
+  "required": ["version", "inputs", "tables"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version for forward compatibility",
+      "const": "1.0.0"
+    },
+    "xl2times_version": {
+      "type": "string",
+      "description": "Version of xl2times that produced this manifest"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when parsing occurred"
+    },
+    "case": {
+      "type": "string",
+      "description": "Case name used for this run, if any"
+    },
+    "inputs": {
+      "type": "array",
+      "description": "List of input workbooks that were processed",
+      "items": {
+        "$ref": "#/$defs/inputFile"
+      }
+    },
+    "tables": {
+      "type": "array",
+      "description": "List of VEDA tables discovered in the input files",
+      "items": {
+        "$ref": "#/$defs/table"
+      }
+    },
+    "symbols": {
+      "type": "object",
+      "description": "Discovered model symbols (processes, commodities, etc.)",
+      "properties": {
+        "processes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/symbol" }
+        },
+        "commodities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/symbol" }
+        },
+        "regions": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "timeslices": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "user_constraints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/symbol" }
+        }
+      }
+    },
+    "data_modules": {
+      "type": "array",
+      "description": "List of data module names in processing order",
+      "items": { "type": "string" }
+    },
+    "time_horizon": {
+      "type": "object",
+      "description": "Time horizon information",
+      "properties": {
+        "start_year": { "type": "integer" },
+        "milestone_years": {
+          "type": "array",
+          "items": { "type": "integer" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "inputFile": {
+      "type": "object",
+      "required": ["path", "module_type"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the input file (relative to input directory)"
+        },
+        "module_type": {
+          "type": "string",
+          "enum": ["base", "subres", "trade", "demand", "scen", "syssettings", "sets", "lma", null],
+          "description": "VEDA module type classification"
+        },
+        "module_name": {
+          "type": "string",
+          "description": "Derived module name"
+        },
+        "submodule": {
+          "type": "string",
+          "enum": ["main", "trans", null],
+          "description": "Submodule classification (main or trans)"
+        },
+        "table_count": {
+          "type": "integer",
+          "description": "Number of tables extracted from this file"
+        }
+      }
+    },
+    "table": {
+      "type": "object",
+      "required": ["id", "tag", "file", "sheet"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for this table instance"
+        },
+        "tag": {
+          "type": "string",
+          "description": "VEDA tag (e.g., '~FI_PROCESS', '~TFM_INS')"
+        },
+        "tag_variant": {
+          "type": "string",
+          "description": "Tag variant suffix if any (e.g., '-TS', '-AT')"
+        },
+        "file": {
+          "type": "string",
+          "description": "Source file path"
+        },
+        "sheet": {
+          "type": "string",
+          "description": "Source worksheet name"
+        },
+        "range": {
+          "type": "string",
+          "description": "Excel range of the table"
+        },
+        "row_count": {
+          "type": "integer",
+          "description": "Number of data rows in the table"
+        },
+        "columns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of column names"
+        },
+        "defaults": {
+          "type": "string",
+          "description": "Tag-level defaults if specified (e.g., from '~FI_T: defaults')"
+        },
+        "uc_sets": {
+          "type": "object",
+          "description": "User constraint domain specifications",
+          "additionalProperties": { "type": "string" }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["processed", "dropped", "unsupported"],
+          "description": "Processing status of this table"
+        },
+        "drop_reason": {
+          "type": "string",
+          "description": "Reason for dropping the table, if status is 'dropped'"
+        }
+      }
+    },
+    "symbol": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Symbol name (e.g., process name, commodity name)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description"
+        },
+        "defined_in": {
+          "type": "string",
+          "description": "Table ID where this symbol is defined"
+        },
+        "regions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Regions where this symbol is active"
+        },
+        "sets": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Sets this symbol belongs to"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,52 @@
+[project]
+name = "veda-devtools"
+version = "0.1.0"
+description = "A typed DSL (VedaLang) that compiles to VEDA tables for TIMES energy models"
+requires-python = ">=3.11"
+dependencies = [
+    "xl2times",
+    "pyyaml>=6.0",
+    "jsonschema>=4.0",
+    "tabulate>=0.9.0",
+    "gitpython>=3.1.45",
+    "pandas>=2.3.3",
+    "openpyxl>=3.1.5",
+    "jinja2>=3.1.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "ruff",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "ruff",
+]
+
+[tool.uv.sources]
+xl2times = { path = "xl2times", editable = true }
+
+[project.scripts]
+veda_emit_excel = "tools.veda_emit_excel.cli:main"
+vedalang = "vedalang.compiler.cli:main"
+veda_check = "tools.veda_check.cli:main"
+veda_pattern = "tools.veda_patterns.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["tools*", "vedalang*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-s --tb=short"

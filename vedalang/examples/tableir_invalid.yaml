@@ -1,0 +1,9 @@
+# Invalid TableIR - missing required fields and wrong types
+files:
+  - path: test.xlsx
+    sheets:
+      - name: Test
+        tables:
+          - tag: "MISSING_TILDE"  # Invalid: tag must start with ~
+            rows:
+              - PRC: Test

@@ -1,0 +1,40 @@
+# Minimal TableIR example: Combined Cycle Gas Turbine
+# This defines a single thermal power plant with natural gas input and electricity output
+#
+# Note: This example demonstrates TableIR structure for the emitter.
+# Full xl2times validation requires additional system tables (BookRegions_Map,
+# TimeSlices, TimePeriods, etc.) - see fixtures/MiniVEDA2 for a complete example.
+
+files:
+  - path: SubRES_Thermal/SubRES_Thermal.xlsx
+    sheets:
+      - name: Thermal
+        tables:
+          - tag: "~FI_PROCESS"
+            rows:
+              - TechName: PP_CCGT
+                TechDesc: Combined Cycle Gas Turbine
+                Sets: ELE
+                Tact: PJ
+                Tcap: GW
+          - tag: "~FI_T"
+            rows:
+              - TechName: PP_CCGT
+                Comm-IN: NG
+                Comm-OUT: ELC
+                EFF: 0.55
+
+  - path: SysSettings/SysSettings.xlsx
+    sheets:
+      - name: Commodities
+        tables:
+          - tag: "~FI_COMM"
+            rows:
+              - Csets: NRG
+                CommName: ELC
+                CommDesc: Electricity
+                Unit: PJ
+              - Csets: NRG
+                CommName: NG
+                CommDesc: Natural Gas
+                Unit: PJ
