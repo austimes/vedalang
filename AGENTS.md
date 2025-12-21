@@ -343,10 +343,13 @@ cp failing_input.yaml tests/failures/type_a_missing_column.yaml
 
 ### Schema Evolution Policy
 
+See [docs/schema_evolution.md](docs/schema_evolution.md) for the full policy.
+
+**Quick rules:**
 - **Add** optional fields freely
 - **Never remove** required fields without deprecation
-- Document breaking changes in schema changelog
-- Version schemas: `vedalang.schema.v1.json`, etc.
+- **Never narrow** enum values (only add new ones)
+- Run `uv run pytest tests/test_schema_compatibility.py` before schema changes
 
 ### Pattern Versioning
 
