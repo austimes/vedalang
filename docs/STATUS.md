@@ -1,10 +1,10 @@
 # VedaLang Project Status
 
-**Last updated:** 2024-12-21
+**Last updated:** 2025-12-21
 
 ## Executive Summary
 
-VedaLang is a typed DSL that compiles to VEDA Excel tables for TIMES energy models. The toolchain is **complete and ready for autonomous agent exploration**.
+VedaLang is a typed DSL that compiles to VEDA Excel tables for TIMES energy models. The toolchain is complete and we are now in the **Primitives Exploration Phase**.
 
 | Milestone | Status |
 |-----------|--------|
@@ -14,16 +14,40 @@ VedaLang is a typed DSL that compiles to VEDA Excel tables for TIMES energy mode
 | Schema evolution policy | ✅ In place |
 | Test coverage | ✅ 134 tests passing |
 | Documentation | ✅ Complete |
+| Exploration infrastructure | ✅ Ready |
 
 ---
 
-## Current Phase: Ready for Exploration
+## Current Phase: Primitives Exploration
 
-The infrastructure is complete for an AI agent to autonomously:
-1. Think up energy modeling scenarios
-2. Express them in VedaLang
-3. Validate with `veda_check`
-4. Learn from failures via structured diagnostics
+**Epic:** `vedalang-fq8`
+
+The infrastructure is complete for an AI agent to autonomously explore energy system primitives and extend VedaLang. See [docs/exploration_prompt.md](exploration_prompt.md) for the full exploration protocol.
+
+### Primitives Exploration Roadmap
+
+| Primitive | Issue | Status | Notes |
+|-----------|-------|--------|-------|
+| Thermal generation | - | ✅ Complete | DC1, DC2 |
+| Renewable generation | - | ✅ Complete | DC2 |
+| Emissions & pricing | - | ✅ Complete | DC3, DC4 |
+| **CHP** | `vedalang-c96` | 🔲 Not started | Multi-output processes |
+| **Storage** | `vedalang-1ak` | 🔲 Not started | Same-commodity I/O |
+| **Demand trajectories** | `vedalang-kpd` | 🔲 Not started | New scenario type? |
+| **Fuel supply** | `vedalang-2cr` | 🔲 Not started | Resource limits |
+| **Capacity bounds** | `vedalang-381` | 🔲 Not started | NCAP_BND, CAP_BND |
+| **Timeslices** | `vedalang-6q7` | 🔲 Not started | Temporal structure |
+| **Transmission** | `vedalang-1uu` | 🔲 Not started | HV/LV within region |
+| **Trade** | `vedalang-87e` | 🔲 Not started | IRE processes |
+| **User constraints** | `vedalang-9df` | 🔲 Not started | UC tables |
+
+### Exploration Protocol
+
+1. Pick one primitive at a time
+2. Design minimal toy model in VedaLang
+3. Validate with `veda_check --from-vedalang --json`
+4. Iterate 2-3 times before proposing schema changes
+5. Document in handoff: `experiments/handoff/session_YYYY-MM-DD.yaml`
 
 ---
 
@@ -58,14 +82,16 @@ The infrastructure is complete for an AI agent to autonomously:
 
 ### What VedaLang Cannot Yet Express
 
-| Concept | Status | Notes |
-|---------|--------|-------|
-| Trade between regions | ❌ Not implemented | Needs IRE processes |
-| Vintage/age tracking | ❌ Not implemented | Future enhancement |
-| Timeslice definitions | ❌ Not implemented | Using defaults |
-| Demand projections | ❌ Not implemented | Needs ~TFM_INS tables |
-| Capacity bounds | ❌ Not implemented | Needs attributes |
-| User constraints | ❌ Not implemented | Needs ~UC tables |
+| Concept | Status | Exploration Issue |
+|---------|--------|-------------------|
+| CHP (multi-output) | 🔲 To explore | `vedalang-c96` |
+| Storage | 🔲 To explore | `vedalang-1ak` |
+| Demand projections | 🔲 To explore | `vedalang-kpd` |
+| Trade between regions | ❌ Needs IRE | `vedalang-87e` |
+| Vintage/age tracking | ❌ Future | - |
+| Timeslice definitions | ❌ Needs tables | `vedalang-6q7` |
+| Capacity bounds | ❌ Needs attributes | `vedalang-381` |
+| User constraints | ❌ Needs UC tables | `vedalang-9df` |
 
 ---
 
@@ -94,6 +120,11 @@ The infrastructure is complete for an AI agent to autonomously:
 - `rules/constraints.yaml` - VEDA tag constraints and required fields
 - `rules/decision_tree.yaml` - Intent routing for natural language
 
+### Exploration Infrastructure
+- `docs/exploration_prompt.md` - Full exploration protocol for agents
+- `experiments/` - Directory structure for primitive exploration
+- `experiments/handoff/` - Session continuity records
+
 ### Guardrails
 - **Golden fixtures**: `tests/test_golden_fixtures.py` - auto-tests all examples
 - **Schema compatibility**: `tests/test_schema_compatibility.py` - 16 tests preventing breaking changes
@@ -102,6 +133,7 @@ The infrastructure is complete for an AI agent to autonomously:
 
 ### Documentation
 - `AGENTS.md` - Agent workflow, design phases, guardrails
+- `docs/exploration_prompt.md` - Primitives exploration protocol
 - `docs/baseline_diagnostics.md` - xl2times diagnostic codes
 - `docs/schema_evolution.md` - Schema change policy
 - `docs/pattern_validation.md` - Pattern validation catalog
@@ -148,24 +180,6 @@ We hardened xl2times (in `xl2times/` submodule) to emit structured diagnostics:
 
 ---
 
-## Next Steps
-
-### Immediate (Ready Now)
-1. **Autonomous exploration** - Agent tries new modeling scenarios
-2. **Expand pattern library** - Add more templates based on discoveries
-
-### Short-term Enhancements
-3. **Timeslice support** - Add `~TIMESLICES` emission
-4. **Demand scenarios** - Add demand trajectory support
-5. **Capacity bounds** - Add NCAP_BND, CAP_BND attributes
-
-### Medium-term Goals
-6. **Trade processes** - IRE for inter-region trade
-7. **User constraints** - UC table support
-8. **Vintage tracking** - Process vintage handling
-
----
-
 ## Repository Structure
 
 ```
@@ -173,9 +187,16 @@ veda-devtools/
 ├── AGENTS.md                 # Agent instructions
 ├── docs/
 │   ├── STATUS.md             # This file
+│   ├── exploration_prompt.md # Primitives exploration protocol
 │   ├── baseline_diagnostics.md
 │   ├── pattern_validation.md
 │   └── schema_evolution.md
+├── experiments/              # Primitives exploration
+│   ├── handoff/              # Session continuity records
+│   ├── chp/                  # CHP experiments
+│   ├── storage/              # Storage experiments
+│   ├── demand/               # Demand experiments
+│   └── ...                   # Other primitives
 ├── vedalang/
 │   ├── schema/               # JSON Schema definitions
 │   ├── compiler/             # VedaLang → TableIR compiler
@@ -227,10 +248,25 @@ uv run ruff check .
 
 ## Issue Tracking
 
-Using `bd` (beads) for issue tracking. All 29 implementation issues are closed.
+Using `bd` (beads) for issue tracking.
 
 ```bash
-bd list --status open    # Show open issues
-bd list --status closed  # Show closed issues
+bd list --status open    # Show open issues (9 primitives + 1 epic)
+bd list --status closed  # Show closed issues (29 implementation issues)
 bd create "title"        # Create new issue
 ```
+
+### Open Issues
+
+| Issue | Title |
+|-------|-------|
+| `vedalang-fq8` | Epic: VedaLang Primitives Exploration |
+| `vedalang-c96` | Explore CHP (Combined Heat and Power) |
+| `vedalang-1ak` | Explore Storage |
+| `vedalang-kpd` | Explore Demand & Demand Trajectories |
+| `vedalang-2cr` | Explore Fuel Supply & Resource Limits |
+| `vedalang-381` | Explore Capacity Bounds & Build Limits |
+| `vedalang-6q7` | Explore Time-Slicing / Temporal Structure |
+| `vedalang-1uu` | Explore Transmission Within a Region |
+| `vedalang-87e` | Explore Trade Between Regions |
+| `vedalang-9df` | Explore User Constraints / Policy Constraints |
