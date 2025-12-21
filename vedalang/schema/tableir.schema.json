@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://veda-devtools/schemas/tableir.schema.json",
+  "title": "TableIR",
+  "description": "Intermediate representation between VedaLang source and Excel output. Defines the structure of VEDA tables to be emitted.",
+  "type": "object",
+  "required": ["files"],
+  "properties": {
+    "files": {
+      "type": "array",
+      "description": "List of Excel workbook files to generate",
+      "items": {
+        "$ref": "#/$defs/file"
+      }
+    }
+  },
+  "$defs": {
+    "file": {
+      "type": "object",
+      "description": "An Excel workbook file containing one or more worksheets",
+      "required": ["path", "sheets"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative path to the Excel file (e.g., 'base/base.xlsx')"
+        },
+        "sheets": {
+          "type": "array",
+          "description": "List of worksheets in this workbook",
+          "items": {
+            "$ref": "#/$defs/sheet"
+          }
+        }
+      }
+    },
+    "sheet": {
+      "type": "object",
+      "description": "A worksheet within an Excel workbook containing VEDA tables",
+      "required": ["name", "tables"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the worksheet (Excel tab name)"
+        },
+        "tables": {
+          "type": "array",
+          "description": "List of VEDA tables on this worksheet",
+          "items": {
+            "$ref": "#/$defs/table"
+          }
+        }
+      }
+    },
+    "table": {
+      "type": "object",
+      "description": "A VEDA table identified by its tag, containing data rows",
+      "required": ["tag", "rows"],
+      "properties": {
+        "tag": {
+          "type": "string",
+          "description": "VEDA tag identifying the table type (e.g., '~FI_PROCESS', '~FI_T', '~TFM_INS')",
+          "pattern": "^~"
+        },
+        "rows": {
+          "type": "array",
+          "description": "List of data rows in the table",
+          "items": {
+            "$ref": "#/$defs/row"
+          }
+        }
+      }
+    },
+    "row": {
+      "type": "object",
+      "description": "A data row containing column-value pairs. Column names are dynamic based on the VEDA tag.",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" }
+        ]
+      }
+    }
+  }
+}
