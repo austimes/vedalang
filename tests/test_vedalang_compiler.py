@@ -49,7 +49,7 @@ def test_commodities_become_fi_comm():
                     comm_tables.append(t)
 
     assert len(comm_tables) >= 1
-    comm_names = [r.get("CommName") for r in comm_tables[0]["rows"]]
+    comm_names = [r.get("commname") for r in comm_tables[0]["rows"]]
     assert "ELC" in comm_names
     assert "NG" in comm_names
 
@@ -68,7 +68,7 @@ def test_processes_become_fi_process():
                     proc_tables.append(t)
 
     assert len(proc_tables) >= 1
-    tech_names = [r.get("TechName") for r in proc_tables[0]["rows"]]
+    tech_names = [r.get("techname") for r in proc_tables[0]["rows"]]
     assert "PP_CCGT" in tech_names
 
 

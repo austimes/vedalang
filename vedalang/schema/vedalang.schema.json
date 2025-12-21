@@ -33,6 +33,11 @@
           "type": "array",
           "items": { "$ref": "#/$defs/process" },
           "description": "Process definitions"
+        },
+        "scenarios": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/scenario" },
+          "description": "Scenario definitions (TFM parameters)"
         }
       }
     }
@@ -90,6 +95,37 @@
         "commodity": { "type": "string", "description": "Reference to commodity name" },
         "share": { "type": "number", "minimum": 0, "maximum": 1, "default": 1.0 }
       }
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": { 
+          "type": "string", 
+          "description": "Scenario name (becomes folder name: Scen_{name})"
+        },
+        "description": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["commodity_price"],
+          "description": "Type of scenario parameter"
+        },
+        "commodity": {
+          "type": "string",
+          "description": "Target commodity for price scenarios"
+        },
+        "values": {
+          "type": "object",
+          "description": "Year -> value mapping for time-series data",
+          "additionalProperties": { "type": "number" }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "commodity_price" } } },
+          "then": { "required": ["commodity", "values"] }
+        }
+      ]
     }
   }
 }

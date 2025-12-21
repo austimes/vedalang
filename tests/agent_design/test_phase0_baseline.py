@@ -64,28 +64,28 @@ class TestMiniPlantCompilation:
     def test_commodity_rows_correct(self, mini_plant_tableir):
         """Commodities ELC and NG should appear in ~FI_COMM."""
         rows = self._get_table_rows(mini_plant_tableir, "~FI_COMM")
-        comm_names = [r.get("CommName") for r in rows]
+        comm_names = [r.get("commname") for r in rows]
         assert "ELC" in comm_names
         assert "NG" in comm_names
 
     def test_process_row_correct(self, mini_plant_tableir):
         """Process PP_CCGT should appear in ~FI_PROCESS."""
         rows = self._get_table_rows(mini_plant_tableir, "~FI_PROCESS")
-        tech_names = [r.get("TechName") for r in rows]
+        tech_names = [r.get("techname") for r in rows]
         assert "PP_CCGT" in tech_names
 
     def test_process_has_sets(self, mini_plant_tableir):
         """Process should have Sets=ELE."""
         rows = self._get_table_rows(mini_plant_tableir, "~FI_PROCESS")
-        pp_ccgt = next(r for r in rows if r.get("TechName") == "PP_CCGT")
-        assert pp_ccgt.get("Sets") == "ELE"
+        pp_ccgt = next(r for r in rows if r.get("techname") == "PP_CCGT")
+        assert pp_ccgt.get("sets") == "ELE"
 
     def test_fi_t_has_efficiency(self, mini_plant_tableir):
         """~FI_T should contain efficiency row."""
         rows = self._get_table_rows(mini_plant_tableir, "~FI_T")
-        eff_rows = [r for r in rows if "EFF" in r]
+        eff_rows = [r for r in rows if "eff" in r]
         assert len(eff_rows) >= 1
-        assert eff_rows[0]["EFF"] == 0.55
+        assert eff_rows[0]["eff"] == 0.55
 
     def _get_all_tags(self, tableir):
         """Extract all table tags from TableIR."""
