@@ -129,10 +129,13 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # ~CURRENCIES - default currency
     currencies_rows = [{"currency": "USD"}]
 
+    # Derive model years for time-series expansion
+    model_years = _get_model_years(model)
+
     # Build scenario files (~TFM_INS-TS tables)
     scenario_files = []
     for scenario in model.get("scenarios", []):
-        scenario_rows = _compile_scenario(scenario, default_region)
+        scenario_rows = _compile_scenario(scenario, default_region, model_years)
         if scenario_rows:
             scenario_file = {
                 "path": f"Scen_{scenario['name']}/Scen_{scenario['name']}.xlsx",
@@ -222,62 +225,123 @@ def _get_model_years(model: dict) -> list[int]:
     return years
 
 
-# VEDA interpolation option codes (from Table 2 in VEDA documentation)
-# These are set in year=0 column/row to control interpolation behavior
-INTERPOLATION_CODES = {
-    "none": -1,                  # No interpolation/extrapolation
-    "interp_only": 1,            # Interpolation but no extrapolation
-    "interp_extrap_eps": 2,      # Interpolation, extrapolation with EPS
-    "interp_extrap": 3,          # Full interpolation and extrapolation
-    "interp_extrap_back": 4,     # Interpolation and backward extrapolation
-    "interp_extrap_forward": 5,  # Interpolation and forward extrapolation
-}
+def _expand_series_to_years(
+    sparse_values: dict[str, float],
+    model_years: list[int],
+    interpolation: str,
+) -> dict[int, float]:
+    """
+    Expand sparse year->value mapping to dense values for all model years.
+
+    Uses VEDA-compatible interpolation/extrapolation semantics but performs
+    the expansion at compile time (no year=0 rows emitted).
+
+    Args:
+        sparse_values: Dictionary of year (as string) -> value
+        model_years: List of model representative years
+        interpolation: One of the VEDA-compatible modes:
+            - none: No interpolation/extrapolation (only specified years)
+            - interp_only: Interpolate between points, no extrapolation
+            - interp_extrap_eps: Interpolate, extrapolate with EPS (tiny value)
+            - interp_extrap: Full interpolation and extrapolation
+            - interp_extrap_back: Interpolate, backward extrapolation only
+            - interp_extrap_forward: Interpolate, forward extrapolation only
+
+    Returns:
+        Dictionary of year (as int) -> interpolated value
+    """
+    # Convert string keys to int and sort
+    points = sorted([(int(y), v) for y, v in sparse_values.items()])
+
+    if not points:
+        return {}
+
+    result = {}
+    first_year, first_val = points[0]
+    last_year, last_val = points[-1]
+
+    # Determine extrapolation behavior based on mode
+    extrap_backward = interpolation in ("interp_extrap", "interp_extrap_back")
+    extrap_forward = interpolation in (
+        "interp_extrap", "interp_extrap_forward", "interp_extrap_eps"
+    )
+    do_interpolate = interpolation != "none"
+
+    for ym in model_years:
+        # Check if exact match exists
+        exact = next((v for y, v in points if y == ym), None)
+        if exact is not None:
+            result[ym] = exact
+            continue
+
+        # If no interpolation, skip non-specified years
+        if not do_interpolate:
+            continue
+
+        # Find surrounding points
+        before = [(y, v) for y, v in points if y < ym]
+        after = [(y, v) for y, v in points if y > ym]
+
+        if not before:
+            # Before first point - backward extrapolation
+            if extrap_backward:
+                result[ym] = first_val
+            # else: skip this year
+        elif not after:
+            # After last point - forward extrapolation
+            if extrap_forward:
+                result[ym] = last_val
+            # else: skip this year
+        else:
+            # Between two points - linear interpolation
+            y0, v0 = before[-1]
+            y1, v1 = after[0]
+            ratio = (ym - y0) / (y1 - y0)
+            result[ym] = v0 + (v1 - v0) * ratio
+
+    return result
 
 
 def _compile_scenario(
     scenario: dict,
     region: str,
+    model_years: list[int],
 ) -> list[dict]:
     """
     Compile a scenario definition to TableIR rows for ~TFM_INS-TS.
 
-    Emits sparse data points plus a year=0 row with the interpolation option code.
-    VEDA/xl2times handles interpolation based on this code.
+    Expands sparse time-series to dense rows for all model years using
+    VEDA-compatible interpolation semantics. No year=0 rows are emitted;
+    the compiler handles all interpolation.
 
     Args:
         scenario: Scenario definition from VedaLang source
         region: Default region for the model
+        model_years: List of model representative years
 
     Returns:
-        List of rows for the ~TFM_INS-TS table
+        List of rows for the ~TFM_INS-TS table (one per model year)
     """
     scenario_type = scenario.get("type")
     rows = []
 
     if scenario_type == "commodity_price":
         commodity = scenario["commodity"]
-        values = scenario.get("values", {})
+        sparse_values = scenario.get("values", {})
         interpolation = scenario["interpolation"]  # Required field
 
-        # Get the VEDA option code for this interpolation mode
-        option_code = INTERPOLATION_CODES[interpolation]
+        # Expand to all model years using VEDA-compatible interpolation
+        dense_values = _expand_series_to_years(
+            sparse_values, model_years, interpolation
+        )
 
-        # Emit year=0 row with the interpolation option code
-        # This tells VEDA how to interpolate/extrapolate the series
-        rows.append({
-            "region": region,
-            "year": 0,
-            "pset_co": commodity,
-            "cost": option_code,
-        })
-
-        # Emit one row per specified year (sparse is OK - VEDA interpolates)
-        for year_str, price in values.items():
+        # Emit one row per year (canonical long format, dense)
+        for year in sorted(dense_values.keys()):
             rows.append({
                 "region": region,
-                "year": int(year_str),
+                "year": year,
                 "pset_co": commodity,
-                "cost": price,
+                "cost": dense_values[year],
             })
 
     return rows

@@ -258,19 +258,20 @@ class TestCanonicalFormEnforcement:
         assert len(errors) >= 1
         assert any("year" in e.lower() for e in errors)
 
-    def test_year_zero_for_interpolation_allowed(self):
-        """Year=0 rows with numeric option codes are valid (VEDA interpolation)."""
+    def test_dense_time_series_valid(self):
+        """Dense time-series data (one row per year) is the canonical form."""
         tableir = make_tableir([
             {
                 "tag": "~TFM_INS-TS",
                 "rows": [
-                    {"region": "REG1", "year": 0, "pset_co": "CO2", "cost": 3},
                     {"region": "REG1", "year": 2020, "pset_co": "CO2", "cost": 50},
+                    {"region": "REG1", "year": 2030, "pset_co": "CO2", "cost": 100},
+                    {"region": "REG1", "year": 2040, "pset_co": "CO2", "cost": 150},
                 ],
             }
         ])
         errors = check_tableir_invariants(tableir)
-        # Should pass - year=0 with option code is valid VEDA syntax
+        # Dense data should pass validation
         assert errors == []
 
 

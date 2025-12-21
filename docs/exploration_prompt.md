@@ -56,18 +56,18 @@ scenarios:
       2050: 200
 ```
 
-**Interpolation options:**
+**Interpolation options (VEDA-compatible, but compiler expands to dense):**
 
-| Enum | Code | Behavior |
-|------|------|----------|
-| `none` | -1 | No interpolation/extrapolation |
-| `interp_only` | 1 | Interpolation but no extrapolation |
-| `interp_extrap_eps` | 2 | Interpolation, extrapolation with EPS |
-| `interp_extrap` | 3 | Full interpolation and extrapolation |
-| `interp_extrap_back` | 4 | Interpolation and backward extrapolation |
-| `interp_extrap_forward` | 5 | Interpolation and forward extrapolation |
+| Enum | Behavior |
+|------|----------|
+| `none` | No interpolation - only specified years emitted |
+| `interp_only` | Interpolate between points, no extrapolation |
+| `interp_extrap_eps` | Interpolate, forward extrapolation |
+| `interp_extrap` | Full interpolation and extrapolation (both directions) |
+| `interp_extrap_back` | Interpolate, backward extrapolation only |
+| `interp_extrap_forward` | Interpolate, forward extrapolation only |
 
-The compiler emits a `year=0` row with the option code, and VEDA handles interpolation.
+The compiler expands to dense data (one row per model year). No year=0 rows.
 
 See [docs/canonical_form.md](canonical_form.md) for the full specification.
 
