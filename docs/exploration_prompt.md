@@ -41,22 +41,33 @@ rows:
   - { region: "REG1", year: 2025, pset_co: "CO2", cost: "I" }  # NO!
 ```
 
-### VedaLang Interpolation
+### VedaLang Interpolation (REQUIRED)
 
-VedaLang source can specify sparse time series with interpolation mode:
+VedaLang requires explicit interpolation mode - no defaults:
 
 ```yaml
 scenarios:
   - name: CO2_Price
     type: commodity_price
     commodity: CO2
-    interpolation: linear  # linear | step | hold
+    interpolation: interp_extrap  # REQUIRED - see options below
     values:
       2020: 50
       2050: 200
 ```
 
-The compiler expands this to dense rows for all model years (2020, 2030, 2040, 2050).
+**Interpolation options:**
+
+| Enum | Code | Behavior |
+|------|------|----------|
+| `none` | -1 | No interpolation/extrapolation |
+| `interp_only` | 1 | Interpolation but no extrapolation |
+| `interp_extrap_eps` | 2 | Interpolation, extrapolation with EPS |
+| `interp_extrap` | 3 | Full interpolation and extrapolation |
+| `interp_extrap_back` | 4 | Interpolation and backward extrapolation |
+| `interp_extrap_forward` | 5 | Interpolation and forward extrapolation |
+
+The compiler emits a `year=0` row with the option code, and VEDA handles interpolation.
 
 See [docs/canonical_form.md](canonical_form.md) for the full specification.
 

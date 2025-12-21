@@ -114,61 +114,66 @@ This provides:
 
 ## Interpolation Handling
 
-### VedaLang Side: Sparse is OK
+### VEDA Option Codes
 
-VedaLang source can specify sparse time series:
+VEDA uses numeric option codes in a `year=0` row to control interpolation/extrapolation.
+VedaLang uses human-readable enums that map to these codes:
+
+| VedaLang Enum | VEDA Code | Behavior |
+|---------------|-----------|----------|
+| `none` | -1 | No interpolation/extrapolation |
+| `interp_only` | 1 | Interpolation but no extrapolation |
+| `interp_extrap_eps` | 2 | Interpolation, extrapolation with EPS |
+| `interp_extrap` | 3 | Full interpolation and extrapolation |
+| `interp_extrap_back` | 4 | Interpolation and backward extrapolation |
+| `interp_extrap_forward` | 5 | Interpolation and forward extrapolation |
+
+### VedaLang Side: Interpolation is REQUIRED
+
+VedaLang requires explicit interpolation mode - no defaults:
 
 ```yaml
 scenarios:
   - name: CO2_Price
     type: commodity_price
     commodity: CO2
-    interpolation: linear  # optional, default is linear
+    interpolation: interp_extrap  # REQUIRED - must be explicit
     values:
       2020: 50
       2050: 200
 ```
 
-### Compiler Side: Expand to Dense
+### Compiler Side: Emit year=0 Row
 
-The compiler:
-1. Reads model years from `time_periods` (e.g., [2020, 2030, 2040, 2050])
-2. Interpolates missing years based on `interpolation` mode
-3. Emits **one row per model year** with explicit numeric values
+The compiler emits:
+1. A `year=0` row with the numeric option code
+2. One row per specified year (sparse is OK - VEDA interpolates)
 
-**Interpolation modes:**
-
-| Mode | Behavior |
-|------|----------|
-| `linear` (default) | Linear interpolation between specified points |
-| `step` | Stepwise constant from each point until next |
-| `hold` | Hold first value before, last value after |
-
-**Example expansion:**
+**Example:**
 
 VedaLang input:
 ```yaml
+interpolation: interp_extrap  # maps to code 3
 values:
   2020: 50
   2050: 200
 ```
 
-With model years [2020, 2030, 2040, 2050] and `interpolation: linear`:
-
 TableIR output:
 ```yaml
 rows:
+  - { region: "REG1", year: 0, pset_co: "CO2", cost: 3 }     # Option code
   - { region: "REG1", year: 2020, pset_co: "CO2", cost: 50 }
-  - { region: "REG1", year: 2030, pset_co: "CO2", cost: 100 }
-  - { region: "REG1", year: 2040, pset_co: "CO2", cost: 150 }
   - { region: "REG1", year: 2050, pset_co: "CO2", cost: 200 }
 ```
 
-### What's Forbidden
+VEDA/xl2times uses the year=0 row to interpolate/extrapolate the series.
 
-- **No `I` or `E` markers** in TableIR - ever
-- **No reliance on VEDA/xl2times interpolation** - compiler does all expansion
-- **No partial year coverage** (optional strictness) - all model years must have values
+### Why This Approach?
+
+- **Explicit is better than implicit** - no hidden defaults to track down
+- **Uses native VEDA behavior** - compiler doesn't reinvent interpolation
+- **Sparse data is compact** - don't duplicate values for every model year
 
 ---
 

@@ -19,7 +19,6 @@ RULES_DIR = Path(__file__).parent.parent.parent / "rules"
 # Regex patterns for canonical form validation
 LOWERCASE_COLUMN_PATTERN = re.compile(r"^[a-z][a-z0-9_-]*$")
 YEAR_COLUMN_PATTERN = re.compile(r"^[12][0-9]{3}$")
-INTERPOLATION_MARKERS = {"I", "E", "i", "e", "I+", "E+", "i+", "e+"}
 
 
 def load_constraints() -> dict:
@@ -78,7 +77,6 @@ def _check_canonical_form(
 
     - Lowercase column names only
     - No year columns (4-digit numbers as column names)
-    - No interpolation markers in string values
     """
     errors = []
 
@@ -101,12 +99,9 @@ def _check_canonical_form(
                     "use 'year' column with year values instead (canonical long format)"
                 )
 
-            # Check for interpolation markers in string values
-            if isinstance(value, str) and value.strip() in INTERPOLATION_MARKERS:
-                errors.append(
-                    f"{location}: column '{col_name}' has interpolation marker "
-                    f"'{value}' - explicit values required (no VEDA interpolation)"
-                )
+            # Note: We do NOT check for "I"/"E" markers here.
+            # VEDA uses numeric option codes in year=0 rows, not string markers.
+            # The compiler emits these correctly.
 
     return errors
 

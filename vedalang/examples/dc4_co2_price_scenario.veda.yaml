@@ -59,6 +59,7 @@ model:
       description: Carbon price trajectory 2025-2050
       type: commodity_price
       commodity: CO2
+      interpolation: interp_extrap  # Full interpolation and extrapolation
       values:
         2025: 50
         2030: 100

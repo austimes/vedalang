@@ -116,9 +116,15 @@
         },
         "interpolation": {
           "type": "string",
-          "enum": ["linear", "step", "hold"],
-          "default": "linear",
-          "description": "How to interpolate between specified years. linear=connect points, step=hold until next, hold=extend first/last"
+          "enum": [
+            "none",
+            "interp_only",
+            "interp_extrap_eps",
+            "interp_extrap",
+            "interp_extrap_back",
+            "interp_extrap_forward"
+          ],
+          "description": "VEDA interpolation/extrapolation mode (REQUIRED). Maps to year=0 option codes: none=-1, interp_only=1, interp_extrap_eps=2, interp_extrap=3, interp_extrap_back=4, interp_extrap_forward=5"
         },
         "values": {
           "type": "object",
@@ -133,18 +139,25 @@
       "allOf": [
         {
           "if": { "properties": { "type": { "const": "commodity_price" } } },
-          "then": { "required": ["commodity", "values"] }
+          "then": { "required": ["commodity", "values", "interpolation"] }
         }
       ]
     },
     "time_series": {
       "type": "object",
-      "description": "Generic time-series specification with optional interpolation",
+      "description": "Generic time-series specification with REQUIRED interpolation mode",
       "properties": {
         "interpolation": {
           "type": "string",
-          "enum": ["linear", "step", "hold"],
-          "default": "linear"
+          "enum": [
+            "none",
+            "interp_only",
+            "interp_extrap_eps",
+            "interp_extrap",
+            "interp_extrap_back",
+            "interp_extrap_forward"
+          ],
+          "description": "VEDA interpolation/extrapolation mode (REQUIRED)"
         },
         "values": {
           "type": "object",
@@ -153,7 +166,7 @@
           "propertyNames": { "pattern": "^[12][0-9]{3}$" }
         }
       },
-      "required": ["values"]
+      "required": ["values", "interpolation"]
     }
   }
 }

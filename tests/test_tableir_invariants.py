@@ -258,17 +258,20 @@ class TestCanonicalFormEnforcement:
         assert len(errors) >= 1
         assert any("year" in e.lower() for e in errors)
 
-    def test_interpolation_markers_rejected(self):
-        """VEDA interpolation markers (I, E) are forbidden."""
+    def test_year_zero_for_interpolation_allowed(self):
+        """Year=0 rows with numeric option codes are valid (VEDA interpolation)."""
         tableir = make_tableir([
             {
                 "tag": "~TFM_INS-TS",
-                "rows": [{"region": "REG1", "year": 2020, "cost": "I"}],
+                "rows": [
+                    {"region": "REG1", "year": 0, "pset_co": "CO2", "cost": 3},
+                    {"region": "REG1", "year": 2020, "pset_co": "CO2", "cost": 50},
+                ],
             }
         ])
         errors = check_tableir_invariants(tableir)
-        assert len(errors) >= 1
-        assert any("interpolation" in e.lower() for e in errors)
+        # Should pass - year=0 with option code is valid VEDA syntax
+        assert errors == []
 
 
 class TestUnknownTags:
