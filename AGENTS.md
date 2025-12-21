@@ -212,31 +212,186 @@ The agent discovers and refines these heuristics through experimentation.
 - Decision heuristics are learned, not hardcoded
 - TableIR is your experimentation layer before committing to VedaLang syntax
 
-## Landing the Plane (Session Completion)
+---
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+## Agent Design Workflow
 
-**MANDATORY WORKFLOW:**
+The agent iteratively designs VedaLang through a structured feedback loop:
 
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
-   ```bash
-   git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
-   ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. Prototype at TableIR                                     │
+│     - Write raw YAML tables (files/sheets/tables structure) │
+│     - Low friction experimentation                          │
+├─────────────────────────────────────────────────────────────┤
+│  2. Emit Excel                                               │
+│     - veda_emit_excel tables.yaml --out test.xlsx           │
+├─────────────────────────────────────────────────────────────┤
+│  3. Validate with xl2times                                   │
+│     - xl2times test.xlsx --diagnostics-json diag.json       │
+│     - xl2times is the ORACLE - its verdict is final         │
+├─────────────────────────────────────────────────────────────┤
+│  4. Fix or Lift                                              │
+│     - If errors: adjust TableIR, repeat from step 2         │
+│     - If valid: lift pattern to VedaLang syntax             │
+└─────────────────────────────────────────────────────────────┘
+```
 
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
+**Preferred workflow:** Use `veda_check` for the full pipeline:
+```bash
+# Validate VedaLang source end-to-end
+uv run veda_check vedalang/examples/mini_plant.veda.yaml --from-vedalang
+
+# Validate TableIR directly
+uv run veda_check tables.yaml --from-tableir
+```
+
+---
+
+## Design Phases
+
+| Phase | Name | Focus | Status |
+|-------|------|-------|--------|
+| **P0** | Validate Toolchain | Tools work, feedback loop closes | ✅ DONE |
+| **P1** | TableIR Experimentation | Learn valid VEDA patterns via trial | 🔄 ACTIVE |
+| **P2** | VedaLang Core | Commodities, processes, basic topology | NEXT |
+| **P3** | Scenarios | TFM tags, scenario parameters | PLANNED |
+| **P4** | Complex Features | Multi-region, vintages, timeslices | PLANNED |
+
+### P0: Validate Toolchain (DONE)
+- ✅ `vedalang compile` works
+- ✅ `veda_emit_excel` emits valid Excel
+- ✅ `veda_check` orchestrates pipeline
+- ✅ xl2times emits structured diagnostics (not crashes)
+- ✅ `mini_plant.veda.yaml` passes VedaLang compilation
+
+### P1: TableIR Experimentation (ACTIVE)
+Goal: Discover which VEDA table structures xl2times accepts.
+
+Focus areas:
+- System tables (`~BOOKREGIONS_MAP`, `~STARTYEAR`, `~CURRENCIES`)
+- Required columns in `~FI_PROCESS`, `~FI_T`
+- Commodity/process cross-references
+
+### P2-P4: Future Phases
+Design challenges (DC1-DC5) drive these phases forward.
+
+---
+
+## Design Challenges
+
+Incremental challenges to validate VedaLang expressiveness:
+
+| ID | Challenge | Concepts Tested |
+|----|-----------|-----------------|
+| **DC1** | Reproduce mini thermal plant via patterns | Basic process, commodity, topology |
+| **DC2** | Add renewable plant sharing output commodity | Multiple processes, shared commodities |
+| **DC3** | Introduce emission commodity and emission factor | Emission tracking, ENV_ACT |
+| **DC4** | Add CO2 price trajectory scenario | TFM tags, time-varying parameters |
+| **DC5** | Two-region model extension | Multi-region, trade, IRE processes |
+
+### Challenge Protocol
+
+For each challenge:
+1. **Describe intent** in natural language
+2. **Prototype** in TableIR
+3. **Validate** with xl2times
+4. **Capture pattern** if successful
+5. **Lift to VedaLang** syntax if pattern is general
+
+---
+
+## Failure Handling
+
+Every failure is a learning opportunity. Failures are categorized and preserved.
+
+### Failure Types
+
+| Type | Description | Action |
+|------|-------------|--------|
+| **A** | Wrong VEDA structure | Fix TableIR, re-validate |
+| **B** | VedaLang can't express valid pattern | Extend VedaLang schema |
+| **C** | Compiler bug | Fix compiler, add regression test |
+
+### Failure Preservation
+
+```bash
+# Create failure test case
+mkdir -p tests/failures/
+cp failing_input.yaml tests/failures/type_a_missing_column.yaml
+# Add corresponding test that expects the failure
+```
+
+### Failure-to-Test Workflow
+
+1. Reproduce failure with minimal input
+2. Capture in `tests/failures/` or inline in test file
+3. Write test that:
+   - For Type A: expects xl2times error diagnostic
+   - For Type B: documents the gap (skip with reason)
+   - For Type C: expects correct behavior after fix
+
+---
+
+## Guardrails
+
+### Golden Fixtures
+
+- `fixtures/MiniVEDA2/` is the regression reference
+- Any change that breaks fixture validation is a bug
+- Run `uv run pytest tests/` after any changes
+
+### Schema Evolution Policy
+
+- **Add** optional fields freely
+- **Never remove** required fields without deprecation
+- Document breaking changes in schema changelog
+- Version schemas: `vedalang.schema.v1.json`, etc.
+
+### Pattern Versioning
+
+- Patterns in `rules/patterns.yaml` are versioned
+- New versions rather than mutation: `add_power_plant_v2`
+- Old versions remain for backward compatibility
+
+### Validation Gates
+
+```bash
+# Run before committing
+uv run pytest tests/
+uv run ruff check .
+
+# Full validation
+uv run veda_check vedalang/examples/mini_plant.veda.yaml --from-vedalang
+```
+
+---
+
+## Diagnostic Codes Reference
+
+xl2times emits structured diagnostics. See [docs/baseline_diagnostics.md](docs/baseline_diagnostics.md) for details.
+
+### Quick Reference
+
+| Code | Severity | Description |
+|------|----------|-------------|
+| `MISSING_REQUIRED_TABLE` | error | Required VEDA table not present |
+| `MISSING_REQUIRED_COLUMN` | error | Required column missing from table |
+| `INVALID_SCALAR_TABLE` | error | Table expected one value, got wrong shape |
+| `MISSING_TIMESLICES` | warning | No timeslice definitions found |
+| `INTERNAL_ERROR` | error | Uncaught exception during processing |
+
+### Reading Diagnostics
+
+```bash
+# Generate diagnostics
+uv run xl2times model.xlsx --diagnostics-json diag.json
+
+# Key fields in output
+cat diag.json | jq '.diagnostics[] | {code, severity, message}'
+```
+
+---
 
 ## Landing the Plane (Session Completion)
 
