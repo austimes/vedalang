@@ -34,7 +34,7 @@ def test_excel_contains_tag():
                 "sheets": [
                     {
                         "name": "Sheet1",
-                        "tables": [{"tag": "~FI_TEST", "rows": [{"COL1": "value1"}]}],
+                        "tables": [{"tag": "~FI_TEST", "rows": [{"col1": "value1"}]}],
                     }
                 ],
             }
@@ -46,7 +46,7 @@ def test_excel_contains_tag():
         wb = load_workbook(created[0])
         ws = wb.active
         assert ws.cell(1, 1).value == "~FI_TEST"
-        assert ws.cell(2, 1).value == "COL1"
+        assert ws.cell(2, 1).value == "col1"
         assert ws.cell(3, 1).value == "value1"
 
 

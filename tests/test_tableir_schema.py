@@ -13,14 +13,16 @@ EXAMPLES_DIR = Path(__file__).parent.parent / "vedalang" / "examples"
 @pytest.fixture
 def tableir_schema():
     """Load the TableIR schema."""
-    schema_path = Path(__file__).parent.parent / "vedalang" / "schema" / "tableir.schema.json"
+    schema_path = (
+        Path(__file__).parent.parent / "vedalang" / "schema" / "tableir.schema.json"
+    )
     with open(schema_path) as f:
         return json.load(f)
 
 
 @pytest.fixture
 def valid_tableir():
-    """Minimal valid TableIR example from AGENTS.md."""
+    """Minimal valid TableIR example - canonical form (lowercase columns)."""
     return {
         "files": [
             {
@@ -32,14 +34,24 @@ def valid_tableir():
                             {
                                 "tag": "~FI_PROCESS",
                                 "rows": [
-                                    {"PRC": "PP_CCGT", "Sets": "ELE", "TACT": "PJ", "TCAP": "GW"}
-                                ]
+                                    {
+                                        "techname": "PP_CCGT",
+                                        "sets": "ELE",
+                                        "tact": "PJ",
+                                        "tcap": "GW",
+                                    }
+                                ],
                             },
                             {
                                 "tag": "~FI_T",
                                 "rows": [
-                                    {"PRC": "PP_CCGT", "COM_IN": "NG", "COM_OUT": "ELC", "EFF": 0.55}
-                                ]
+                                    {
+                                        "techname": "PP_CCGT",
+                                        "commodity-in": "NG",
+                                        "commodity-out": "ELC",
+                                        "eff": 0.55,
+                                    }
+                                ],
                             }
                         ]
                     }
@@ -104,7 +116,8 @@ def test_tag_must_start_with_tilde(tableir_schema):
     }
     with pytest.raises(jsonschema.ValidationError) as exc_info:
         jsonschema.validate(invalid, tableir_schema)
-    assert "does not match" in str(exc_info.value) or "pattern" in str(exc_info.value).lower()
+    err_str = str(exc_info.value).lower()
+    assert "does not match" in err_str or "pattern" in err_str
 
 
 def test_row_values_string_number_boolean(tableir_schema):

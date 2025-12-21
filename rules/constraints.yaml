@@ -51,12 +51,10 @@ tag_constraints:
       - "BY_Trans/*.xlsx"
     required_fields:
       - TechName
-    conditional_fields:
-      - field: "Comm-IN"
-        or: "Comm-OUT"
-        description: Must have at least one input or output
+    any_of_fields:
+      - fields: ["Comm-IN", "Comm-OUT", "EFF"]
+        description: Must have at least one of input, output, or efficiency
     optional_fields:
-      - EFF
       - Share-I
       - Share-O
       - FLO_SHAR

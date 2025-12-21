@@ -5,12 +5,12 @@ diagnostics instead of raising exceptions.
 """
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from xl2times.xl2times import utils
 from xl2times.xl2times.datatypes import EmbeddedXlTable, Tag
-from xl2times.xl2times.diagnostics import get_collector, reset_collector, Severity
-import pandas as pd
+from xl2times.xl2times.diagnostics import get_collector, reset_collector
 
 
 @pytest.fixture(autouse=True)

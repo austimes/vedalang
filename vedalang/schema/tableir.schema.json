@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://veda-devtools/schemas/tableir.schema.json",
   "title": "TableIR",
-  "description": "Intermediate representation between VedaLang source and Excel output. Defines the structure of VEDA tables to be emitted.",
+  "description": "Intermediate representation between VedaLang source and Excel output. Enforces canonical tidy long-by-year format.",
   "type": "object",
   "required": ["files"],
   "properties": {
@@ -72,8 +72,16 @@
     },
     "row": {
       "type": "object",
-      "description": "A data row containing column-value pairs. Column names are dynamic based on the VEDA tag.",
+      "description": "A data row containing column-value pairs. Canonical form: lowercase column names, no year/region pivots.",
+      "propertyNames": {
+        "description": "Column names must be lowercase alphanumeric with hyphens/underscores. No 4-digit years as column names.",
+        "pattern": "^[a-z][a-z0-9_-]*$",
+        "not": {
+          "pattern": "^[12][0-9]{3}$"
+        }
+      },
       "additionalProperties": {
+        "description": "Values must be string, number, or boolean. No interpolation markers (I, E) allowed.",
         "oneOf": [
           { "type": "string" },
           { "type": "number" },

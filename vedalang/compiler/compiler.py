@@ -129,10 +129,13 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # ~CURRENCIES - default currency
     currencies_rows = [{"currency": "USD"}]
 
+    # Derive model years for time-series expansion
+    model_years = _get_model_years(model)
+
     # Build scenario files (~TFM_INS-TS tables)
     scenario_files = []
     for scenario in model.get("scenarios", []):
-        scenario_rows = _compile_scenario(scenario, default_region)
+        scenario_rows = _compile_scenario(scenario, default_region, model_years)
         if scenario_rows:
             scenario_file = {
                 "path": f"Scen_{scenario['name']}/Scen_{scenario['name']}.xlsx",
@@ -201,29 +204,135 @@ def _commodity_type_to_csets(ctype: str) -> str:
     return mapping.get(ctype, "NRG")
 
 
-def _compile_scenario(scenario: dict, region: str) -> list[dict]:
+def _get_model_years(model: dict) -> list[int]:
+    """
+    Derive the list of model representative years from start_year and time_periods.
+
+    Args:
+        model: The model dictionary from VedaLang source
+
+    Returns:
+        List of model years (e.g., [2020, 2030, 2040, 2050])
+    """
+    start_year = model.get("start_year", 2020)
+    time_periods = model.get("time_periods", [10, 10, 10, 10])
+
+    years = []
+    y = start_year
+    for p in time_periods:
+        years.append(y)
+        y += p
+    return years
+
+
+def _expand_series_to_years(
+    sparse_values: dict[str, float],
+    model_years: list[int],
+    interpolation: str = "linear",
+) -> dict[int, float]:
+    """
+    Expand sparse year->value mapping to dense values for all model years.
+
+    No VEDA interpolation markers are used - all values are explicit.
+
+    Args:
+        sparse_values: Dictionary of year (as string) -> value
+        model_years: List of model representative years
+        interpolation: One of 'linear', 'step', 'hold'
+
+    Returns:
+        Dictionary of year (as int) -> interpolated value
+    """
+    # Convert string keys to int and sort
+    points = sorted([(int(y), v) for y, v in sparse_values.items()])
+
+    if not points:
+        return {}
+
+    result = {}
+
+    for ym in model_years:
+        # Check if exact match exists
+        exact = next((v for y, v in points if y == ym), None)
+        if exact is not None:
+            result[ym] = exact
+            continue
+
+        # Find surrounding points
+        before = [(y, v) for y, v in points if y < ym]
+        after = [(y, v) for y, v in points if y > ym]
+
+        if not before and not after:
+            # No data at all
+            continue
+        elif not before:
+            # Before first point
+            if interpolation == "hold":
+                result[ym] = after[0][1]
+            # For linear/step, don't extrapolate before first point
+        elif not after:
+            # After last point
+            if interpolation in ("hold", "step"):
+                result[ym] = before[-1][1]
+            # For linear, don't extrapolate after last point
+        else:
+            # Between two points
+            y0, v0 = before[-1]
+            y1, v1 = after[0]
+
+            if interpolation == "linear":
+                # Linear interpolation
+                ratio = (ym - y0) / (y1 - y0)
+                result[ym] = v0 + (v1 - v0) * ratio
+            elif interpolation == "step":
+                # Step: hold previous value
+                result[ym] = v0
+            elif interpolation == "hold":
+                # Hold: also use previous value between points
+                result[ym] = v0
+
+    return result
+
+
+def _compile_scenario(
+    scenario: dict,
+    region: str,
+    model_years: list[int],
+) -> list[dict]:
     """
     Compile a scenario definition to TableIR rows for ~TFM_INS-TS.
+
+    Expands sparse time-series to dense rows for all model years.
+    No VEDA interpolation markers are emitted.
 
     Args:
         scenario: Scenario definition from VedaLang source
         region: Default region for the model
+        model_years: List of model representative years
 
     Returns:
-        List of rows for the ~TFM_INS-TS table
+        List of rows for the ~TFM_INS-TS table (one per model year)
     """
     scenario_type = scenario.get("type")
     rows = []
 
     if scenario_type == "commodity_price":
         commodity = scenario["commodity"]
-        values = scenario.get("values", {})
-        for year, price in values.items():
+        sparse_values = scenario.get("values", {})
+        interpolation = scenario.get("interpolation", "linear")
+
+        # Expand to all model years
+        dense_values = _expand_series_to_years(
+            sparse_values, model_years, interpolation
+        )
+
+        # Emit one row per year (canonical long format)
+        for year in sorted(dense_values.keys()):
             rows.append({
                 "region": region,
-                "year": int(year),
+                "year": year,
                 "pset_co": commodity,
-                "cost": price,
+                "cost": dense_values[year],
             })
 
     return rows

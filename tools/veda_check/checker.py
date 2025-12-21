@@ -8,6 +8,7 @@ from pathlib import Path
 
 import jsonschema
 
+from tools.veda_check.invariants import check_tableir_invariants
 from tools.veda_emit_excel import emit_excel, load_tableir
 from vedalang.compiler import compile_vedalang_to_tableir, load_vedalang
 
@@ -70,12 +71,19 @@ def run_check(
                         result.tables.append(tag)
                     result.total_rows += len(table.get("rows", []))
 
-        # Step 2: Emit Excel to temp directory
+        # Step 2: Check TableIR invariants (fast validation before xl2times)
+        invariant_errors = check_tableir_invariants(tableir)
+        if invariant_errors:
+            result.errors += len(invariant_errors)
+            result.error_messages.extend(invariant_errors)
+            return result
+
+        # Step 3: Emit Excel to temp directory
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir = Path(tmpdir)
             emit_excel(tableir, tmpdir)
 
-            # Step 3: Run xl2times
+            # Step 4: Run xl2times
             manifest_path = tmpdir / "manifest.json"
             diagnostics_path = tmpdir / "diagnostics.json"
 
@@ -91,7 +99,7 @@ def run_check(
                 cwd=project_root,
             )
 
-            # Step 4: Parse and validate outputs (if available)
+            # Step 5: Parse and validate outputs (if available)
             if manifest_path.exists():
                 with open(manifest_path) as f:
                     result.manifest = json.load(f)

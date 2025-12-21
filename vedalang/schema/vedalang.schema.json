@@ -114,10 +114,20 @@
           "type": "string",
           "description": "Target commodity for price scenarios"
         },
+        "interpolation": {
+          "type": "string",
+          "enum": ["linear", "step", "hold"],
+          "default": "linear",
+          "description": "How to interpolate between specified years. linear=connect points, step=hold until next, hold=extend first/last"
+        },
         "values": {
           "type": "object",
-          "description": "Year -> value mapping for time-series data",
-          "additionalProperties": { "type": "number" }
+          "description": "Year -> value mapping for time-series data (sparse OK, compiler expands)",
+          "additionalProperties": { "type": "number" },
+          "propertyNames": {
+            "pattern": "^[12][0-9]{3}$",
+            "description": "Keys must be 4-digit years"
+          }
         }
       },
       "allOf": [
@@ -126,6 +136,24 @@
           "then": { "required": ["commodity", "values"] }
         }
       ]
+    },
+    "time_series": {
+      "type": "object",
+      "description": "Generic time-series specification with optional interpolation",
+      "properties": {
+        "interpolation": {
+          "type": "string",
+          "enum": ["linear", "step", "hold"],
+          "default": "linear"
+        },
+        "values": {
+          "type": "object",
+          "description": "Year -> value mapping",
+          "additionalProperties": { "type": "number" },
+          "propertyNames": { "pattern": "^[12][0-9]{3}$" }
+        }
+      },
+      "required": ["values"]
     }
   }
 }

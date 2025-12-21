@@ -4,6 +4,8 @@
 # Note: This example demonstrates TableIR structure for the emitter.
 # Full xl2times validation requires additional system tables (BookRegions_Map,
 # TimeSlices, TimePeriods, etc.) - see fixtures/MiniVEDA2 for a complete example.
+#
+# IMPORTANT: TableIR uses canonical form with lowercase column names.
 
 files:
   - path: SubRES_Thermal/SubRES_Thermal.xlsx
@@ -12,17 +14,17 @@ files:
         tables:
           - tag: "~FI_PROCESS"
             rows:
-              - TechName: PP_CCGT
-                TechDesc: Combined Cycle Gas Turbine
-                Sets: ELE
-                Tact: PJ
-                Tcap: GW
+              - techname: PP_CCGT
+                techdesc: Combined Cycle Gas Turbine
+                sets: ELE
+                tact: PJ
+                tcap: GW
           - tag: "~FI_T"
             rows:
-              - TechName: PP_CCGT
-                Comm-IN: NG
-                Comm-OUT: ELC
-                EFF: 0.55
+              - techname: PP_CCGT
+                commodity-in: NG
+                commodity-out: ELC
+                eff: 0.55
 
   - path: SysSettings/SysSettings.xlsx
     sheets:
@@ -30,11 +32,11 @@ files:
         tables:
           - tag: "~FI_COMM"
             rows:
-              - Csets: NRG
-                CommName: ELC
-                CommDesc: Electricity
-                Unit: PJ
-              - Csets: NRG
-                CommName: NG
-                CommDesc: Natural Gas
-                Unit: PJ
+              - csets: NRG
+                commname: ELC
+                commdesc: Electricity
+                unit: PJ
+              - csets: NRG
+                commname: NG
+                commdesc: Natural Gas
+                unit: PJ

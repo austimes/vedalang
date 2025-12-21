@@ -1,0 +1,35 @@
+# DC5: Two-Region Model Extension
+# Demonstrates multi-region support in VedaLang.
+# Both regions share the same processes and commodities.
+model:
+  name: TwoRegionModel
+  description: Two-region model with shared processes
+  
+  regions:
+    - REG1
+    - REG2
+  
+  commodities:
+    - name: NG
+      type: energy
+      unit: PJ
+      description: Natural Gas
+    - name: ELC
+      type: energy
+      unit: PJ
+      description: Electricity
+  
+  processes:
+    # Thermal plant available in both regions
+    - name: PP_CCGT
+      description: Combined cycle gas turbine
+      sets: [ELE]
+      activity_unit: PJ
+      capacity_unit: GW
+      inputs:
+        - commodity: NG
+          share: 1.0
+      outputs:
+        - commodity: ELC
+          share: 1.0
+      efficiency: 0.55

@@ -2,6 +2,66 @@
 
 **Purpose:** Guide an AI agent to iteratively extend VedaLang by exploring energy system primitives one at a time.
 
+---
+
+## Critical: Canonical Table Form
+
+Before exploring any primitive, understand these **non-negotiable rules**:
+
+### ONE Canonical Form Only
+
+VedaLang enforces a single table representation. No alternatives allowed.
+
+| Rule | Description |
+|------|-------------|
+| **Tidy long format** | One row = one fact. `year` is a column, never a column header. |
+| **Lowercase columns** | All column names lowercase: `techname`, `region`, `year`, `cost` |
+| **No wide pivots** | Never use years or regions as column headers |
+| **No VEDA interpolation** | Never emit `I`, `E`, or other markers. All values explicit. |
+| **Compiler expands sparse** | VedaLang can be sparse; compiler densifies to all model years |
+
+### Examples
+
+**CORRECT (canonical):**
+```yaml
+rows:
+  - { region: "REG1", year: 2020, pset_co: "CO2", cost: 50 }
+  - { region: "REG1", year: 2030, pset_co: "CO2", cost: 100 }
+```
+
+**FORBIDDEN (wide by year):**
+```yaml
+rows:
+  - { region: "REG1", pset_co: "CO2", "2020": 50, "2030": 100 }  # NO!
+```
+
+**FORBIDDEN (interpolation marker):**
+```yaml
+rows:
+  - { region: "REG1", year: 2025, pset_co: "CO2", cost: "I" }  # NO!
+```
+
+### VedaLang Interpolation
+
+VedaLang source can specify sparse time series with interpolation mode:
+
+```yaml
+scenarios:
+  - name: CO2_Price
+    type: commodity_price
+    commodity: CO2
+    interpolation: linear  # linear | step | hold
+    values:
+      2020: 50
+      2050: 200
+```
+
+The compiler expands this to dense rows for all model years (2020, 2030, 2040, 2050).
+
+See [docs/canonical_form.md](canonical_form.md) for the full specification.
+
+---
+
 ## 0. Role and Mission
 
 You are the **VedaLang Exploration Agent**.

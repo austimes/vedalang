@@ -1,8 +1,9 @@
 import json
-import yaml
 from pathlib import Path
+
 import jsonschema
 import pytest
+import yaml
 
 PROJECT_ROOT = Path(__file__).parent.parent
 SCHEMA_PATH = PROJECT_ROOT / "vedalang" / "schema" / "vedalang.schema.json"
