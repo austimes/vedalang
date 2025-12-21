@@ -31,9 +31,9 @@ The infrastructure is complete for an AI agent to autonomously explore energy sy
 | Thermal generation | - | ✅ Complete | DC1, DC2 |
 | Renewable generation | - | ✅ Complete | DC2 |
 | Emissions & pricing | - | ✅ Complete | DC3, DC4 |
-| **CHP** | `vedalang-c96` | 🔲 Not started | Multi-output processes |
-| **Storage** | `vedalang-1ak` | 🔲 Not started | Same-commodity I/O |
-| **Demand trajectories** | `vedalang-kpd` | 🔲 Not started | New scenario type? |
+| **CHP** | `vedalang-c96` | ✅ Complete | Multi-output processes work with existing schema |
+| **Storage** | `vedalang-1ak` | ✅ Complete | Same-commodity I/O works with existing schema |
+| **Demand trajectories** | `vedalang-kpd` | ✅ Complete | Schema extension needed: `demand_projection` type |
 | **Fuel supply** | `vedalang-2cr` | 🔲 Not started | Resource limits |
 | **Capacity bounds** | `vedalang-381` | 🔲 Not started | NCAP_BND, CAP_BND |
 | **Timeslices** | `vedalang-6q7` | 🔲 Not started | Temporal structure |
