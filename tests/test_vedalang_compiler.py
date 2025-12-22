@@ -6,7 +6,12 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-from vedalang.compiler import compile_vedalang_to_tableir, load_vedalang
+from vedalang.compiler import (
+    SemanticValidationError,
+    compile_vedalang_to_tableir,
+    load_vedalang,
+    validate_cross_references,
+)
 
 PROJECT_ROOT = Path(__file__).parent.parent
 EXAMPLES_DIR = PROJECT_ROOT / "vedalang" / "examples"
@@ -1412,3 +1417,339 @@ def test_uc_table_has_uc_sets_metadata():
     assert "T_E" in uc_table["uc_sets"], "Should have T_E scope"
     assert uc_table["uc_sets"]["R_E"] == "AllRegions"
     assert uc_table["uc_sets"]["T_E"] == ""
+
+
+# =============================================================================
+# Semantic Cross-Reference Validation Tests
+# =============================================================================
+
+
+def test_unknown_commodity_in_process_input():
+    """Unknown commodity in process inputs should raise SemanticValidationError."""
+    source = {
+        "model": {
+            "name": "BadInputTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "inputs": [{"commodity": "NG_MISSING"}],
+                    "outputs": [{"commodity": "ELC"}],
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "NG_MISSING" in str(exc_info.value)
+    assert "PP_CCGT" in str(exc_info.value)
+    assert "inputs[0]" in str(exc_info.value)
+
+
+def test_unknown_commodity_in_process_output():
+    """Unknown commodity in process outputs should raise SemanticValidationError."""
+    source = {
+        "model": {
+            "name": "BadOutputTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "inputs": [{"commodity": "NG"}],
+                    "outputs": [{"commodity": "ELC1"}],
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "ELC1" in str(exc_info.value)
+    assert "PP_CCGT" in str(exc_info.value)
+    assert "outputs[0]" in str(exc_info.value)
+
+
+def test_unknown_commodity_suggests_similar():
+    """Unknown commodity should suggest similar commodity name."""
+    source = {
+        "model": {
+            "name": "SuggestTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "outputs": [{"commodity": "EL"}],
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "Did you mean 'ELC'" in str(exc_info.value)
+
+
+def test_unknown_process_in_constraint():
+    """Unknown process in constraint should raise SemanticValidationError."""
+    source = {
+        "model": {
+            "name": "BadConstraintTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "outputs": [{"commodity": "ELC"}],
+                },
+            ],
+            "constraints": [
+                {
+                    "name": "REN_TARGET",
+                    "type": "activity_share",
+                    "commodity": "ELC",
+                    "processes": ["PP_WIND_MISSING"],
+                    "minimum_share": 0.30,
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "PP_WIND_MISSING" in str(exc_info.value)
+    assert "REN_TARGET" in str(exc_info.value)
+
+
+def test_unknown_region_in_trade_link():
+    """Unknown region in trade_link should raise SemanticValidationError."""
+    source = {
+        "model": {
+            "name": "BadTradeTest",
+            "regions": ["REG1", "REG2"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "outputs": [{"commodity": "ELC"}],
+                },
+            ],
+            "trade_links": [
+                {
+                    "origin": "REG1",
+                    "destination": "REG3_MISSING",
+                    "commodity": "ELC",
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "REG3_MISSING" in str(exc_info.value)
+    assert "destination" in str(exc_info.value)
+
+
+def test_unknown_commodity_in_trade_link():
+    """Unknown commodity in trade_link should raise SemanticValidationError."""
+    source = {
+        "model": {
+            "name": "BadTradeCommTest",
+            "regions": ["REG1", "REG2"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "outputs": [{"commodity": "ELC"}],
+                },
+            ],
+            "trade_links": [
+                {
+                    "origin": "REG1",
+                    "destination": "REG2",
+                    "commodity": "GAS_MISSING",
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "GAS_MISSING" in str(exc_info.value)
+
+
+def test_demand_projection_wrong_commodity_type():
+    """demand_projection targeting non-demand commodity should raise error."""
+    source = {
+        "model": {
+            "name": "BadDemandTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "IMP_NG",
+                    "sets": ["IMP"],
+                    "primary_commodity_group": "NRGO",
+                    "outputs": [{"commodity": "NG"}],
+                },
+            ],
+            "scenarios": [
+                {
+                    "name": "BaseDemand",
+                    "type": "demand_projection",
+                    "commodity": "NG",
+                    "interpolation": "interp_extrap",
+                    "values": {"2020": 100.0},
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "demand_projection" in str(exc_info.value)
+    assert "BaseDemand" in str(exc_info.value)
+    assert "NG" in str(exc_info.value)
+    assert "energy" in str(exc_info.value)
+
+
+def test_commodity_price_wrong_commodity_type():
+    """commodity_price targeting demand commodity should raise error."""
+    source = {
+        "model": {
+            "name": "BadPriceTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "RSD", "type": "demand"},
+            ],
+            "processes": [
+                {
+                    "name": "DEM_RSD",
+                    "sets": ["DMD"],
+                    "primary_commodity_group": "DEMO",
+                    "outputs": [{"commodity": "RSD"}],
+                },
+            ],
+            "scenarios": [
+                {
+                    "name": "DemandPrice",
+                    "type": "commodity_price",
+                    "commodity": "RSD",
+                    "interpolation": "interp_extrap",
+                    "values": {"2020": 100.0},
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "commodity_price" in str(exc_info.value)
+    assert "DemandPrice" in str(exc_info.value)
+    assert "demand" in str(exc_info.value)
+
+
+def test_unit_warning_for_unusual_activity_unit():
+    """Non-energy activity_unit should generate warning."""
+    model = {
+        "name": "UnitWarningTest",
+        "regions": ["REG1"],
+        "commodities": [{"name": "ELC", "type": "energy"}],
+        "processes": [
+            {
+                "name": "PP_CCGT",
+                "sets": ["ELE"],
+                "primary_commodity_group": "NRGO",
+                "activity_unit": "kg",
+                "outputs": [{"commodity": "ELC"}],
+            },
+        ],
+    }
+    errors, warnings = validate_cross_references(model)
+    assert len(errors) == 0
+    assert len(warnings) == 1
+    assert "kg" in warnings[0]
+    assert "PP_CCGT" in warnings[0]
+    assert "activity_unit" in warnings[0]
+
+
+def test_unit_warning_for_unusual_capacity_unit():
+    """Non-power capacity_unit should generate warning."""
+    model = {
+        "name": "CapUnitWarningTest",
+        "regions": ["REG1"],
+        "commodities": [{"name": "ELC", "type": "energy"}],
+        "processes": [
+            {
+                "name": "PP_CCGT",
+                "sets": ["ELE"],
+                "primary_commodity_group": "NRGO",
+                "capacity_unit": "Mt",
+                "outputs": [{"commodity": "ELC"}],
+            },
+        ],
+    }
+    errors, warnings = validate_cross_references(model)
+    assert len(errors) == 0
+    assert len(warnings) == 1
+    assert "Mt" in warnings[0]
+    assert "capacity_unit" in warnings[0]
+
+
+def test_multiple_errors_collected():
+    """Multiple errors should be collected, not fail-fast."""
+    source = {
+        "model": {
+            "name": "MultiErrorTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "inputs": [{"commodity": "MISSING1"}],
+                    "outputs": [{"commodity": "MISSING2"}],
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "MISSING1" in str(exc_info.value)
+    assert "MISSING2" in str(exc_info.value)
+    assert len(exc_info.value.errors) == 2
+
+
+def test_all_examples_pass_semantic_validation():
+    """All example files should pass semantic validation."""
+    example_files = list(EXAMPLES_DIR.glob("*.veda.yaml"))
+    assert len(example_files) > 0, "Should have example files"
+
+    for example_file in example_files:
+        source = load_vedalang(example_file)
+        tableir = compile_vedalang_to_tableir(source)
+        assert "files" in tableir, f"Failed for {example_file.name}"

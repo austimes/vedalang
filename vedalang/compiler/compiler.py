@@ -1,12 +1,202 @@
 """VedaLang to TableIR compiler."""
 
 import json
+from difflib import get_close_matches
 from pathlib import Path
 
 import jsonschema
 import yaml
 
 SCHEMA_DIR = Path(__file__).parent.parent / "schema"
+
+# Unit categories for semantic validation
+ENERGY_UNITS = {"PJ", "TJ", "GJ", "MWh", "GWh", "TWh", "MTOE", "KTOE"}
+POWER_UNITS = {"GW", "MW", "kW", "TW"}
+MASS_UNITS = {"Mt", "kt", "t", "Gt"}
+
+
+class SemanticValidationError(Exception):
+    """Raised when semantic validation fails."""
+
+    def __init__(self, errors: list[str], warnings: list[str] | None = None):
+        self.errors = errors
+        self.warnings = warnings or []
+        super().__init__(self._format_message())
+
+    def _format_message(self) -> str:
+        parts = []
+        if self.errors:
+            parts.append(f"{len(self.errors)} semantic error(s):")
+            for e in self.errors:
+                parts.append(f"  - {e}")
+        if self.warnings:
+            parts.append(f"{len(self.warnings)} warning(s):")
+            for w in self.warnings:
+                parts.append(f"  - {w}")
+        return "\n".join(parts)
+
+
+def validate_cross_references(model: dict) -> tuple[list[str], list[str]]:
+    """
+    Validate semantic cross-references in the model.
+
+    Checks that all referenced commodities, processes, and regions exist,
+    and that scenario types target appropriate commodity types.
+
+    Args:
+        model: The model dictionary from VedaLang source
+
+    Returns:
+        Tuple of (errors, warnings)
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Build lookup sets
+    commodities = {c["name"]: c for c in model.get("commodities", [])}
+    commodity_names = set(commodities.keys())
+    processes = {p["name"] for p in model.get("processes", [])}
+    regions = set(model.get("regions", []))
+
+    def suggest_commodity(name: str) -> str:
+        matches = get_close_matches(name, commodity_names, n=1, cutoff=0.6)
+        if matches:
+            return f" Did you mean '{matches[0]}'?"
+        return ""
+
+    def suggest_process(name: str) -> str:
+        matches = get_close_matches(name, processes, n=1, cutoff=0.6)
+        if matches:
+            return f" Did you mean '{matches[0]}'?"
+        return ""
+
+    def suggest_region(name: str) -> str:
+        matches = get_close_matches(name, regions, n=1, cutoff=0.6)
+        if matches:
+            return f" Did you mean '{matches[0]}'?"
+        return ""
+
+    # Validate process references
+    for process in model.get("processes", []):
+        proc_name = process["name"]
+
+        # Check input commodity references
+        for i, inp in enumerate(process.get("inputs", [])):
+            comm = inp["commodity"]
+            if comm not in commodity_names:
+                hint = suggest_commodity(comm)
+                errors.append(
+                    f"Unknown commodity '{comm}' in process "
+                    f"'{proc_name}' inputs[{i}].{hint}"
+                )
+
+        # Check output commodity references
+        for i, out in enumerate(process.get("outputs", [])):
+            comm = out["commodity"]
+            if comm not in commodity_names:
+                hint = suggest_commodity(comm)
+                errors.append(
+                    f"Unknown commodity '{comm}' in process "
+                    f"'{proc_name}' outputs[{i}].{hint}"
+                )
+
+        # Check unit compatibility (warnings only)
+        activity_unit = process.get("activity_unit")
+        if activity_unit and activity_unit not in ENERGY_UNITS:
+            warnings.append(
+                f"Process '{proc_name}' has activity_unit '{activity_unit}' "
+                f"which is not a recognized energy unit. "
+                f"Expected one of: {', '.join(sorted(ENERGY_UNITS))}"
+            )
+
+        capacity_unit = process.get("capacity_unit")
+        if capacity_unit and capacity_unit not in POWER_UNITS:
+            warnings.append(
+                f"Process '{proc_name}' has capacity_unit '{capacity_unit}' "
+                f"which is not a recognized power unit. "
+                f"Expected one of: {', '.join(sorted(POWER_UNITS))}"
+            )
+
+    # Validate constraint references
+    for constraint in model.get("constraints", []):
+        constraint_name = constraint["name"]
+
+        # Check commodity reference
+        commodity = constraint.get("commodity")
+        if commodity and commodity not in commodity_names:
+            hint = suggest_commodity(commodity)
+            errors.append(
+                f"Unknown commodity '{commodity}' in constraint "
+                f"'{constraint_name}'.{hint}"
+            )
+
+        # Check process references (for activity_share constraints)
+        for proc in constraint.get("processes", []):
+            if proc not in processes:
+                hint = suggest_process(proc)
+                errors.append(
+                    f"Unknown process '{proc}' in constraint '{constraint_name}'.{hint}"
+                )
+
+    # Validate trade link references
+    for i, link in enumerate(model.get("trade_links", [])):
+        origin = link["origin"]
+        destination = link["destination"]
+        commodity = link["commodity"]
+
+        if origin not in regions:
+            hint = suggest_region(origin)
+            errors.append(
+                f"Unknown region '{origin}' in trade_links[{i}] origin.{hint}"
+            )
+
+        if destination not in regions:
+            hint = suggest_region(destination)
+            errors.append(
+                f"Unknown region '{destination}' in trade_links[{i}] destination.{hint}"
+            )
+
+        if commodity not in commodity_names:
+            hint = suggest_commodity(commodity)
+            errors.append(
+                f"Unknown commodity '{commodity}' in trade_links[{i}].{hint}"
+            )
+
+    # Validate scenario references
+    for scenario in model.get("scenarios", []):
+        scenario_name = scenario["name"]
+        scenario_type = scenario.get("type")
+        commodity = scenario.get("commodity")
+
+        if commodity:
+            if commodity not in commodity_names:
+                hint = suggest_commodity(commodity)
+                errors.append(
+                    f"Unknown commodity '{commodity}' in scenario "
+                    f"'{scenario_name}'.{hint}"
+                )
+            else:
+                # Check commodity type matches scenario type
+                comm_info = commodities[commodity]
+                comm_type = comm_info.get("type", "energy")
+
+                if scenario_type == "demand_projection":
+                    if comm_type != "demand":
+                        errors.append(
+                            f"demand_projection scenario '{scenario_name}' targets "
+                            f"commodity '{commodity}' (type '{comm_type}'), "
+                            "expected 'demand'"
+                        )
+
+                elif scenario_type == "commodity_price":
+                    if comm_type == "demand":
+                        errors.append(
+                            f"commodity_price scenario '{scenario_name}' targets "
+                            f"commodity '{commodity}' (type 'demand'), "
+                            "expected non-demand type"
+                        )
+
+    return errors, warnings
 
 
 def load_vedalang_schema() -> dict:
@@ -33,15 +223,25 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
 
     Args:
         source: VedaLang dictionary (parsed from .veda.yaml)
-        validate: Whether to validate input/output against schemas
+        validate: Whether to validate input/output against schemas and semantics
 
     Returns:
         TableIR dictionary ready for veda_emit_excel
+
+    Raises:
+        jsonschema.ValidationError: If source doesn't match VedaLang schema
+        SemanticValidationError: If cross-references are invalid
     """
     if validate:
         validate_vedalang(source)
 
     model = source["model"]
+
+    # Semantic cross-reference validation (before any emission)
+    if validate:
+        errors, warnings = validate_cross_references(model)
+        if errors:
+            raise SemanticValidationError(errors, warnings)
 
     # Get regions from model
     regions = model.get("regions", ["REG1"])
