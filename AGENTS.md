@@ -409,6 +409,39 @@ cat diag.json | jq '.diagnostics[] | {code, severity, message}'
 
 ---
 
+## Keeping STATUS.md Updated
+
+The living status document is [`docs/STATUS.md`](docs/STATUS.md). Keep it in sync with `bd` issues.
+
+### When to Update STATUS.md
+
+- **At session start** — Run sync script to check current state
+- **When closing issues** — Move from "Open Tasks" to completed section
+- **When creating issues** — Add to appropriate section
+- **On phase transitions** — Update "Current Phase" section
+
+### Quick Sync Commands
+
+```bash
+# Generate status summary from bd issues
+uv run python tools/sync_status.py
+
+# Show current open issues
+bd list --all | grep " open "
+
+# Count closed issues  
+bd list --all | grep " closed " | wc -l
+```
+
+### What to Update
+
+1. **Open Tasks table** — Must match `bd list --all | grep " open "`
+2. **Closed count** — Update "X issues closed" number
+3. **Current Phase** — Update when epic completes
+4. **Capabilities table** — Add new features as implemented
+
+---
+
 ## Landing the Plane (Session Completion)
 
 **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
@@ -418,16 +451,17 @@ cat diag.json | jq '.diagnostics[] | {code, severity, message}'
 1. **File issues for remaining work** - Create issues for anything that needs follow-up
 2. **Run quality gates** (if code changed) - Tests, linters, builds
 3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
+4. **Update STATUS.md** - Sync with current bd issue state
+5. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
    bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+6. **Clean up** - Clear stashes, prune remote branches
+7. **Verify** - All changes committed AND pushed
+8. **Hand off** - Provide context for next session
 
 **CRITICAL RULES:**
 - Work is NOT complete until `git push` succeeds
