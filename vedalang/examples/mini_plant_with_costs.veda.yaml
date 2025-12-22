@@ -1,0 +1,59 @@
+# VedaLang example: Minimal thermal plant with cost attributes
+# Demonstrates invcost, fixom, varom, life, and activity cost
+
+model:
+  name: MiniPlantCosts
+  description: Minimal thermal plant model with process costs
+  regions:
+    - REG1
+  start_year: 2020
+  time_periods: [10, 10, 10]
+
+  commodities:
+    - name: NG
+      type: energy
+      unit: PJ
+    - name: ELC
+      type: energy
+      unit: PJ
+    - name: RSD
+      type: demand
+      unit: PJ
+
+  processes:
+    # Natural gas import - supply process with activity cost
+    - name: IMP_NG
+      description: Natural gas import
+      sets: [IMP]
+      activity_unit: PJ
+      capacity_unit: PJ
+      outputs:
+        - commodity: NG
+      cost: 5.0  # M€/PJ import cost (ACT_COST)
+
+    # CCGT power plant - conversion process with investment and O&M costs
+    - name: PP_CCGT
+      description: Combined cycle gas turbine
+      sets: [ELE]
+      activity_unit: PJ
+      capacity_unit: GW
+      inputs:
+        - commodity: NG
+      outputs:
+        - commodity: ELC
+      efficiency: 0.55
+      invcost: 800    # M€/GW investment cost (NCAP_COST)
+      fixom: 20       # M€/GW/yr fixed O&M (FOM)
+      varom: 2        # M€/PJ variable O&M (VOM)
+      life: 30        # years (LIFE)
+
+    # Residential demand device
+    - name: DMD_RSD
+      description: Residential electricity demand
+      sets: [DMD]
+      activity_unit: PJ
+      capacity_unit: PJ
+      inputs:
+        - commodity: ELC
+      outputs:
+        - commodity: RSD

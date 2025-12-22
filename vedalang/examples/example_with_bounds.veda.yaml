@@ -1,0 +1,93 @@
+# VedaLang example: Capacity and activity bounds
+# Demonstrates cap_bound, ncap_bound, and activity_bound constraints
+
+model:
+  name: BoundsExample
+  description: Model demonstrating capacity and activity bounds
+  regions:
+    - REG1
+  start_year: 2020
+  time_periods: [10, 10, 10]
+
+  commodities:
+    - name: NG
+      type: energy
+      unit: PJ
+    - name: ELC
+      type: energy
+      unit: PJ
+    - name: RSD
+      type: demand
+      unit: PJ
+
+  processes:
+    # Natural gas import with activity upper bound
+    - name: IMP_NG
+      description: Natural gas import (limited supply)
+      sets: [IMP]
+      activity_unit: PJ
+      capacity_unit: PJ
+      outputs:
+        - commodity: NG
+      cost: 5.0
+      activity_bound:
+        up: 500.0  # Maximum 500 PJ/year import
+
+    # CCGT with capacity upper bound and new capacity limit
+    - name: PP_CCGT
+      description: Combined cycle gas turbine (limited expansion)
+      sets: [ELE]
+      activity_unit: PJ
+      capacity_unit: GW
+      inputs:
+        - commodity: NG
+      outputs:
+        - commodity: ELC
+      efficiency: 0.55
+      invcost: 800
+      fixom: 20
+      life: 30
+      cap_bound:
+        up: 10.0  # Maximum 10 GW total capacity
+      ncap_bound:
+        up: 2.0   # Maximum 2 GW new per period
+
+    # Wind with minimum capacity (RPS target) and maximum (grid limit)
+    - name: PP_WIND
+      description: Wind power (renewable target)
+      sets: [ELE]
+      activity_unit: PJ
+      capacity_unit: GW
+      outputs:
+        - commodity: ELC
+      invcost: 1200
+      fixom: 25
+      life: 25
+      cap_bound:
+        lo: 5.0   # Minimum 5 GW (renewable portfolio standard)
+        up: 50.0  # Maximum 50 GW (grid integration limit)
+
+    # Existing plant with fixed capacity
+    - name: PP_EXIST
+      description: Existing coal plant (fixed legacy capacity)
+      sets: [ELE]
+      activity_unit: PJ
+      capacity_unit: GW
+      inputs:
+        - commodity: NG
+      outputs:
+        - commodity: ELC
+      efficiency: 0.40
+      ncap_bound:
+        fx: 3.0  # Exactly 3 GW existing capacity
+
+    # Demand device
+    - name: DMD_RSD
+      description: Residential electricity demand
+      sets: [DMD]
+      activity_unit: PJ
+      capacity_unit: PJ
+      inputs:
+        - commodity: ELC
+      outputs:
+        - commodity: RSD

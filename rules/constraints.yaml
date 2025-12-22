@@ -45,19 +45,24 @@ tag_constraints:
       Tcap: GW
   
   "~FI_T":
-    description: Define process topology (inputs, outputs, efficiency)
+    description: Define process topology (inputs, outputs, efficiency) or commodity attributes
     valid_files:
       - "SubRES_*/*.xlsx"
       - "BY_Trans/*.xlsx"
-    required_fields:
-      - TechName
+    # Note: TechName is required for process rows, but commodity-level attributes
+    # (like DEMAND for COM_PROJ) use commodity column instead. We use any_of_fields
+    # to allow both patterns.
     any_of_fields:
-      - fields: ["Comm-IN", "Comm-OUT", "EFF"]
-        description: Must have at least one of input, output, or efficiency
+      - fields: ["TechName", "Attribute"]
+        description: Must have TechName (process rows) or Attribute (commodity rows like DEMAND)
+      - fields: ["Comm-IN", "Comm-OUT", "EFF", "Value"]
+        description: Must have at least one of input, output, efficiency, or value
     optional_fields:
       - Share-I
       - Share-O
       - FLO_SHAR
+      - Commodity
+      - Year
     example_row:
       TechName: PP_CCGT
       Comm-IN: NG
