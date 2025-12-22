@@ -29,10 +29,12 @@ model:
       destination: REG2
       commodity: ELC
       bidirectional: true
+      efficiency: 0.98  # 2% transmission loss
     - origin: REG1
       destination: REG2
       commodity: NG
       bidirectional: true
+      # No efficiency means default (1.0 = no loss)
   
   processes:
     - name: PP_CCGT
