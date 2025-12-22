@@ -253,10 +253,10 @@ uv run veda_check tables.yaml --from-tableir
 | Phase | Name | Focus | Status |
 |-------|------|-------|--------|
 | **P0** | Validate Toolchain | Tools work, feedback loop closes | ✅ DONE |
-| **P1** | TableIR Experimentation | Learn valid VEDA patterns via trial | 🔄 ACTIVE |
-| **P2** | VedaLang Core | Commodities, processes, basic topology | NEXT |
-| **P3** | Scenarios | TFM tags, scenario parameters | PLANNED |
-| **P4** | Complex Features | Multi-region, vintages, timeslices | PLANNED |
+| **P1** | TableIR Experimentation | Learn valid VEDA patterns via trial | ✅ DONE |
+| **P2** | Primitives Exploration | All energy system primitives | ✅ DONE |
+| **P3** | MiniSystem Stress Test | Real model validation | 🔄 ACTIVE |
+| **P4** | Advanced Features | Time-series, scenario composition | PLANNED |
 
 ### P0: Validate Toolchain (DONE)
 - ✅ `vedalang compile` works
@@ -265,16 +265,29 @@ uv run veda_check tables.yaml --from-tableir
 - ✅ xl2times emits structured diagnostics (not crashes)
 - ✅ `mini_plant.veda.yaml` passes VedaLang compilation
 
-### P1: TableIR Experimentation (ACTIVE)
-Goal: Discover which VEDA table structures xl2times accepts.
+### P1: TableIR Experimentation (DONE)
+- ✅ DC1-DC5 design challenges complete
+- ✅ Golden fixture regression tests
+- ✅ Schema evolution policy
+- ✅ Failure tracking infrastructure
 
-Focus areas:
-- System tables (`~BOOKREGIONS_MAP`, `~STARTYEAR`, `~CURRENCIES`)
-- Required columns in `~FI_PROCESS`, `~FI_T`
-- Commodity/process cross-references
+### P2: Primitives Exploration (DONE)
+All 10 energy system primitives explored and schema extensions implemented:
+- ✅ Thermal/renewable generation, CHP, storage, transmission (patterns)
+- ✅ Demand projections, costs, bounds, timeslices, trade, user constraints (schema)
 
-### P2-P4: Future Phases
-Design challenges (DC1-DC5) drive these phases forward.
+### P3: MiniSystem Stress Test (ACTIVE)
+Epic: `vedalang-93s`
+
+Open tasks:
+- `vedalang-5dw` — Design MiniSystem model specification
+- `vedalang-scv` — Implement MiniSystem in VedaLang
+- `vedalang-4t8` — Wire as golden CI test
+
+### P4: Advanced Features (PLANNED)
+- `vedalang-6qs` — Time-varying process attributes
+- `vedalang-9xy` — Scenario composition
+- `vedalang-a9m` — Units and dimension checking
 
 ---
 
