@@ -1,0 +1,76 @@
+# VedaLang example: Two-region model with inter-regional trade
+model:
+  name: TwoRegionTrade
+  description: Two regions with electricity and gas trade
+  
+  regions:
+    - REG1
+    - REG2
+  
+  start_year: 2020
+  time_periods: [10, 10, 10, 10]
+  
+  commodities:
+    - name: ELC
+      type: energy
+      unit: PJ
+      description: Electricity
+    - name: NG
+      type: energy
+      unit: PJ
+      description: Natural Gas
+    - name: RSD
+      type: demand
+      unit: PJ
+      description: Residential demand
+  
+  trade_links:
+    - origin: REG1
+      destination: REG2
+      commodity: ELC
+      bidirectional: true
+    - origin: REG1
+      destination: REG2
+      commodity: NG
+      bidirectional: true
+  
+  processes:
+    - name: PP_CCGT
+      description: Combined Cycle Gas Turbine
+      sets: [ELE]
+      activity_unit: PJ
+      capacity_unit: GW
+      inputs:
+        - commodity: NG
+      outputs:
+        - commodity: ELC
+      efficiency: 0.55
+      invcost: 800
+      fixom: 20
+      life: 30
+    
+    - name: IMP_NG
+      description: Natural Gas Import
+      sets: [IMP]
+      outputs:
+        - commodity: NG
+      cost: 5.0
+    
+    - name: DEM_RSD
+      description: Residential Demand Process
+      sets: [DMD]
+      inputs:
+        - commodity: ELC
+      outputs:
+        - commodity: RSD
+      efficiency: 1.0
+  
+  scenarios:
+    - name: BaseDemand
+      type: demand_projection
+      commodity: RSD
+      interpolation: interp_extrap
+      values:
+        "2020": 100.0
+        "2030": 120.0
+        "2050": 160.0

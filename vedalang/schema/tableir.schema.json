@@ -72,10 +72,10 @@
     },
     "row": {
       "type": "object",
-      "description": "A data row containing column-value pairs. Canonical form: lowercase column names, no year/region pivots.",
+      "description": "A data row containing column-value pairs. Column names may be lowercase alphanumeric (canonical), or uppercase for matrix-format tables like ~TRADELINKS.",
       "propertyNames": {
-        "description": "Column names must be lowercase alphanumeric with hyphens/underscores. No 4-digit years as column names.",
-        "pattern": "^[a-z][a-z0-9_-]*$",
+        "description": "Column names: alphanumeric with hyphens/underscores. No 4-digit years as column names.",
+        "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
         "not": {
           "pattern": "^[12][0-9]{3}$"
         }

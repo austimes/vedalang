@@ -503,3 +503,125 @@ def test_no_timeslices_when_not_defined():
         for s in f["sheets"]:
             for t in s["tables"]:
                 assert t["tag"] != "~TIMESLICES"
+
+
+def test_compile_trade_links():
+    """Trade links should emit ~TRADELINKS tables (matrix format)."""
+    source = {
+        "model": {
+            "name": "TradeTest",
+            "regions": ["REG1", "REG2"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+                {"name": "NG", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "outputs": [{"commodity": "ELC"}],
+                },
+            ],
+            "trade_links": [
+                {
+                    "origin": "REG1",
+                    "destination": "REG2",
+                    "commodity": "ELC",
+                    "bidirectional": True,
+                },
+                {
+                    "origin": "REG1",
+                    "destination": "REG2",
+                    "commodity": "NG",
+                    "bidirectional": False,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~TRADELINKS tables
+    tradelinks_tables = []
+    sheet_names = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~TRADELINKS":
+                    tradelinks_tables.append(t)
+                    sheet_names.append(s["name"])
+
+    # Should have 2 sheets: Bi_ELC and Uni_NG
+    assert len(tradelinks_tables) == 2
+    assert "Bi_ELC" in sheet_names
+    assert "Uni_NG" in sheet_names
+
+    # Check bidirectional ELC link (matrix format)
+    bi_elc_idx = sheet_names.index("Bi_ELC")
+    elc_rows = tradelinks_tables[bi_elc_idx]["rows"]
+    assert len(elc_rows) == 1  # One origin
+    assert elc_rows[0]["ELC"] == "REG1"  # First column is commodity, value is origin
+    assert elc_rows[0]["REG2"] == 1  # Destination column has 1
+
+    # Check unidirectional NG link
+    uni_ng_idx = sheet_names.index("Uni_NG")
+    ng_rows = tradelinks_tables[uni_ng_idx]["rows"]
+    assert len(ng_rows) == 1
+    assert ng_rows[0]["NG"] == "REG1"
+    assert ng_rows[0]["REG2"] == 1
+
+
+def test_trade_links_file_path():
+    """Trade links should be in SuppXLS/Trades directory."""
+    source = {
+        "model": {
+            "name": "TestModel",
+            "regions": ["REG1", "REG2"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "trade_links": [
+                {"origin": "REG1", "destination": "REG2", "commodity": "ELC"},
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find trade file path (in SuppXLS/Trades)
+    trade_files = [
+        f["path"] for f in tableir["files"]
+        if f["path"].startswith("SuppXLS/Trades/")
+    ]
+    assert len(trade_files) == 1
+    assert trade_files[0] == "SuppXLS/Trades/ScenTrade__Trade_Links.xlsx"
+
+
+def test_no_trade_links_when_not_defined():
+    """Models without trade_links should not emit trade file."""
+    source = load_vedalang(EXAMPLES_DIR / "mini_plant.veda.yaml")
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Should NOT have trade file
+    for f in tableir["files"]:
+        assert "Trade" not in f["path"]
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                assert t["tag"] != "~TRADELINKS"
+
+
+def test_compile_example_with_trade():
+    """Compile example_with_trade.veda.yaml to TableIR."""
+    source = load_vedalang(EXAMPLES_DIR / "example_with_trade.veda.yaml")
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Should have trade links file in SuppXLS/Trades
+    trade_files = [
+        f for f in tableir["files"]
+        if f["path"].startswith("SuppXLS/Trades/")
+    ]
+    assert len(trade_files) == 1
+
+    # Should have ~TRADELINKS tables (2 sheets for 2 commodities)
+    trade_sheets = trade_files[0]["sheets"]
+    assert len(trade_sheets) == 2
+    for s in trade_sheets:
+        for t in s["tables"]:
+            assert t["tag"] == "~TRADELINKS"

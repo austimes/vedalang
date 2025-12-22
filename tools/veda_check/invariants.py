@@ -66,6 +66,10 @@ def check_tableir_invariants(tableir: dict) -> list[str]:
     return errors
 
 
+# Tags that use matrix format with dynamic column names (commodity/region names)
+MATRIX_FORMAT_TAGS = {"~TRADELINKS"}
+
+
 def _check_canonical_form(
     tag: str,
     rows: list[dict],
@@ -75,17 +79,20 @@ def _check_canonical_form(
     """
     Check that table follows canonical form rules.
 
-    - Lowercase column names only
+    - Lowercase column names only (except matrix format tables)
     - No year columns (4-digit numbers as column names)
     """
     errors = []
+
+    # Matrix format tables use commodity/region names as columns - skip case check
+    skip_case_check = tag in MATRIX_FORMAT_TAGS
 
     for row_idx, row in enumerate(rows):
         location = f"{file_path}:{sheet_name}:{tag}:row {row_idx + 1}"
 
         for col_name, value in row.items():
-            # Check lowercase column names
-            if not LOWERCASE_COLUMN_PATTERN.match(col_name):
+            # Check lowercase column names (unless matrix format)
+            if not skip_case_check and not LOWERCASE_COLUMN_PATTERN.match(col_name):
                 # Special case: allow 'value' column in scalar tables
                 if col_name.lower() != col_name:
                     errors.append(

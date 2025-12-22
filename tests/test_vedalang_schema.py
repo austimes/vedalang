@@ -115,3 +115,51 @@ def test_timeslice_code_pattern():
     }
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(data, schema)
+
+
+def test_trade_links_validates():
+    """Trade links should validate against schema."""
+    schema = load_schema()
+    data = {
+        "model": {
+            "name": "TradeTest",
+            "regions": ["REG1", "REG2"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [{"name": "P1", "sets": ["ELE"]}],
+            "trade_links": [
+                {
+                    "origin": "REG1",
+                    "destination": "REG2",
+                    "commodity": "ELC",
+                    "bidirectional": True,
+                },
+            ],
+        }
+    }
+    jsonschema.validate(data, schema)
+
+
+def test_trade_links_example_validates():
+    """The example_with_trade.veda.yaml should pass validation."""
+    schema = load_schema()
+    with open(EXAMPLES_DIR / "example_with_trade.veda.yaml") as f:
+        data = yaml.safe_load(f)
+    jsonschema.validate(data, schema)
+
+
+def test_trade_link_missing_required_fields():
+    """Trade link missing required fields should be rejected."""
+    schema = load_schema()
+    data = {
+        "model": {
+            "name": "BadTrade",
+            "regions": ["REG1", "REG2"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [{"name": "P1", "sets": ["ELE"]}],
+            "trade_links": [
+                {"origin": "REG1"},  # Missing destination and commodity
+            ],
+        }
+    }
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(data, schema)

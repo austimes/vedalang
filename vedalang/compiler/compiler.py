@@ -237,6 +237,9 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     first_region = regions[0] if regions else "REG1"
     process_file_path = f"VT_{first_region}_{model_name}.xlsx"
 
+    # Compile trade links if present
+    trade_link_files = _compile_trade_links(model.get("trade_links", []))
+
     # Build TableIR structure
     tableir = {
         "files": [
@@ -257,6 +260,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
                 ],
             },
             *scenario_files,
+            *trade_link_files,
         ]
     }
 
@@ -516,6 +520,70 @@ def _compile_demand_projections(
             })
 
     return rows
+
+
+def _compile_trade_links(trade_links: list[dict]) -> list[dict]:
+    """
+    Compile trade link definitions to TableIR files.
+
+    Uses the matrix format ~TRADELINKS (not ~TRADELINKS_DINS) because
+    xl2times harmonise_tradelinks properly converts it and adds required
+    metadata columns.
+
+    Matrix format has sheet name encoding direction: "Bi_COMM" or "Uni_COMM"
+    First column is the commodity name, other columns are destination regions.
+    Rows are origin regions, cell values are 1 (or process name) for trade link.
+
+    Args:
+        trade_links: List of trade link definitions from VedaLang source
+
+    Returns:
+        List of TableIR file definitions (empty if no trade links)
+    """
+    if not trade_links:
+        return []
+
+    # Group trade links by commodity and bidirectional flag
+    # Each unique (commodity, bidirectional) combo becomes one sheet
+    from collections import defaultdict
+    grouped: dict[tuple[str, bool], list[dict]] = defaultdict(list)
+
+    for link in trade_links:
+        commodity = link["commodity"]
+        bidirectional = link.get("bidirectional", True)
+        grouped[(commodity, bidirectional)].append(link)
+
+    sheets = []
+    for (commodity, bidirectional), links in grouped.items():
+        # Sheet name encodes direction and commodity
+        direction = "Bi" if bidirectional else "Uni"
+        sheet_name = f"{direction}_{commodity}"
+
+        # Build matrix: first column is commodity, other columns are destinations
+        # Build sparse matrix rows - only include rows with actual links
+        rows = []
+        origins_with_links: set[str] = set()
+        for link in links:
+            origins_with_links.add(link["origin"])
+
+        for origin in sorted(origins_with_links):
+            row: dict = {commodity: origin}
+            for link in links:
+                if link["origin"] == origin:
+                    row[link["destination"]] = 1
+            rows.append(row)
+
+        sheets.append({
+            "name": sheet_name,
+            "tables": [{"tag": "~TRADELINKS", "rows": rows}],
+        })
+
+    return [
+        {
+            "path": "SuppXLS/Trades/ScenTrade__Trade_Links.xlsx",
+            "sheets": sheets,
+        }
+    ]
 
 
 def _compile_timeslices(

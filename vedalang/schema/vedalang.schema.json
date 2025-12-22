@@ -42,11 +42,47 @@
           "type": "array",
           "items": { "$ref": "#/$defs/scenario" },
           "description": "Scenario definitions (TFM parameters)"
+        },
+        "trade_links": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/trade_link" },
+          "description": "Inter-regional trade links"
         }
       }
     }
   },
   "$defs": {
+    "trade_link": {
+      "type": "object",
+      "description": "Inter-regional trade link for commodity exchange",
+      "required": ["origin", "destination", "commodity"],
+      "properties": {
+        "origin": {
+          "type": "string",
+          "description": "Origin region code"
+        },
+        "destination": {
+          "type": "string",
+          "description": "Destination region code"
+        },
+        "commodity": {
+          "type": "string",
+          "description": "Traded commodity name"
+        },
+        "bidirectional": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether trade flows in both directions"
+        },
+        "efficiency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Transport efficiency (1.0 = no losses)"
+        }
+      },
+      "additionalProperties": false
+    },
     "timeslice_level": {
       "type": "object",
       "description": "A single timeslice code within a level (season/weekly/daynite)",
