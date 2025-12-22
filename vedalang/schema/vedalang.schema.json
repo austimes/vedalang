@@ -237,6 +237,11 @@
           "items": { "type": "string" },
           "description": "Process set memberships (e.g., ELE, IND)"
         },
+        "primary_commodity_group": {
+          "type": "string",
+          "enum": ["DEMI", "DEMO", "MATI", "MATO", "NRGI", "NRGO", "ENVI", "ENVO", "FINI", "FINO"],
+          "description": "Primary commodity group (PCG). Controls activity definition. If omitted, inferred from topology using xl2times rules: outputs before inputs, DEM>MAT>NRG>ENV>FIN priority."
+        },
         "activity_unit": { "type": "string", "default": "PJ" },
         "capacity_unit": { "type": "string", "default": "GW" },
         "inputs": {

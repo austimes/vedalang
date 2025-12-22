@@ -1144,6 +1144,206 @@ def test_constraint_file_path():
     assert constraint_files[0] == "SuppXLS/Scen_UC_Constraints.xlsx"
 
 
+# =============================================================================
+# Primary Commodity Group (PCG) Tests
+# =============================================================================
+
+
+def test_pcg_inferred_nrg_output():
+    """PCG should be inferred as NRGO for process with energy output."""
+    source = {
+        "model": {
+            "name": "PCGInferTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "inputs": [{"commodity": "NG"}],
+                    "outputs": [{"commodity": "ELC"}],
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_PROCESS rows
+    process_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_PROCESS":
+                    process_rows.extend(t["rows"])
+
+    ccgt = [r for r in process_rows if r["techname"] == "PP_CCGT"][0]
+    assert ccgt["primarycg"] == "NRGO"
+
+
+def test_pcg_inferred_dem_output():
+    """PCG should be inferred as DEMO for demand device with DEM output."""
+    source = {
+        "model": {
+            "name": "PCGDemandTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+                {"name": "RSD", "type": "demand"},
+            ],
+            "processes": [
+                {
+                    "name": "DEM_RSD",
+                    "sets": ["DMD"],
+                    "inputs": [{"commodity": "ELC"}],
+                    "outputs": [{"commodity": "RSD"}],
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_PROCESS rows
+    process_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_PROCESS":
+                    process_rows.extend(t["rows"])
+
+    dem = [r for r in process_rows if r["techname"] == "DEM_RSD"][0]
+    # DEM has higher priority than NRG, and outputs checked before inputs
+    assert dem["primarycg"] == "DEMO"
+
+
+def test_pcg_inferred_input_only():
+    """PCG should be inferred from inputs when no outputs defined."""
+    source = {
+        "model": {
+            "name": "PCGInputTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "SNK_NG",
+                    "sets": ["SNK"],
+                    "inputs": [{"commodity": "NG"}],
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_PROCESS rows
+    process_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_PROCESS":
+                    process_rows.extend(t["rows"])
+
+    snk = [r for r in process_rows if r["techname"] == "SNK_NG"][0]
+    assert snk["primarycg"] == "NRGI"
+
+
+def test_pcg_explicit_override():
+    """Explicit primary_commodity_group should override inference."""
+    source = {
+        "model": {
+            "name": "PCGExplicitTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+                {"name": "ELC", "type": "energy"},
+                {"name": "HTH", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CHP",
+                    "sets": ["CHP"],
+                    "inputs": [{"commodity": "NG"}],
+                    "outputs": [{"commodity": "ELC"}, {"commodity": "HTH"}],
+                    "primary_commodity_group": "NRGO",
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_PROCESS rows
+    process_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_PROCESS":
+                    process_rows.extend(t["rows"])
+
+    chp = [r for r in process_rows if r["techname"] == "PP_CHP"][0]
+    assert chp["primarycg"] == "NRGO"
+
+
+def test_pcg_env_output_priority():
+    """ENV output should have lower priority than NRG output."""
+    source = {
+        "model": {
+            "name": "PCGEnvTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+                {"name": "ELC", "type": "energy"},
+                {"name": "CO2", "type": "emission"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_COAL",
+                    "sets": ["ELE"],
+                    "inputs": [{"commodity": "NG"}],
+                    "outputs": [{"commodity": "ELC"}, {"commodity": "CO2"}],
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_PROCESS rows
+    process_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_PROCESS":
+                    process_rows.extend(t["rows"])
+
+    coal = [r for r in process_rows if r["techname"] == "PP_COAL"][0]
+    # NRG has higher priority than ENV
+    assert coal["primarycg"] == "NRGO"
+
+
+def test_pcg_always_emitted():
+    """primarycg column should always be emitted in ~FI_PROCESS."""
+    source = load_vedalang(EXAMPLES_DIR / "mini_plant.veda.yaml")
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_PROCESS rows
+    process_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_PROCESS":
+                    process_rows.extend(t["rows"])
+
+    # All process rows should have primarycg
+    valid_pcgs = [
+        "DEMI", "DEMO", "MATI", "MATO", "NRGI", "NRGO", "ENVI", "ENVO", "FINI", "FINO"
+    ]
+    for row in process_rows:
+        assert "primarycg" in row, f"Process {row.get('techname')} missing primarycg"
+        assert row["primarycg"] in valid_pcgs
+
+
 def test_no_constraints_when_not_defined():
     """Models without constraints should not emit UC file."""
     source = load_vedalang(EXAMPLES_DIR / "mini_plant.veda.yaml")
