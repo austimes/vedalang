@@ -228,7 +228,7 @@
     },
     "process": {
       "type": "object",
-      "required": ["name", "sets"],
+      "required": ["name", "sets", "primary_commodity_group"],
       "properties": {
         "name": { "type": "string", "description": "Process identifier" },
         "description": { "type": "string" },
@@ -240,7 +240,7 @@
         "primary_commodity_group": {
           "type": "string",
           "enum": ["DEMI", "DEMO", "MATI", "MATO", "NRGI", "NRGO", "ENVI", "ENVO", "FINI", "FINO"],
-          "description": "Primary commodity group (PCG). Controls activity definition. If omitted, inferred from topology using xl2times rules: outputs before inputs, DEM>MAT>NRG>ENV>FIN priority."
+          "description": "Primary commodity group (PCG). REQUIRED. Defines which commodity flows determine process activity. No inference - must be explicit."
         },
         "activity_unit": { "type": "string", "default": "PJ" },
         "capacity_unit": { "type": "string", "default": "GW" },

@@ -93,6 +93,7 @@ def test_process_cost_attributes():
                 {
                     "name": "PP_CCGT",
                     "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
                     "inputs": [{"commodity": "NG"}],
                     "outputs": [{"commodity": "ELC"}],
                     "efficiency": 0.55,
@@ -104,6 +105,7 @@ def test_process_cost_attributes():
                 {
                     "name": "IMP_NG",
                     "sets": ["IMP"],
+                    "primary_commodity_group": "NRGO",
                     "outputs": [{"commodity": "NG"}],
                     "cost": 5.0,
                 },
@@ -157,6 +159,7 @@ def test_demand_projection_scenario():
                 {
                     "name": "DEM_RSD",
                     "sets": ["DMD"],
+                    "primary_commodity_group": "DEMO",
                     "inputs": [{"commodity": "ELC"}],
                     "outputs": [{"commodity": "RSD"}],
                     "efficiency": 1.0,
@@ -223,6 +226,7 @@ def test_demand_projection_no_scenario_file():
                 {
                     "name": "DEM_RSD",
                     "sets": ["DMD"],
+                    "primary_commodity_group": "DEMO",
                     "outputs": [{"commodity": "RSD"}],
                 },
             ],
@@ -257,6 +261,7 @@ def test_process_capacity_bounds():
                 {
                     "name": "PP_CCGT",
                     "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
                     "outputs": [{"commodity": "ELC"}],
                     "cap_bound": {"up": 10.0},
                     "ncap_bound": {"up": 2.0, "lo": 0.5},
@@ -308,6 +313,7 @@ def test_process_activity_bound():
                 {
                     "name": "IMP_NG",
                     "sets": ["IMP"],
+                    "primary_commodity_group": "NRGO",
                     "outputs": [{"commodity": "NG"}],
                     "activity_bound": {"up": 500.0, "fx": 100.0},
                 },
@@ -358,13 +364,15 @@ def test_compile_example_with_bounds():
 
     # Verify specific bounds exist
     ccgt_cap_up = [
-        r for r in bound_rows
+        r
+        for r in bound_rows
         if r.get("techname") == "PP_CCGT" and r.get("cap_bnd") == 10.0
     ]
     assert len(ccgt_cap_up) == 1
 
     wind_cap_lo = [
-        r for r in bound_rows
+        r
+        for r in bound_rows
         if r.get("techname") == "PP_WIND" and r.get("limtype") == "LO"
     ]
     assert len(wind_cap_lo) == 1
@@ -400,6 +408,7 @@ def test_compile_timeslices():
                 {
                     "name": "PP_CCGT",
                     "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
                     "outputs": [{"commodity": "ELC"}],
                 },
             ],
@@ -450,7 +459,9 @@ def test_compile_timeslices_yrfr():
                 },
             },
             "commodities": [{"name": "ELC", "type": "energy"}],
-            "processes": [{"name": "PP_CCGT", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP_CCGT", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
         }
     }
     tableir = compile_vedalang_to_tableir(source)
@@ -519,6 +530,7 @@ def test_compile_trade_links():
                 {
                     "name": "PP_CCGT",
                     "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
                     "outputs": [{"commodity": "ELC"}],
                 },
             ],
@@ -577,7 +589,9 @@ def test_trade_links_file_path():
             "name": "TestModel",
             "regions": ["REG1", "REG2"],
             "commodities": [{"name": "ELC", "type": "energy"}],
-            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
             "trade_links": [
                 {"origin": "REG1", "destination": "REG2", "commodity": "ELC"},
             ],
@@ -587,8 +601,7 @@ def test_trade_links_file_path():
 
     # Find trade file path (in SuppXLS/Trades)
     trade_files = [
-        f["path"] for f in tableir["files"]
-        if f["path"].startswith("SuppXLS/Trades/")
+        f["path"] for f in tableir["files"] if f["path"].startswith("SuppXLS/Trades/")
     ]
     assert len(trade_files) == 1
     assert trade_files[0] == "SuppXLS/Trades/ScenTrade__Trade_Links.xlsx"
@@ -614,8 +627,7 @@ def test_compile_example_with_trade():
 
     # Should have trade links file in SuppXLS/Trades
     trade_files = [
-        f for f in tableir["files"]
-        if f["path"].startswith("SuppXLS/Trades/")
+        f for f in tableir["files"] if f["path"].startswith("SuppXLS/Trades/")
     ]
     assert len(trade_files) == 1
 
@@ -641,7 +653,9 @@ def test_trade_link_efficiency():
             "name": "TradeEffTest",
             "regions": ["REG1", "REG2"],
             "commodities": [{"name": "ELC", "type": "energy"}],
-            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
             "trade_links": [
                 {
                     "origin": "REG1",
@@ -657,8 +671,7 @@ def test_trade_link_efficiency():
 
     # Find trade file
     trade_files = [
-        f for f in tableir["files"]
-        if f["path"].startswith("SuppXLS/Trades/")
+        f for f in tableir["files"] if f["path"].startswith("SuppXLS/Trades/")
     ]
     assert len(trade_files) == 1
 
@@ -693,7 +706,9 @@ def test_trade_link_no_efficiency():
             "name": "TradeNoEffTest",
             "regions": ["REG1", "REG2"],
             "commodities": [{"name": "ELC", "type": "energy"}],
-            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
             "trade_links": [
                 {
                     "origin": "REG1",
@@ -709,8 +724,7 @@ def test_trade_link_no_efficiency():
 
     # Find trade file
     trade_files = [
-        f for f in tableir["files"]
-        if f["path"].startswith("SuppXLS/Trades/")
+        f for f in tableir["files"] if f["path"].startswith("SuppXLS/Trades/")
     ]
     assert len(trade_files) == 1
 
@@ -731,7 +745,9 @@ def test_trade_links_emit_explicit_process_declarations():
             "name": "TradeExplicitTest",
             "regions": ["REG1", "REG2"],
             "commodities": [{"name": "ELC", "type": "energy", "unit": "PJ"}],
-            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
             "trade_links": [
                 {
                     "origin": "REG1",
@@ -801,7 +817,9 @@ def test_trade_links_unidirectional_single_declaration():
             "name": "TradeUniTest",
             "regions": ["REG1", "REG2"],
             "commodities": [{"name": "ELC", "type": "energy"}],
-            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
             "trade_links": [
                 {
                     "origin": "REG1",
@@ -849,7 +867,7 @@ def test_emission_cap_constraint():
                 {"name": "ELC", "type": "energy"},
             ],
             "processes": [
-                {"name": "PP_CCGT", "sets": ["ELE"]},
+                {"name": "PP_CCGT", "sets": ["ELE"], "primary_commodity_group": "NRGO"},
             ],
             "constraints": [
                 {
@@ -905,7 +923,9 @@ def test_emission_cap_with_year_trajectory():
             "commodities": [
                 {"name": "CO2", "type": "emission"},
             ],
-            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
             "constraints": [
                 {
                     "name": "CO2_BUDGET",
@@ -952,9 +972,13 @@ def test_activity_share_minimum():
                 {"name": "ELC", "type": "energy"},
             ],
             "processes": [
-                {"name": "PP_WIND", "sets": ["ELE"]},
-                {"name": "PP_SOLAR", "sets": ["ELE"]},
-                {"name": "PP_CCGT", "sets": ["ELE"]},
+                {"name": "PP_WIND", "sets": ["ELE"], "primary_commodity_group": "NRGO"},
+                {
+                    "name": "PP_SOLAR",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                },
+                {"name": "PP_CCGT", "sets": ["ELE"], "primary_commodity_group": "NRGO"},
             ],
             "constraints": [
                 {
@@ -1014,8 +1038,8 @@ def test_activity_share_maximum():
             "time_periods": [10],
             "commodities": [{"name": "ELC", "type": "energy"}],
             "processes": [
-                {"name": "PP_COAL", "sets": ["ELE"]},
-                {"name": "PP_CCGT", "sets": ["ELE"]},
+                {"name": "PP_COAL", "sets": ["ELE"], "primary_commodity_group": "NRGO"},
+                {"name": "PP_CCGT", "sets": ["ELE"], "primary_commodity_group": "NRGO"},
             ],
             "constraints": [
                 {
@@ -1058,7 +1082,7 @@ def test_activity_share_both_min_max():
             "time_periods": [10],
             "commodities": [{"name": "ELC", "type": "energy"}],
             "processes": [
-                {"name": "PP_WIND", "sets": ["ELE"]},
+                {"name": "PP_WIND", "sets": ["ELE"], "primary_commodity_group": "NRGO"},
             ],
             "constraints": [
                 {
@@ -1088,28 +1112,32 @@ def test_activity_share_both_min_max():
 
     # Check LO constraint
     lo_rhsrt = [
-        r for r in uc_rows
+        r
+        for r in uc_rows
         if r["uc_n"] == "WIND_BAND_LO" and r["attribute"] == "UC_RHSRT"
     ]
     assert len(lo_rhsrt) == 1
     assert lo_rhsrt[0]["limtype"] == "LO"
 
     lo_comprd = [
-        r for r in uc_rows
+        r
+        for r in uc_rows
         if r["uc_n"] == "WIND_BAND_LO" and r["attribute"] == "UC_COMPRD"
     ]
     assert lo_comprd[0]["value"] == -0.20
 
     # Check UP constraint
     up_rhsrt = [
-        r for r in uc_rows
+        r
+        for r in uc_rows
         if r["uc_n"] == "WIND_BAND_UP" and r["attribute"] == "UC_RHSRT"
     ]
     assert len(up_rhsrt) == 1
     assert up_rhsrt[0]["limtype"] == "UP"
 
     up_comprd = [
-        r for r in uc_rows
+        r
+        for r in uc_rows
         if r["uc_n"] == "WIND_BAND_UP" and r["attribute"] == "UC_COMPRD"
     ]
     assert up_comprd[0]["value"] == -0.40
@@ -1122,7 +1150,9 @@ def test_constraint_file_path():
             "name": "ConstraintFileTest",
             "regions": ["REG1"],
             "commodities": [{"name": "CO2", "type": "emission"}],
-            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
             "constraints": [
                 {
                     "name": "CO2_CAP",
@@ -1137,8 +1167,7 @@ def test_constraint_file_path():
 
     # Find constraint file path
     constraint_files = [
-        f["path"] for f in tableir["files"]
-        if "UC_Constraints" in f["path"]
+        f["path"] for f in tableir["files"] if "UC_Constraints" in f["path"]
     ]
     assert len(constraint_files) == 1
     assert constraint_files[0] == "SuppXLS/Scen_UC_Constraints.xlsx"
@@ -1149,11 +1178,11 @@ def test_constraint_file_path():
 # =============================================================================
 
 
-def test_pcg_inferred_nrg_output():
-    """PCG should be inferred as NRGO for process with energy output."""
+def test_pcg_missing_raises_validation_error():
+    """Process without primary_commodity_group should raise ValidationError."""
     source = {
         "model": {
-            "name": "PCGInferTest",
+            "name": "PCGMissingTest",
             "regions": ["REG1"],
             "commodities": [
                 {"name": "NG", "type": "energy"},
@@ -1169,9 +1198,58 @@ def test_pcg_inferred_nrg_output():
             ],
         }
     }
+    with pytest.raises(jsonschema.ValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "primary_commodity_group" in str(exc_info.value)
+
+
+def test_pcg_invalid_value_raises_validation_error():
+    """Process with invalid primary_commodity_group should raise ValidationError."""
+    source = {
+        "model": {
+            "name": "PCGInvalidTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "INVALID",
+                    "outputs": [{"commodity": "ELC"}],
+                },
+            ],
+        }
+    }
+    with pytest.raises(jsonschema.ValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "INVALID" in str(exc_info.value)
+
+
+def test_pcg_explicit_nrgo():
+    """Explicit primary_commodity_group=NRGO should compile correctly."""
+    source = {
+        "model": {
+            "name": "PCGExplicitTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "inputs": [{"commodity": "NG"}],
+                    "outputs": [{"commodity": "ELC"}],
+                },
+            ],
+        }
+    }
     tableir = compile_vedalang_to_tableir(source)
 
-    # Find ~FI_PROCESS rows
     process_rows = []
     for f in tableir["files"]:
         for s in f["sheets"]:
@@ -1183,11 +1261,11 @@ def test_pcg_inferred_nrg_output():
     assert ccgt["primarycg"] == "NRGO"
 
 
-def test_pcg_inferred_dem_output():
-    """PCG should be inferred as DEMO for demand device with DEM output."""
+def test_pcg_explicit_demo():
+    """Explicit primary_commodity_group=DEMO should compile correctly."""
     source = {
         "model": {
-            "name": "PCGDemandTest",
+            "name": "PCGDemoTest",
             "regions": ["REG1"],
             "commodities": [
                 {"name": "ELC", "type": "energy"},
@@ -1197,6 +1275,7 @@ def test_pcg_inferred_dem_output():
                 {
                     "name": "DEM_RSD",
                     "sets": ["DMD"],
+                    "primary_commodity_group": "DEMO",
                     "inputs": [{"commodity": "ELC"}],
                     "outputs": [{"commodity": "RSD"}],
                 },
@@ -1205,7 +1284,6 @@ def test_pcg_inferred_dem_output():
     }
     tableir = compile_vedalang_to_tableir(source)
 
-    # Find ~FI_PROCESS rows
     process_rows = []
     for f in tableir["files"]:
         for s in f["sheets"]:
@@ -1214,112 +1292,7 @@ def test_pcg_inferred_dem_output():
                     process_rows.extend(t["rows"])
 
     dem = [r for r in process_rows if r["techname"] == "DEM_RSD"][0]
-    # DEM has higher priority than NRG, and outputs checked before inputs
     assert dem["primarycg"] == "DEMO"
-
-
-def test_pcg_inferred_input_only():
-    """PCG should be inferred from inputs when no outputs defined."""
-    source = {
-        "model": {
-            "name": "PCGInputTest",
-            "regions": ["REG1"],
-            "commodities": [
-                {"name": "NG", "type": "energy"},
-            ],
-            "processes": [
-                {
-                    "name": "SNK_NG",
-                    "sets": ["SNK"],
-                    "inputs": [{"commodity": "NG"}],
-                },
-            ],
-        }
-    }
-    tableir = compile_vedalang_to_tableir(source)
-
-    # Find ~FI_PROCESS rows
-    process_rows = []
-    for f in tableir["files"]:
-        for s in f["sheets"]:
-            for t in s["tables"]:
-                if t["tag"] == "~FI_PROCESS":
-                    process_rows.extend(t["rows"])
-
-    snk = [r for r in process_rows if r["techname"] == "SNK_NG"][0]
-    assert snk["primarycg"] == "NRGI"
-
-
-def test_pcg_explicit_override():
-    """Explicit primary_commodity_group should override inference."""
-    source = {
-        "model": {
-            "name": "PCGExplicitTest",
-            "regions": ["REG1"],
-            "commodities": [
-                {"name": "NG", "type": "energy"},
-                {"name": "ELC", "type": "energy"},
-                {"name": "HTH", "type": "energy"},
-            ],
-            "processes": [
-                {
-                    "name": "PP_CHP",
-                    "sets": ["CHP"],
-                    "inputs": [{"commodity": "NG"}],
-                    "outputs": [{"commodity": "ELC"}, {"commodity": "HTH"}],
-                    "primary_commodity_group": "NRGO",
-                },
-            ],
-        }
-    }
-    tableir = compile_vedalang_to_tableir(source)
-
-    # Find ~FI_PROCESS rows
-    process_rows = []
-    for f in tableir["files"]:
-        for s in f["sheets"]:
-            for t in s["tables"]:
-                if t["tag"] == "~FI_PROCESS":
-                    process_rows.extend(t["rows"])
-
-    chp = [r for r in process_rows if r["techname"] == "PP_CHP"][0]
-    assert chp["primarycg"] == "NRGO"
-
-
-def test_pcg_env_output_priority():
-    """ENV output should have lower priority than NRG output."""
-    source = {
-        "model": {
-            "name": "PCGEnvTest",
-            "regions": ["REG1"],
-            "commodities": [
-                {"name": "NG", "type": "energy"},
-                {"name": "ELC", "type": "energy"},
-                {"name": "CO2", "type": "emission"},
-            ],
-            "processes": [
-                {
-                    "name": "PP_COAL",
-                    "sets": ["ELE"],
-                    "inputs": [{"commodity": "NG"}],
-                    "outputs": [{"commodity": "ELC"}, {"commodity": "CO2"}],
-                },
-            ],
-        }
-    }
-    tableir = compile_vedalang_to_tableir(source)
-
-    # Find ~FI_PROCESS rows
-    process_rows = []
-    for f in tableir["files"]:
-        for s in f["sheets"]:
-            for t in s["tables"]:
-                if t["tag"] == "~FI_PROCESS":
-                    process_rows.extend(t["rows"])
-
-    coal = [r for r in process_rows if r["techname"] == "PP_COAL"][0]
-    # NRG has higher priority than ENV
-    assert coal["primarycg"] == "NRGO"
 
 
 def test_pcg_always_emitted():
@@ -1337,7 +1310,16 @@ def test_pcg_always_emitted():
 
     # All process rows should have primarycg
     valid_pcgs = [
-        "DEMI", "DEMO", "MATI", "MATO", "NRGI", "NRGO", "ENVI", "ENVO", "FINI", "FINO"
+        "DEMI",
+        "DEMO",
+        "MATI",
+        "MATO",
+        "NRGI",
+        "NRGO",
+        "ENVI",
+        "ENVO",
+        "FINI",
+        "FINO",
     ]
     for row in process_rows:
         assert "primarycg" in row, f"Process {row.get('techname')} missing primarycg"
@@ -1364,7 +1346,9 @@ def test_emission_cap_lower_bound():
             "name": "EmissionMinTest",
             "regions": ["REG1"],
             "commodities": [{"name": "CO2", "type": "emission"}],
-            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
             "constraints": [
                 {
                     "name": "CO2_MIN",
@@ -1398,7 +1382,9 @@ def test_uc_table_has_uc_sets_metadata():
             "name": "UCSetTest",
             "regions": ["REG1"],
             "commodities": [{"name": "CO2", "type": "emission"}],
-            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "processes": [
+                {"name": "PP", "sets": ["ELE"], "primary_commodity_group": "NRGO"}
+            ],
             "constraints": [
                 {
                     "name": "CO2_CAP",

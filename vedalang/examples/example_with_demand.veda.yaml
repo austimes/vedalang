@@ -22,6 +22,7 @@ model:
     - name: PP_GENERIC
       description: Generic power supply
       sets: [ELE]
+      primary_commodity_group: NRGO
       activity_unit: PJ
       capacity_unit: GW
       outputs:
@@ -30,6 +31,7 @@ model:
     - name: DEM_RSD
       description: Residential demand device
       sets: [DMD]
+      primary_commodity_group: DEMO
       activity_unit: PJ
       capacity_unit: GW
       inputs:

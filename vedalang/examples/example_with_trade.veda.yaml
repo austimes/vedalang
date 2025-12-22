@@ -40,6 +40,7 @@ model:
     - name: PP_CCGT
       description: Combined Cycle Gas Turbine
       sets: [ELE]
+      primary_commodity_group: NRGO
       activity_unit: PJ
       capacity_unit: GW
       inputs:
@@ -54,6 +55,7 @@ model:
     - name: IMP_NG
       description: Natural Gas Import
       sets: [IMP]
+      primary_commodity_group: NRGO
       outputs:
         - commodity: NG
       cost: 5.0
@@ -61,6 +63,7 @@ model:
     - name: DEM_RSD
       description: Residential Demand Process
       sets: [DMD]
+      primary_commodity_group: DEMO
       inputs:
         - commodity: ELC
       outputs:

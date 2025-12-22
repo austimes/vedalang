@@ -45,6 +45,7 @@ patterns:
         - name: {{ plant_name }}
           description: Thermal power plant
           sets: [ELE]
+          primary_commodity_group: NRGO
           activity_unit: {{ activity_unit }}
           capacity_unit: {{ capacity_unit }}
           inputs:
@@ -85,6 +86,7 @@ patterns:
         - name: {{ plant_name }}
           description: {{ technology_type }} renewable plant
           sets: [ELE, RNEW]
+          primary_commodity_group: NRGO
           capacity_unit: {{ capacity_unit }}
           outputs:
             - commodity: {{ output_commodity }}
@@ -135,6 +137,7 @@ patterns:
         - name: {{ plant_name }}
           description: CHP plant (combined heat and power)
           sets: [ELE, CHP]
+          primary_commodity_group: NRGO
           inputs:
             - commodity: {{ fuel_commodity }}
               share: 1.0
@@ -183,6 +186,7 @@ patterns:
         - name: {{ storage_name }}
           description: Energy storage
           sets: [ELE, STG]
+          primary_commodity_group: NRGO
           capacity_unit: {{ capacity_unit }}
           inputs:
             - commodity: {{ commodity }}

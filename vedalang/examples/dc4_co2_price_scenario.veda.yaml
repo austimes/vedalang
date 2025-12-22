@@ -32,6 +32,7 @@ model:
     - name: PP_CCGT
       description: Combined cycle gas turbine
       sets: [ELE]
+      primary_commodity_group: NRGO
       activity_unit: PJ
       capacity_unit: GW
       inputs:
@@ -49,6 +50,7 @@ model:
     - name: PP_WIND
       description: Onshore wind plant
       sets: [ELE]
+      primary_commodity_group: NRGO
       capacity_unit: GW
       outputs:
         - commodity: ELC

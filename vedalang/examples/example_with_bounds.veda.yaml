@@ -25,6 +25,7 @@ model:
     - name: IMP_NG
       description: Natural gas import (limited supply)
       sets: [IMP]
+      primary_commodity_group: NRGO
       activity_unit: PJ
       capacity_unit: PJ
       outputs:
@@ -37,6 +38,7 @@ model:
     - name: PP_CCGT
       description: Combined cycle gas turbine (limited expansion)
       sets: [ELE]
+      primary_commodity_group: NRGO
       activity_unit: PJ
       capacity_unit: GW
       inputs:
@@ -56,6 +58,7 @@ model:
     - name: PP_WIND
       description: Wind power (renewable target)
       sets: [ELE]
+      primary_commodity_group: NRGO
       activity_unit: PJ
       capacity_unit: GW
       outputs:
@@ -71,6 +74,7 @@ model:
     - name: PP_EXIST
       description: Existing coal plant (fixed legacy capacity)
       sets: [ELE]
+      primary_commodity_group: NRGO
       activity_unit: PJ
       capacity_unit: GW
       inputs:
@@ -85,6 +89,7 @@ model:
     - name: DMD_RSD
       description: Residential electricity demand
       sets: [DMD]
+      primary_commodity_group: DEMO
       activity_unit: PJ
       capacity_unit: PJ
       inputs:

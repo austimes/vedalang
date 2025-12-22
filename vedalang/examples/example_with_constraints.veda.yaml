@@ -34,6 +34,7 @@ model:
     - name: PP_CCGT
       description: Combined cycle gas turbine
       sets: [ELE]
+      primary_commodity_group: NRGO
       inputs:
         - commodity: NG
       outputs:
@@ -45,12 +46,14 @@ model:
     - name: PP_WIND
       description: Onshore wind plant
       sets: [ELE]
+      primary_commodity_group: NRGO
       outputs:
         - commodity: ELC
 
     - name: PP_SOLAR
       description: Solar PV plant
       sets: [ELE]
+      primary_commodity_group: NRGO
       outputs:
         - commodity: ELC
 

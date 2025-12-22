@@ -20,6 +20,7 @@ model:
     - name: PP_CCGT
       description: Combined Cycle Gas Turbine
       sets: [ELE]
+      primary_commodity_group: NRGO
       activity_unit: PJ
       capacity_unit: GW
       inputs:

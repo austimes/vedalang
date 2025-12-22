@@ -50,9 +50,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # Build commodity table (~FI_COMM)
     # Use lowercase column names for xl2times compatibility
     comm_rows = []
-    commodities_by_name: dict[str, dict] = {}
     for commodity in model.get("commodities", []):
-        commodities_by_name[commodity["name"]] = commodity
         comm_rows.append({
             "region": default_region,
             "csets": _commodity_type_to_csets(commodity.get("type", "energy")),
@@ -62,12 +60,9 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
 
     # Build process table (~FI_PROCESS)
     # Use lowercase column names for xl2times compatibility
-    # Always emit primarycg - either explicit or inferred
+    # primary_commodity_group is REQUIRED in schema - use directly, no inference
     process_rows = []
     for process in model.get("processes", []):
-        pcg = process.get("primary_commodity_group") or _infer_primary_commodity_group(
-            process, commodities_by_name
-        )
         process_rows.append({
             "region": default_region,
             "techname": process["name"],
@@ -75,7 +70,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
             "sets": ",".join(process.get("sets", [])),
             "tact": process.get("activity_unit", "PJ"),
             "tcap": process.get("capacity_unit", "GW"),
-            "primarycg": pcg,
+            "primarycg": process["primary_commodity_group"],
         })
 
     # Build topology table (~FI_T) for inputs/outputs
@@ -350,48 +345,6 @@ def _commodity_type_to_csets(ctype: str) -> str:
         "demand": "DEM",
     }
     return mapping.get(ctype, "NRG")
-
-
-# PCG inference order (from xl2times transforms.py line 23)
-CSETS_ORDERED_FOR_PCG = ["DEM", "MAT", "NRG", "ENV", "FIN"]
-
-
-def _infer_primary_commodity_group(
-    process: dict, commodities_by_name: dict[str, dict]
-) -> str:
-    """
-    Infer the Primary Commodity Group (PCG) using xl2times rules.
-
-    Algorithm (from xl2times _process_comm_groups_vectorised):
-    1. Try OUTPUT commodities first, then INPUT
-    2. For each side, try commodity types in order: DEM, MAT, NRG, ENV, FIN
-    3. First match wins
-
-    Args:
-        process: Process definition from VedaLang source
-        commodities_by_name: Dict mapping commodity name to commodity definition
-
-    Returns:
-        PCG suffix like "NRGO", "DEMO", "MATI", etc.
-    """
-    for io_suffix, flow_key in [("O", "outputs"), ("I", "inputs")]:
-        flows = process.get(flow_key, [])
-        if not flows:
-            continue
-
-        flow_csets = set()
-        for flow in flows:
-            comm_name = flow.get("commodity")
-            if comm_name and comm_name in commodities_by_name:
-                comm = commodities_by_name[comm_name]
-                cset = _commodity_type_to_csets(comm.get("type", "energy"))
-                flow_csets.add(cset)
-
-        for cset in CSETS_ORDERED_FOR_PCG:
-            if cset in flow_csets:
-                return cset + io_suffix
-
-    return "NRGO"
 
 
 def _get_model_years(model: dict) -> list[int]:

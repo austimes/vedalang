@@ -94,24 +94,27 @@ The SPG is automatically derived as commodities on the opposite side of PCG with
 
 ## 4. Recommended Approach for VedaLang
 
-**Recommendation: Option C - Auto-compute at compile time with optional override**
+**IMPLEMENTED: Option A - Make PCG REQUIRED (no inference)**
 
 ### Rationale
 
-1. **Most processes have obvious PCG**: A single-fuel power plant producing electricity has NRG outputs → `NRGO` is obvious
-2. **xl2times inference is deterministic**: Same rules can be applied at VedaLang compile time
-3. **Explicit override when needed**: CHP, multi-product processes, unusual topologies need explicit specification
-4. **Transparency**: VedaLang compiler can report inferred PCG in diagnostics/comments
+Following the VedaLang principle: **no hidden/hard-to-find defaults that cannot be checked at compile time.**
 
-### Schema Addition
+1. **Forces modelers to understand what PCG means**: No surprises from inference rules
+2. **Makes the model self-documenting**: Every process explicitly states its activity definition
+3. **Enables compile-time validation**: Invalid or missing PCG is caught immediately
+4. **No inference complexity**: Simple, predictable behavior
+
+### Schema (as implemented)
 
 ```json
 "process": {
+  "required": ["name", "sets", "primary_commodity_group"],
   "properties": {
     "primary_commodity_group": {
       "type": "string",
       "enum": ["DEMI", "DEMO", "MATI", "MATO", "NRGI", "NRGO", "ENVI", "ENVO", "FINI", "FINO"],
-      "description": "Primary commodity group. If omitted, inferred from topology (first NRG output, etc.)"
+      "description": "Primary commodity group (PCG). REQUIRED. Defines which commodity flows determine process activity. No inference - must be explicit."
     }
   }
 }
@@ -119,11 +122,11 @@ The SPG is automatically derived as commodities on the opposite side of PCG with
 
 ### Compiler Behavior
 
-1. If `primary_commodity_group` is specified: use it directly
-2. If omitted: apply xl2times inference logic at compile time
-3. Either way: **always emit `primarycg` column in ~FI_PROCESS**
+1. Schema validation rejects missing `primary_commodity_group`
+2. No inference logic - value is used directly from source
+3. **Always emit `primarycg` column in ~FI_PROCESS**
 
-This makes VedaLang explicit (the column is always present) while keeping simple cases simple (inference handles the common patterns).
+This makes VedaLang fully explicit - no hidden defaults, no inference surprises.
 
 ## 5. Implementation Spec
 
@@ -188,15 +191,14 @@ for process in model.get("processes", []):
 
 ## 6. Implementation Status
 
-**Status: SPEC COMPLETE, IMPLEMENTATION PENDING**
+**Status: COMPLETE** ✅
 
-The implementation is straightforward (~50 lines of code) but should be done in a separate commit with tests.
+PCG is now a **required** field in VedaLang process definitions. No inference logic exists.
 
-### Next Steps
+### What was done
 
-1. Create issue for implementation tracking
-2. Add schema field (5 mins)
-3. Implement `_infer_pcg()` function (15 mins)
-4. Update process emission to include `primarycg` (5 mins)
-5. Add test cases (20 mins)
-6. Update mini_plant.veda.yaml example (5 mins)
+1. ✅ Schema updated: `primary_commodity_group` added to required array
+2. ✅ Compiler updated: removed `_infer_primary_commodity_group()` function
+3. ✅ All example files updated with explicit PCG values
+4. ✅ Tests added for missing/invalid PCG validation
+5. ✅ Documentation updated
