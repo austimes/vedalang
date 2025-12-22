@@ -45,7 +45,7 @@ REQUIRED_SCENARIO_FIELDS = ["name", "type"]
 
 BASELINE_COMMODITY_TYPES = ["energy", "material", "emission", "demand"]
 
-BASELINE_SCENARIO_TYPES = ["commodity_price"]
+BASELINE_SCENARIO_TYPES = ["commodity_price", "demand_projection"]
 
 
 # =============================================================================
@@ -232,4 +232,16 @@ class TestSchemaStructure:
         """Scenario definition must exist."""
         assert "scenario" in schema.get("$defs", {}), (
             "Scenario type definition was removed!"
+        )
+
+    def test_timeslices_def_exists(self, schema: dict):
+        """Timeslices definition must exist."""
+        assert "timeslices" in schema.get("$defs", {}), (
+            "Timeslices type definition was removed!"
+        )
+
+    def test_timeslice_level_def_exists(self, schema: dict):
+        """Timeslice level definition must exist."""
+        assert "timeslice_level" in schema.get("$defs", {}), (
+            "Timeslice level type definition was removed!"
         )

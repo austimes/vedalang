@@ -1,0 +1,47 @@
+# VedaLang example with timeslice definitions
+# This model includes intra-annual temporal structure (seasons + day/night)
+model:
+  name: TimesliceModel
+  description: A model with 4 timeslices (2 seasons × 2 daynite)
+  
+  regions:
+    - REG1
+  
+  timeslices:
+    season:
+      - code: S
+        name: Summer
+      - code: W
+        name: Winter
+    daynite:
+      - code: D
+        name: Day
+      - code: N
+        name: Night
+    fractions:
+      SD: 0.25    # Summer-Day
+      SN: 0.23    # Summer-Night
+      WD: 0.27    # Winter-Day
+      WN: 0.25    # Winter-Night
+  
+  commodities:
+    - name: ELC
+      type: energy
+      unit: PJ
+      description: Electricity
+    - name: NG
+      type: energy
+      unit: PJ
+      description: Natural Gas
+  
+  processes:
+    - name: PP_CCGT
+      description: Combined Cycle Gas Turbine
+      sets: [ELE]
+      activity_unit: PJ
+      capacity_unit: GW
+      inputs:
+        - commodity: NG
+      outputs:
+        - commodity: ELC
+      efficiency: 0.55

@@ -59,3 +59,59 @@ def test_efficiency_range():
     }
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(data, schema)
+
+
+def test_timeslices_validates():
+    """Timeslice structure should validate against schema."""
+    schema = load_schema()
+    data = {
+        "model": {
+            "name": "TimesliceTest",
+            "regions": ["R1"],
+            "timeslices": {
+                "season": [
+                    {"code": "S", "name": "Summer"},
+                    {"code": "W", "name": "Winter"},
+                ],
+                "daynite": [
+                    {"code": "D", "name": "Day"},
+                    {"code": "N", "name": "Night"},
+                ],
+                "fractions": {
+                    "SD": 0.25,
+                    "SN": 0.25,
+                    "WD": 0.25,
+                    "WN": 0.25,
+                },
+            },
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [{"name": "P1", "sets": ["ELE"]}],
+        }
+    }
+    jsonschema.validate(data, schema)
+
+
+def test_timeslices_example_validates():
+    """The example_with_timeslices.veda.yaml should pass validation."""
+    schema = load_schema()
+    with open(EXAMPLES_DIR / "example_with_timeslices.veda.yaml") as f:
+        data = yaml.safe_load(f)
+    jsonschema.validate(data, schema)
+
+
+def test_timeslice_code_pattern():
+    """Timeslice code must be 1-3 uppercase letters."""
+    schema = load_schema()
+    data = {
+        "model": {
+            "name": "BadTimeslice",
+            "regions": ["R1"],
+            "timeslices": {
+                "season": [{"code": "toolong"}],
+            },
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [{"name": "P1", "sets": ["ELE"]}],
+        }
+    }
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(data, schema)

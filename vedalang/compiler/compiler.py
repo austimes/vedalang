@@ -75,8 +75,24 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # Use lowercase column names for xl2times compatibility
     topology_rows = []
     for process in model.get("processes", []):
+        inputs = process.get("inputs", [])
+        outputs = process.get("outputs", [])
+
+        # Collect cost parameters to merge into rows
+        cost_params = {}
+        if "invcost" in process:
+            cost_params["invcost"] = process["invcost"]
+        if "fixom" in process:
+            cost_params["fixom"] = process["fixom"]
+        if "varom" in process:
+            cost_params["varom"] = process["varom"]
+        if "life" in process:
+            cost_params["life"] = process["life"]
+        if "cost" in process:
+            cost_params["cost"] = process["cost"]
+
         # Add input flows
-        for inp in process.get("inputs", []):
+        for inp in inputs:
             row = {
                 "region": default_region,
                 "techname": process["name"],
@@ -86,8 +102,8 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
                 row["share-i"] = inp["share"]
             topology_rows.append(row)
 
-        # Add output flows
-        for out in process.get("outputs", []):
+        # Add output flows - merge cost params into first output row if no eff
+        for i, out in enumerate(outputs):
             row = {
                 "region": default_region,
                 "techname": process["name"],
@@ -95,15 +111,42 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
             }
             if "share" in out:
                 row["share-o"] = out["share"]
+            # Merge cost params into first output row if no efficiency specified
+            if i == 0 and "efficiency" not in process and cost_params:
+                row.update(cost_params)
+                cost_params = {}  # Clear so we don't add again
             topology_rows.append(row)
 
-        # Add efficiency if specified
+        # Collect bound parameters
+        bound_params = _collect_bound_params(process)
+
+        # Add efficiency row with cost and bound parameters if specified
         if "efficiency" in process:
-            topology_rows.append({
+            row = {
                 "region": default_region,
                 "techname": process["name"],
                 "eff": process["efficiency"],
-            })
+            }
+            row.update(cost_params)
+            # Merge first bound into efficiency row if present
+            if bound_params:
+                first_bound = bound_params.pop(0)
+                row.update(first_bound)
+            topology_rows.append(row)
+
+        # Emit remaining bounds merged with commodity-out references
+        # xl2times requires rows to have Comm-IN, Comm-OUT, EFF, or Value
+        for bound_param in bound_params:
+            # Find first output commodity for this process
+            first_output = outputs[0]["commodity"] if outputs else None
+            row = {
+                "region": default_region,
+                "techname": process["name"],
+            }
+            if first_output:
+                row["commodity-out"] = first_output
+            row.update(bound_param)
+            topology_rows.append(row)
 
     # Build system settings tables
     regions = model.get("regions", ["REG1"])
@@ -132,7 +175,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # Derive model years for time-series expansion
     model_years = _get_model_years(model)
 
-    # Build scenario files (~TFM_INS-TS tables)
+    # Build scenario files (~TFM_INS-TS tables) for commodity_price scenarios
     scenario_files = []
     for scenario in model.get("scenarios", []):
         scenario_rows = _compile_scenario(scenario, default_region, model_years)
@@ -148,30 +191,61 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
             }
             scenario_files.append(scenario_file)
 
+    # Compile demand projections - these go into ~FI_T table
+    demand_projection_rows = _compile_demand_projections(
+        model.get("scenarios", []), default_region, model_years
+    )
+    topology_rows.extend(demand_projection_rows)
+
+    # Compile timeslices if defined
+    timeslice_rows = []
+    yrfr_rows = []
+    if "timeslices" in model:
+        timeslice_rows, yrfr_rows = _compile_timeslices(
+            model["timeslices"], regions
+        )
+
+    # Build SysSets tables list
+    syssets_tables = [
+        {"tag": "~BOOKREGIONS_MAP", "rows": bookregions_rows},
+        {"tag": "~STARTYEAR", "rows": startyear_rows},
+        {"tag": "~ACTIVEPDEF", "rows": activepdef_rows},
+        {"tag": "~TIMEPERIODS", "rows": timeperiods_rows},
+        {"tag": "~CURRENCIES", "rows": currencies_rows},
+    ]
+
+    # Add timeslice table if defined
+    if timeslice_rows:
+        syssets_tables.append({"tag": "~TIMESLICES", "rows": timeslice_rows})
+
+    # Build SysSettings sheets list
+    syssettings_sheets = [
+        {"name": "SysSets", "tables": syssets_tables},
+        {"name": "Commodities", "tables": [{"tag": "~FI_COMM", "rows": comm_rows}]},
+    ]
+
+    # Add constants sheet with YRFR if timeslices defined
+    if yrfr_rows:
+        syssettings_sheets.append({
+            "name": "constants",
+            "tables": [{"tag": "~TFM_INS", "rows": yrfr_rows}],
+        })
+
+    # Build process file - use VT_{region}_ prefix for internal region recognition
+    # For multi-region models, use the first region for the file name
+    model_name = model.get("name", "Model")
+    first_region = regions[0] if regions else "REG1"
+    process_file_path = f"VT_{first_region}_{model_name}.xlsx"
+
     # Build TableIR structure
     tableir = {
         "files": [
             {
                 "path": "SysSettings/SysSettings.xlsx",
-                "sheets": [
-                    {
-                        "name": "SysSets",
-                        "tables": [
-                            {"tag": "~BOOKREGIONS_MAP", "rows": bookregions_rows},
-                            {"tag": "~STARTYEAR", "rows": startyear_rows},
-                            {"tag": "~ACTIVEPDEF", "rows": activepdef_rows},
-                            {"tag": "~TIMEPERIODS", "rows": timeperiods_rows},
-                            {"tag": "~CURRENCIES", "rows": currencies_rows},
-                        ],
-                    },
-                    {
-                        "name": "Commodities",
-                        "tables": [{"tag": "~FI_COMM", "rows": comm_rows}],
-                    },
-                ],
+                "sheets": syssettings_sheets,
             },
             {
-                "path": "SubRES_TMPL/SubRES_Model.xlsx",
+                "path": process_file_path,
                 "sheets": [
                     {
                         "name": "Processes",
@@ -191,6 +265,54 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
         jsonschema.validate(tableir, tableir_schema)
 
     return tableir
+
+
+def _collect_bound_params(process: dict) -> list[dict]:
+    """
+    Collect bound parameters from process definition.
+
+    Each bound type (activity_bound, cap_bound, ncap_bound) can have up to three
+    limits (up, lo, fx), each returned as a separate dict with limtype and column.
+
+    These params are designed to be merged into ~FI_T rows that have other
+    required fields (commodity-out, eff, etc.).
+
+    Args:
+        process: Process definition from VedaLang source
+
+    Returns:
+        List of dicts with {limtype, <bound_column>: value}
+    """
+    params = []
+
+    # Mapping: VedaLang field -> VEDA column name
+    bound_mapping = {
+        "activity_bound": "act_bnd",
+        "cap_bound": "cap_bnd",
+        "ncap_bound": "ncap_bnd",
+    }
+
+    # Mapping: VedaLang limtype key -> VEDA limtype value
+    limtype_mapping = {
+        "up": "UP",
+        "lo": "LO",
+        "fx": "FX",
+    }
+
+    for vedalang_field, veda_column in bound_mapping.items():
+        bound_spec = process.get(vedalang_field)
+        if not bound_spec:
+            continue
+
+        for limit_key, limit_value in bound_spec.items():
+            if limit_key not in limtype_mapping:
+                continue
+            params.append({
+                "limtype": limtype_mapping[limit_key],
+                veda_column: limit_value,
+            })
+
+    return params
 
 
 def _commodity_type_to_csets(ctype: str) -> str:
@@ -344,7 +466,109 @@ def _compile_scenario(
                 "cost": dense_values[year],
             })
 
+    # Note: demand_projection is handled separately in compile_vedalang_to_tableir
+    # as it emits to ~FI_T table, not ~TFM_INS-TS
+
     return rows
+
+
+def _compile_demand_projections(
+    scenarios: list[dict],
+    region: str,
+    model_years: list[int],
+) -> list[dict]:
+    """
+    Compile demand_projection scenarios to TableIR rows for ~FI_T.
+
+    Demand projections use attribute=DEMAND which maps to COM_PROJ in TIMES.
+
+    Args:
+        scenarios: List of scenario definitions from VedaLang source
+        region: Default region for the model
+        model_years: List of model representative years
+
+    Returns:
+        List of rows for the ~FI_T table (one per model year per commodity)
+    """
+    rows = []
+
+    for scenario in scenarios:
+        if scenario.get("type") != "demand_projection":
+            continue
+
+        commodity = scenario["commodity"]
+        sparse_values = scenario.get("values", {})
+        interpolation = scenario["interpolation"]
+
+        # Expand to all model years using VEDA-compatible interpolation
+        dense_values = _expand_series_to_years(
+            sparse_values, model_years, interpolation
+        )
+
+        # Emit one row per year with attribute=DEMAND
+        for year in sorted(dense_values.keys()):
+            rows.append({
+                "region": region,
+                "attribute": "DEMAND",
+                "commodity": commodity,
+                "year": year,
+                "value": dense_values[year],
+            })
+
+    return rows
+
+
+def _compile_timeslices(
+    timeslices: dict,
+    regions: list[str],
+) -> tuple[list[dict], list[dict]]:
+    """
+    Compile timeslice definitions to TableIR tables.
+
+    Generates:
+    1. ~TIMESLICES table with season/weekly/daynite columns
+    2. ~TFM_INS rows with attribute=YRFR for year fractions
+
+    Args:
+        timeslices: Timeslice definition from VedaLang source
+        regions: List of region codes
+
+    Returns:
+        Tuple of (timeslice_rows, yrfr_rows)
+    """
+    season_codes = [s["code"] for s in timeslices.get("season", [])]
+    weekly_codes = [w["code"] for w in timeslices.get("weekly", [])]
+    daynite_codes = [d["code"] for d in timeslices.get("daynite", [])]
+
+    # Build ~TIMESLICES rows (Cartesian product of all levels)
+    timeslice_rows = []
+
+    # Handle case where some levels are empty
+    seasons = season_codes if season_codes else [""]
+    weeklies = weekly_codes if weekly_codes else [""]
+    daynites = daynite_codes if daynite_codes else [""]
+
+    for season in seasons:
+        for weekly in weeklies:
+            for daynite in daynites:
+                timeslice_rows.append({
+                    "season": season,
+                    "weekly": weekly,
+                    "daynite": daynite,
+                })
+
+    # Build ~TFM_INS rows for year fractions
+    fractions = timeslices.get("fractions", {})
+    yrfr_rows = []
+    for ts_name, fraction in fractions.items():
+        # YRFR applies to all regions via allregions column
+        yrfr_rows.append({
+            "timeslice": ts_name,
+            "attribute": "YRFR",
+            "allregions": fraction,
+        })
+
+    return timeslice_rows, yrfr_rows
 
 
 def load_vedalang(path: Path) -> dict:

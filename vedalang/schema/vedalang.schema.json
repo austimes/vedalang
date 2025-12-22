@@ -24,6 +24,10 @@
           "minItems": 1,
           "description": "List of region codes"
         },
+        "timeslices": {
+          "$ref": "#/$defs/timeslices",
+          "description": "Timeslice structure for intra-annual temporal resolution"
+        },
         "commodities": {
           "type": "array",
           "items": { "$ref": "#/$defs/commodity" },
@@ -43,6 +47,54 @@
     }
   },
   "$defs": {
+    "timeslice_level": {
+      "type": "object",
+      "description": "A single timeslice code within a level (season/weekly/daynite)",
+      "required": ["code"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z]{1,3}$",
+          "description": "Short code (1-3 uppercase chars) for this timeslice"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable name (e.g., 'Summer', 'Day')"
+        }
+      },
+      "additionalProperties": false
+    },
+    "timeslices": {
+      "type": "object",
+      "description": "Timeslice structure for intra-annual variation",
+      "properties": {
+        "season": {
+          "type": "array",
+          "description": "Seasonal timeslice codes (e.g., Summer, Winter)",
+          "items": { "$ref": "#/$defs/timeslice_level" }
+        },
+        "weekly": {
+          "type": "array",
+          "description": "Weekly timeslice codes (rarely used)",
+          "items": { "$ref": "#/$defs/timeslice_level" }
+        },
+        "daynite": {
+          "type": "array",
+          "description": "Day/night timeslice codes",
+          "items": { "$ref": "#/$defs/timeslice_level" }
+        },
+        "fractions": {
+          "type": "object",
+          "description": "Year fraction for each composite timeslice (must sum to 1.0). Keys are auto-generated: SEASON + WEEKLY + DAYNITE.",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "commodity": {
       "type": "object",
       "required": ["name", "type"],
@@ -85,8 +137,67 @@
           "minimum": 0,
           "maximum": 1,
           "description": "Process efficiency (0-1)"
+        },
+        "invcost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Investment cost per unit capacity (NCAP_COST)"
+        },
+        "fixom": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Fixed O&M per unit capacity per year (FOM)"
+        },
+        "varom": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Variable O&M per unit activity (VOM)"
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Technical lifetime in years (LIFE)"
+        },
+        "cost": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Activity cost for supply processes (ACT_COST)"
+        },
+        "activity_bound": {
+          "$ref": "#/$defs/bound",
+          "description": "Bounds on annual activity (ACT_BND)"
+        },
+        "cap_bound": {
+          "$ref": "#/$defs/bound",
+          "description": "Bounds on total installed capacity (CAP_BND)"
+        },
+        "ncap_bound": {
+          "$ref": "#/$defs/bound",
+          "description": "Bounds on new capacity per period (NCAP_BND)"
         }
       }
+    },
+    "bound": {
+      "type": "object",
+      "description": "Bound specification with optional upper, lower, and fixed limits",
+      "properties": {
+        "up": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Upper bound (maximum allowed)"
+        },
+        "lo": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Lower bound (minimum required)"
+        },
+        "fx": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Fixed bound (exact value)"
+        }
+      },
+      "additionalProperties": false
     },
     "flow": {
       "type": "object",
@@ -107,7 +218,7 @@
         "description": { "type": "string" },
         "type": {
           "type": "string",
-          "enum": ["commodity_price"],
+          "enum": ["commodity_price", "demand_projection"],
           "description": "Type of scenario parameter"
         },
         "commodity": {
@@ -139,6 +250,10 @@
       "allOf": [
         {
           "if": { "properties": { "type": { "const": "commodity_price" } } },
+          "then": { "required": ["commodity", "values", "interpolation"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "demand_projection" } } },
           "then": { "required": ["commodity", "values", "interpolation"] }
         }
       ]
