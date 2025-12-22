@@ -56,6 +56,14 @@ def emit_excel(tableir: dict, out_dir: Path, validate: bool = True) -> list[Path
 
             current_row = 1
             for table in sheet_spec.get("tables", []):
+                # Emit ~UC_SETS declarations before the table tag if present
+                uc_sets = table.get("uc_sets", {})
+                for uc_key, uc_value in uc_sets.items():
+                    # Format: ~UC_SETS: R_E: AllRegions or ~UC_SETS: T_E:
+                    uc_sets_cell = f"~UC_SETS: {uc_key}: {uc_value}"
+                    ws.cell(row=current_row, column=1, value=uc_sets_cell)
+                    current_row += 1
+
                 ws.cell(row=current_row, column=1, value=table["tag"])
                 current_row += 1
 

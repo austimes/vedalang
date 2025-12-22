@@ -790,14 +790,25 @@ def _compile_constraints(
     if not uc_rows:
         return []
 
-    # Build UC file
+    # Build UC file with uc_sets metadata
+    # Default UC scope: R_E (each region), T_E (each period)
+    # This tells xl2times how to expand the constraints
     return [
         {
             "path": "SuppXLS/Scen_UC_Constraints.xlsx",
             "sheets": [
                 {
                     "name": "UC_Constraints",
-                    "tables": [{"tag": "~UC_T", "rows": uc_rows}],
+                    "tables": [
+                        {
+                            "tag": "~UC_T",
+                            "uc_sets": {
+                                "R_E": "AllRegions",
+                                "T_E": "",
+                            },
+                            "rows": uc_rows,
+                        }
+                    ],
                 }
             ],
         }

@@ -64,3 +64,40 @@ def test_invalid_tableir_rejected():
     }
     with pytest.raises(jsonschema.ValidationError):
         validate_tableir(invalid)
+
+
+def test_uc_sets_emitted_before_table():
+    """Tables with uc_sets should emit ~UC_SETS declarations before the table tag."""
+    tableir = {
+        "files": [
+            {
+                "path": "uc_test.xlsx",
+                "sheets": [
+                    {
+                        "name": "Constraints",
+                        "tables": [
+                            {
+                                "tag": "~UC_T",
+                                "uc_sets": {"R_E": "AllRegions", "T_E": ""},
+                                "rows": [{"uc_n": "TEST", "value": 1}],
+                            }
+                        ],
+                    }
+                ],
+            }
+        ]
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        created = emit_excel(tableir, Path(tmpdir))
+        wb = load_workbook(created[0])
+        ws = wb.active
+
+        # Row 1: ~UC_SETS: R_E: AllRegions
+        assert ws.cell(1, 1).value == "~UC_SETS: R_E: AllRegions"
+        # Row 2: ~UC_SETS: T_E:
+        assert ws.cell(2, 1).value == "~UC_SETS: T_E: "
+        # Row 3: ~UC_T
+        assert ws.cell(3, 1).value == "~UC_T"
+        # Row 4: header
+        assert ws.cell(4, 1).value == "uc_n"

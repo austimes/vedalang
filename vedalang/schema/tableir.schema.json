@@ -61,6 +61,16 @@
           "description": "VEDA tag identifying the table type (e.g., '~FI_PROCESS', '~FI_T', '~TFM_INS')",
           "pattern": "^~"
         },
+        "uc_sets": {
+          "type": "object",
+          "description": "UC scope declarations for user constraint tables (~UC_T). Keys are VEDA UC set codes (R_E, R_S, T_E, T_S, T_SUC, TS_E, TS_S), values are the scope (e.g., 'AllRegions', region list, or empty string).",
+          "propertyNames": {
+            "enum": ["R_E", "R_S", "T_E", "T_S", "T_SUC", "TS_E", "TS_S"]
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "rows": {
           "type": "array",
           "description": "List of data rows in the table",

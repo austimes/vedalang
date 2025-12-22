@@ -1189,3 +1189,40 @@ def test_emission_cap_lower_bound():
     # Check limtype is LO
     rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
     assert all(r["limtype"] == "LO" for r in rhsrt_rows)
+
+
+def test_uc_table_has_uc_sets_metadata():
+    """~UC_T tables should include uc_sets metadata for xl2times processing."""
+    source = {
+        "model": {
+            "name": "UCSetTest",
+            "regions": ["REG1"],
+            "commodities": [{"name": "CO2", "type": "emission"}],
+            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "constraints": [
+                {
+                    "name": "CO2_CAP",
+                    "type": "emission_cap",
+                    "commodity": "CO2",
+                    "limit": 100,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~UC_T table and check it has uc_sets
+    uc_table = None
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~UC_T":
+                    uc_table = t
+                    break
+
+    assert uc_table is not None, "Should have ~UC_T table"
+    assert "uc_sets" in uc_table, "~UC_T table should have uc_sets"
+    assert "R_E" in uc_table["uc_sets"], "Should have R_E scope"
+    assert "T_E" in uc_table["uc_sets"], "Should have T_E scope"
+    assert uc_table["uc_sets"]["R_E"] == "AllRegions"
+    assert uc_table["uc_sets"]["T_E"] == ""
