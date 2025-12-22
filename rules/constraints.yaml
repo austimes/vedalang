@@ -69,13 +69,19 @@ tag_constraints:
   # ============================================================================
   
   "~TFM_INS":
-    description: Insert/update data for existing processes
+    description: Insert/update data for existing processes or system parameters
     valid_files:
       - "Scen_*/*.xlsx"
       - "SysSettings/*.xlsx"
     required_fields:
+      - Attribute
+    # Note: TechName is NOT required - system-level parameters (like YRFR, Discount)
+    # don't have TechName. Use any_of_fields if we want to validate process-specific rows.
+    optional_fields:
       - TechName
-    note: Used for scenario-specific parameter changes
+      - TimeSlice
+      - AllRegions
+    note: Used for scenario-specific parameter changes and system parameters (YRFR, Discount, etc.)
 
   "~TFM_INS-TS":
     description: Insert time-series data
