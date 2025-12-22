@@ -90,6 +90,113 @@ patterns:
             - commodity: {{ output_commodity }}
               share: 1.0
 
+  add_chp_plant:
+    description: |
+      Define a Combined Heat and Power (CHP) process that produces multiple
+      useful outputs (electricity + heat) from a single fuel input.
+      Output shares represent the fraction of activity going to each output.
+      The sum of output shares should equal the total efficiency.
+    category: generation
+    parameters:
+      - name: plant_name
+        type: string
+        required: true
+        description: Unique identifier for the CHP plant (e.g., CHP_GAS_01)
+      - name: fuel_commodity
+        type: string
+        required: true
+        description: Input fuel commodity (e.g., NG, COAL, BIO)
+      - name: electricity_commodity
+        type: string
+        required: false
+        default: ELC
+        description: Electricity output commodity
+      - name: heat_commodity
+        type: string
+        required: true
+        description: Heat output commodity (e.g., HEAT, DH)
+      - name: elec_share
+        type: number
+        required: false
+        default: 0.35
+        description: Fraction of activity to electricity (0-1)
+      - name: heat_share
+        type: number
+        required: false
+        default: 0.45
+        description: Fraction of activity to heat (0-1)
+      - name: total_efficiency
+        type: number
+        required: false
+        default: 0.80
+        description: Total efficiency (should equal elec_share + heat_share)
+    vedalang_template: |
+      processes:
+        - name: {{ plant_name }}
+          description: CHP plant (combined heat and power)
+          sets: [ELE, CHP]
+          inputs:
+            - commodity: {{ fuel_commodity }}
+              share: 1.0
+          outputs:
+            - commodity: {{ electricity_commodity }}
+              share: {{ elec_share }}
+            - commodity: {{ heat_commodity }}
+              share: {{ heat_share }}
+          efficiency: {{ total_efficiency }}
+    example:
+      plant_name: CHP_GAS
+      fuel_commodity: NG
+      electricity_commodity: ELC
+      heat_commodity: HEAT
+      elec_share: 0.40
+      heat_share: 0.50
+      total_efficiency: 0.90
+
+  add_storage:
+    description: |
+      Define an energy storage process that shifts energy across time.
+      Uses the same commodity for input and output with round-trip efficiency.
+      Note: Full temporal behavior requires timeslice definitions.
+    category: storage
+    parameters:
+      - name: storage_name
+        type: string
+        required: true
+        description: Unique identifier for the storage (e.g., STG_BATTERY)
+      - name: commodity
+        type: string
+        required: true
+        description: Commodity to store (e.g., ELC, HEAT)
+      - name: round_trip_efficiency
+        type: number
+        required: false
+        default: 0.85
+        description: Round-trip efficiency (0-1), includes charging and discharging losses
+      - name: capacity_unit
+        type: string
+        required: false
+        default: GW
+        description: Unit for power capacity
+    vedalang_template: |
+      processes:
+        - name: {{ storage_name }}
+          description: Energy storage
+          sets: [ELE, STG]
+          capacity_unit: {{ capacity_unit }}
+          inputs:
+            - commodity: {{ commodity }}
+              share: 1.0
+          outputs:
+            - commodity: {{ commodity }}
+              share: 1.0
+          efficiency: {{ round_trip_efficiency }}
+    example:
+      storage_name: STG_BATTERY
+      commodity: ELC
+      round_trip_efficiency: 0.85
+      capacity_unit: GW
+
   # ============================================================================
   # Commodity Patterns
   # ============================================================================

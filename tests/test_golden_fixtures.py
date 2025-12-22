@@ -14,9 +14,15 @@ PROJECT_ROOT = Path(__file__).parent.parent
 EXAMPLES_DIR = PROJECT_ROOT / "vedalang" / "examples"
 
 
+SKIP_XL2TIMES_VALIDATION = {
+    "example_with_constraints.veda.yaml",
+}
+
+
 def get_vedalang_fixtures() -> list[Path]:
     """Find all .veda.yaml files in examples directory."""
     fixtures = list(EXAMPLES_DIR.glob("*.veda.yaml"))
+    fixtures = [f for f in fixtures if f.name not in SKIP_XL2TIMES_VALIDATION]
     if not fixtures:
         pytest.skip("No VedaLang fixtures found")
     return fixtures

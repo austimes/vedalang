@@ -47,11 +47,92 @@
           "type": "array",
           "items": { "$ref": "#/$defs/trade_link" },
           "description": "Inter-regional trade links"
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/constraint" },
+          "description": "User constraints (emission caps, activity shares, etc.)"
         }
       }
     }
   },
   "$defs": {
+    "constraint": {
+      "type": "object",
+      "description": "User constraint definition (emission_cap or activity_share)",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Constraint name (becomes UC_N in TIMES)"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["emission_cap", "activity_share"],
+          "description": "Type of constraint"
+        },
+        "commodity": {
+          "type": "string",
+          "description": "Target commodity for the constraint"
+        },
+        "processes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of process names (for activity_share)"
+        },
+        "limit": {
+          "type": "number",
+          "description": "RHS value for emission_cap constraints"
+        },
+        "limtype": {
+          "type": "string",
+          "enum": ["up", "lo", "fx"],
+          "default": "up",
+          "description": "Limit type: up (max), lo (min), or fx (fixed)"
+        },
+        "minimum_share": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Minimum share for activity_share constraints (0-1)"
+        },
+        "maximum_share": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Maximum share for activity_share constraints (0-1)"
+        },
+        "years": {
+          "type": "object",
+          "description": "Year-specific RHS values (overrides limit)",
+          "additionalProperties": { "type": "number" },
+          "propertyNames": { "pattern": "^[12][0-9]{3}$" }
+        },
+        "interpolation": {
+          "type": "string",
+          "enum": [
+            "none",
+            "interp_only",
+            "interp_extrap_eps",
+            "interp_extrap",
+            "interp_extrap_back",
+            "interp_extrap_forward"
+          ],
+          "description": "Interpolation mode for year-specific values"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "emission_cap" } } },
+          "then": { "required": ["commodity"] }
+        },
+        {
+          "if": { "properties": { "type": { "const": "activity_share" } } },
+          "then": { "required": ["commodity", "processes"] }
+        }
+      ],
+      "additionalProperties": false
+    },
     "trade_link": {
       "type": "object",
       "description": "Inter-regional trade link for commodity exchange",

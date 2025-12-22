@@ -540,7 +540,7 @@ def test_compile_trade_links():
     }
     tableir = compile_vedalang_to_tableir(source)
 
-    # Find ~TRADELINKS tables
+    # Find ~TRADELINKS tables and sheet names
     tradelinks_tables = []
     sheet_names = []
     for f in tableir["files"]:
@@ -555,19 +555,19 @@ def test_compile_trade_links():
     assert "Bi_ELC" in sheet_names
     assert "Uni_NG" in sheet_names
 
-    # Check bidirectional ELC link (matrix format)
+    # Check bidirectional ELC link (matrix format with process name as value)
     bi_elc_idx = sheet_names.index("Bi_ELC")
     elc_rows = tradelinks_tables[bi_elc_idx]["rows"]
-    assert len(elc_rows) == 1  # One origin
+    assert len(elc_rows) == 1  # One origin (REG1)
     assert elc_rows[0]["ELC"] == "REG1"  # First column is commodity, value is origin
-    assert elc_rows[0]["REG2"] == 1  # Destination column has 1
+    assert elc_rows[0]["REG2"] == "T_B_ELC_REG1_REG2_01"  # Explicit process name
 
     # Check unidirectional NG link
     uni_ng_idx = sheet_names.index("Uni_NG")
     ng_rows = tradelinks_tables[uni_ng_idx]["rows"]
     assert len(ng_rows) == 1
     assert ng_rows[0]["NG"] == "REG1"
-    assert ng_rows[0]["REG2"] == 1
+    assert ng_rows[0]["REG2"] == "T_U_NG_REG1_REG2_01"
 
 
 def test_trade_links_file_path():
@@ -619,9 +619,573 @@ def test_compile_example_with_trade():
     ]
     assert len(trade_files) == 1
 
-    # Should have ~TRADELINKS tables (2 sheets for 2 commodities)
-    trade_sheets = trade_files[0]["sheets"]
-    assert len(trade_sheets) == 2
-    for s in trade_sheets:
+    # Should have ~TRADELINKS tables (2 sheets for 2 commodities, both bidirectional)
+    tradelinks_tables = []
+    fit_tables = []
+    for s in trade_files[0]["sheets"]:
         for t in s["tables"]:
-            assert t["tag"] == "~TRADELINKS"
+            if t["tag"] == "~TRADELINKS":
+                tradelinks_tables.append(t)
+            if t["tag"] == "~FI_T":
+                fit_tables.append(t)
+    assert len(tradelinks_tables) == 2
+    # Should have 1 efficiency row (ELC has efficiency, NG does not)
+    assert len(fit_tables) == 1
+    assert fit_tables[0]["rows"][0]["eff"] == 0.98
+
+
+def test_trade_link_efficiency():
+    """Trade links with efficiency should emit ~FI_T row for IRE_FLO."""
+    source = {
+        "model": {
+            "name": "TradeEffTest",
+            "regions": ["REG1", "REG2"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "trade_links": [
+                {
+                    "origin": "REG1",
+                    "destination": "REG2",
+                    "commodity": "ELC",
+                    "bidirectional": True,
+                    "efficiency": 0.95,  # 5% transmission loss
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find trade file
+    trade_files = [
+        f for f in tableir["files"]
+        if f["path"].startswith("SuppXLS/Trades/")
+    ]
+    assert len(trade_files) == 1
+
+    # Should have ~TRADELINKS table with process name
+    tradelinks_tables = []
+    for s in trade_files[0]["sheets"]:
+        for t in s["tables"]:
+            if t["tag"] == "~TRADELINKS":
+                tradelinks_tables.append(t)
+    assert len(tradelinks_tables) == 1
+    # Check that we emit process name (not just 1) to enable efficiency targeting
+    assert tradelinks_tables[0]["rows"][0]["REG2"] == "T_B_ELC_REG1_REG2_01"
+
+    # Should have TradeParams sheet with ~FI_T table
+    fit_rows = []
+    for s in trade_files[0]["sheets"]:
+        for t in s["tables"]:
+            if t["tag"] == "~FI_T":
+                fit_rows.extend(t["rows"])
+
+    assert len(fit_rows) == 1
+    assert fit_rows[0]["techname"] == "T_B_ELC_REG1_REG2_01"
+    assert fit_rows[0]["eff"] == 0.95
+    assert fit_rows[0]["region"] == "REG1"
+    assert fit_rows[0]["commodity-out"] == "ELC"
+
+
+def test_trade_link_no_efficiency():
+    """Trade links without efficiency should not emit ~FI_T rows."""
+    source = {
+        "model": {
+            "name": "TradeNoEffTest",
+            "regions": ["REG1", "REG2"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "trade_links": [
+                {
+                    "origin": "REG1",
+                    "destination": "REG2",
+                    "commodity": "ELC",
+                    "bidirectional": True,
+                    # No efficiency specified
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find trade file
+    trade_files = [
+        f for f in tableir["files"]
+        if f["path"].startswith("SuppXLS/Trades/")
+    ]
+    assert len(trade_files) == 1
+
+    # Should NOT have ~FI_T tables (only TradeLinks sheet)
+    fit_tables = []
+    for s in trade_files[0]["sheets"]:
+        for t in s["tables"]:
+            if t["tag"] == "~FI_T":
+                fit_tables.append(t)
+
+    assert len(fit_tables) == 0
+
+
+def test_trade_links_emit_explicit_process_declarations():
+    """Trade links should emit explicit ~FI_PROCESS declarations."""
+    source = {
+        "model": {
+            "name": "TradeExplicitTest",
+            "regions": ["REG1", "REG2"],
+            "commodities": [{"name": "ELC", "type": "energy", "unit": "PJ"}],
+            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "trade_links": [
+                {
+                    "origin": "REG1",
+                    "destination": "REG2",
+                    "commodity": "ELC",
+                    "bidirectional": True,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find all ~FI_PROCESS rows
+    process_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_PROCESS":
+                    process_rows.extend(t["rows"])
+
+    # Trade process should be explicitly declared
+    trade_proc_rows = [
+        r for r in process_rows if r.get("techname", "").startswith("T_")
+    ]
+
+    # Bidirectional = declared in BOTH regions
+    assert len(trade_proc_rows) == 2
+    regions = {r["region"] for r in trade_proc_rows}
+    assert regions == {"REG1", "REG2"}
+
+    # Should have IRE set
+    for row in trade_proc_rows:
+        assert row["sets"] == "IRE"
+        assert row["techname"] == "T_B_ELC_REG1_REG2_01"
+
+    # Should also have topology in ~FI_T (commodity-in/out flows)
+    topology_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_T":
+                    topology_rows.extend(t["rows"])
+
+    trade_topo_rows = [
+        r for r in topology_rows if r.get("techname", "").startswith("T_")
+    ]
+    # One commodity-out (REG1), one commodity-in (REG2)
+    assert len(trade_topo_rows) == 2
+
+    # REG1 exports (commodity-out)
+    out_row = [r for r in trade_topo_rows if r.get("commodity-out")]
+    assert len(out_row) == 1
+    assert out_row[0]["region"] == "REG1"
+    assert out_row[0]["commodity-out"] == "ELC"
+
+    # REG2 imports (commodity-in)
+    in_row = [r for r in trade_topo_rows if r.get("commodity-in")]
+    assert len(in_row) == 1
+    assert in_row[0]["region"] == "REG2"
+    assert in_row[0]["commodity-in"] == "ELC"
+
+
+def test_trade_links_unidirectional_single_declaration():
+    """Unidirectional trade should only declare process in origin region."""
+    source = {
+        "model": {
+            "name": "TradeUniTest",
+            "regions": ["REG1", "REG2"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "trade_links": [
+                {
+                    "origin": "REG1",
+                    "destination": "REG2",
+                    "commodity": "ELC",
+                    "bidirectional": False,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find all ~FI_PROCESS rows
+    process_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_PROCESS":
+                    process_rows.extend(t["rows"])
+
+    # Trade process should only be in origin (REG1)
+    trade_proc_rows = [
+        r for r in process_rows if r.get("techname", "").startswith("T_")
+    ]
+    assert len(trade_proc_rows) == 1
+    assert trade_proc_rows[0]["region"] == "REG1"
+    assert trade_proc_rows[0]["techname"] == "T_U_ELC_REG1_REG2_01"
+
+
+# =============================================================================
+# User Constraint Tests
+# =============================================================================
+
+
+def test_emission_cap_constraint():
+    """emission_cap constraint should emit ~UC_T rows with UC_COMPRD and UC_RHSRT."""
+    source = {
+        "model": {
+            "name": "EmissionCapTest",
+            "regions": ["REG1"],
+            "start_year": 2020,
+            "time_periods": [10, 10],
+            "commodities": [
+                {"name": "CO2", "type": "emission"},
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {"name": "PP_CCGT", "sets": ["ELE"]},
+            ],
+            "constraints": [
+                {
+                    "name": "CO2_CAP",
+                    "type": "emission_cap",
+                    "commodity": "CO2",
+                    "limit": 100,
+                    "limtype": "up",
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~UC_T table
+    uc_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~UC_T":
+                    uc_rows.extend(t["rows"])
+
+    # Should have rows for 2 years (2020, 2030)
+    # Each year: 1 UC_COMPRD + 1 UC_RHSRT = 2 rows
+    assert len(uc_rows) == 4
+
+    # Check UC_COMPRD rows
+    comprd_rows = [r for r in uc_rows if r["attribute"] == "UC_COMPRD"]
+    assert len(comprd_rows) == 2
+    for row in comprd_rows:
+        assert row["uc_n"] == "CO2_CAP"
+        assert row["commodity"] == "CO2"
+        assert row["side"] == "LHS"
+        assert row["value"] == 1
+
+    # Check UC_RHSRT rows
+    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
+    assert len(rhsrt_rows) == 2
+    for row in rhsrt_rows:
+        assert row["uc_n"] == "CO2_CAP"
+        assert row["limtype"] == "UP"
+        assert row["value"] == 100
+
+
+def test_emission_cap_with_year_trajectory():
+    """emission_cap with years dict should interpolate values."""
+    source = {
+        "model": {
+            "name": "EmissionCapTrajectoryTest",
+            "regions": ["REG1"],
+            "start_year": 2020,
+            "time_periods": [10, 10, 10],
+            "commodities": [
+                {"name": "CO2", "type": "emission"},
+            ],
+            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "constraints": [
+                {
+                    "name": "CO2_BUDGET",
+                    "type": "emission_cap",
+                    "commodity": "CO2",
+                    "years": {
+                        "2020": 100,
+                        "2040": 50,
+                    },
+                    "interpolation": "interp_extrap",
+                    "limtype": "up",
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~UC_T rows
+    uc_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~UC_T":
+                    uc_rows.extend(t["rows"])
+
+    # Check RHS values are interpolated
+    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
+    by_year = {r["year"]: r["value"] for r in rhsrt_rows}
+
+    assert by_year[2020] == 100
+    assert by_year[2030] == 75  # Interpolated
+    assert by_year[2040] == 50
+
+
+def test_activity_share_minimum():
+    """activity_share with minimum_share should emit LO constraint."""
+    source = {
+        "model": {
+            "name": "ActivityShareTest",
+            "regions": ["REG1"],
+            "start_year": 2020,
+            "time_periods": [10],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {"name": "PP_WIND", "sets": ["ELE"]},
+                {"name": "PP_SOLAR", "sets": ["ELE"]},
+                {"name": "PP_CCGT", "sets": ["ELE"]},
+            ],
+            "constraints": [
+                {
+                    "name": "REN_TARGET",
+                    "type": "activity_share",
+                    "commodity": "ELC",
+                    "processes": ["PP_WIND", "PP_SOLAR"],
+                    "minimum_share": 0.30,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~UC_T rows
+    uc_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~UC_T":
+                    uc_rows.extend(t["rows"])
+
+    # Should have rows for 1 year (2020):
+    # 2 UC_ACT (PP_WIND, PP_SOLAR) + 1 UC_COMPRD + 1 UC_RHSRT = 4 rows
+    assert len(uc_rows) == 4
+
+    # Check UC_ACT rows (coefficient = 1 for target processes)
+    act_rows = [r for r in uc_rows if r["attribute"] == "UC_ACT"]
+    assert len(act_rows) == 2
+    processes = {r["process"] for r in act_rows}
+    assert processes == {"PP_WIND", "PP_SOLAR"}
+    for row in act_rows:
+        assert row["value"] == 1
+        assert row["side"] == "LHS"
+
+    # Check UC_COMPRD row (coefficient = -share)
+    comprd_rows = [r for r in uc_rows if r["attribute"] == "UC_COMPRD"]
+    assert len(comprd_rows) == 1
+    assert comprd_rows[0]["commodity"] == "ELC"
+    assert comprd_rows[0]["value"] == -0.30
+    assert comprd_rows[0]["side"] == "LHS"
+
+    # Check UC_RHSRT row (RHS = 0, limtype = LO)
+    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
+    assert len(rhsrt_rows) == 1
+    assert rhsrt_rows[0]["value"] == 0
+    assert rhsrt_rows[0]["limtype"] == "LO"
+
+
+def test_activity_share_maximum():
+    """activity_share with maximum_share should emit UP constraint."""
+    source = {
+        "model": {
+            "name": "ActivityShareMaxTest",
+            "regions": ["REG1"],
+            "start_year": 2020,
+            "time_periods": [10],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [
+                {"name": "PP_COAL", "sets": ["ELE"]},
+                {"name": "PP_CCGT", "sets": ["ELE"]},
+            ],
+            "constraints": [
+                {
+                    "name": "COAL_LIMIT",
+                    "type": "activity_share",
+                    "commodity": "ELC",
+                    "processes": ["PP_COAL"],
+                    "maximum_share": 0.20,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~UC_T rows
+    uc_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~UC_T":
+                    uc_rows.extend(t["rows"])
+
+    # Check UC_RHSRT has limtype = UP
+    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
+    assert len(rhsrt_rows) == 1
+    assert rhsrt_rows[0]["limtype"] == "UP"
+
+    # Check UC_COMPRD has -0.20
+    comprd_rows = [r for r in uc_rows if r["attribute"] == "UC_COMPRD"]
+    assert comprd_rows[0]["value"] == -0.20
+
+
+def test_activity_share_both_min_max():
+    """activity_share with both min and max should emit two constraints."""
+    source = {
+        "model": {
+            "name": "ActivityShareBothTest",
+            "regions": ["REG1"],
+            "start_year": 2020,
+            "time_periods": [10],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [
+                {"name": "PP_WIND", "sets": ["ELE"]},
+            ],
+            "constraints": [
+                {
+                    "name": "WIND_BAND",
+                    "type": "activity_share",
+                    "commodity": "ELC",
+                    "processes": ["PP_WIND"],
+                    "minimum_share": 0.20,
+                    "maximum_share": 0.40,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~UC_T rows
+    uc_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~UC_T":
+                    uc_rows.extend(t["rows"])
+
+    # Should have 2 constraints (WIND_BAND_LO and WIND_BAND_UP)
+    uc_names = {r["uc_n"] for r in uc_rows}
+    assert uc_names == {"WIND_BAND_LO", "WIND_BAND_UP"}
+
+    # Check LO constraint
+    lo_rhsrt = [
+        r for r in uc_rows
+        if r["uc_n"] == "WIND_BAND_LO" and r["attribute"] == "UC_RHSRT"
+    ]
+    assert len(lo_rhsrt) == 1
+    assert lo_rhsrt[0]["limtype"] == "LO"
+
+    lo_comprd = [
+        r for r in uc_rows
+        if r["uc_n"] == "WIND_BAND_LO" and r["attribute"] == "UC_COMPRD"
+    ]
+    assert lo_comprd[0]["value"] == -0.20
+
+    # Check UP constraint
+    up_rhsrt = [
+        r for r in uc_rows
+        if r["uc_n"] == "WIND_BAND_UP" and r["attribute"] == "UC_RHSRT"
+    ]
+    assert len(up_rhsrt) == 1
+    assert up_rhsrt[0]["limtype"] == "UP"
+
+    up_comprd = [
+        r for r in uc_rows
+        if r["uc_n"] == "WIND_BAND_UP" and r["attribute"] == "UC_COMPRD"
+    ]
+    assert up_comprd[0]["value"] == -0.40
+
+
+def test_constraint_file_path():
+    """Constraints should be emitted to SuppXLS/Scen_UC_Constraints.xlsx."""
+    source = {
+        "model": {
+            "name": "ConstraintFileTest",
+            "regions": ["REG1"],
+            "commodities": [{"name": "CO2", "type": "emission"}],
+            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "constraints": [
+                {
+                    "name": "CO2_CAP",
+                    "type": "emission_cap",
+                    "commodity": "CO2",
+                    "limit": 100,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find constraint file path
+    constraint_files = [
+        f["path"] for f in tableir["files"]
+        if "UC_Constraints" in f["path"]
+    ]
+    assert len(constraint_files) == 1
+    assert constraint_files[0] == "SuppXLS/Scen_UC_Constraints.xlsx"
+
+
+def test_no_constraints_when_not_defined():
+    """Models without constraints should not emit UC file."""
+    source = load_vedalang(EXAMPLES_DIR / "mini_plant.veda.yaml")
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Should NOT have UC file
+    for f in tableir["files"]:
+        assert "UC_Constraints" not in f["path"]
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                assert t["tag"] != "~UC_T"
+
+
+def test_emission_cap_lower_bound():
+    """emission_cap with limtype='lo' should set LO limit."""
+    source = {
+        "model": {
+            "name": "EmissionMinTest",
+            "regions": ["REG1"],
+            "commodities": [{"name": "CO2", "type": "emission"}],
+            "processes": [{"name": "PP", "sets": ["ELE"]}],
+            "constraints": [
+                {
+                    "name": "CO2_MIN",
+                    "type": "emission_cap",
+                    "commodity": "CO2",
+                    "limit": 50,
+                    "limtype": "lo",
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~UC_T rows
+    uc_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~UC_T":
+                    uc_rows.extend(t["rows"])
+
+    # Check limtype is LO
+    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
+    assert all(r["limtype"] == "LO" for r in rhsrt_rows)

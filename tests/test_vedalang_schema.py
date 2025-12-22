@@ -163,3 +163,106 @@ def test_trade_link_missing_required_fields():
     }
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(data, schema)
+
+
+def test_constraints_emission_cap_validates():
+    """emission_cap constraint should validate against schema."""
+    schema = load_schema()
+    data = {
+        "model": {
+            "name": "ConstraintTest",
+            "regions": ["REG1"],
+            "commodities": [{"name": "CO2", "type": "emission"}],
+            "processes": [{"name": "P1", "sets": ["ELE"]}],
+            "constraints": [
+                {
+                    "name": "CO2_CAP",
+                    "type": "emission_cap",
+                    "commodity": "CO2",
+                    "limit": 100,
+                    "limtype": "up",
+                },
+            ],
+        }
+    }
+    jsonschema.validate(data, schema)
+
+
+def test_constraints_activity_share_validates():
+    """activity_share constraint should validate against schema."""
+    schema = load_schema()
+    data = {
+        "model": {
+            "name": "ConstraintTest",
+            "regions": ["REG1"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [
+                {"name": "PP_WIND", "sets": ["ELE"]},
+                {"name": "PP_CCGT", "sets": ["ELE"]},
+            ],
+            "constraints": [
+                {
+                    "name": "REN_TARGET",
+                    "type": "activity_share",
+                    "commodity": "ELC",
+                    "processes": ["PP_WIND"],
+                    "minimum_share": 0.30,
+                },
+            ],
+        }
+    }
+    jsonschema.validate(data, schema)
+
+
+def test_constraints_example_validates():
+    """The example_with_constraints.veda.yaml should pass validation."""
+    schema = load_schema()
+    with open(EXAMPLES_DIR / "example_with_constraints.veda.yaml") as f:
+        data = yaml.safe_load(f)
+    jsonschema.validate(data, schema)
+
+
+def test_constraint_invalid_type_rejected():
+    """Invalid constraint type should be rejected."""
+    schema = load_schema()
+    data = {
+        "model": {
+            "name": "BadConstraint",
+            "regions": ["REG1"],
+            "commodities": [{"name": "CO2", "type": "emission"}],
+            "processes": [{"name": "P1", "sets": ["ELE"]}],
+            "constraints": [
+                {
+                    "name": "BAD",
+                    "type": "invalid_type",
+                    "commodity": "CO2",
+                },
+            ],
+        }
+    }
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(data, schema)
+
+
+def test_constraint_share_range():
+    """Share values must be between 0 and 1."""
+    schema = load_schema()
+    data = {
+        "model": {
+            "name": "BadShare",
+            "regions": ["REG1"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [{"name": "PP_WIND", "sets": ["ELE"]}],
+            "constraints": [
+                {
+                    "name": "BAD",
+                    "type": "activity_share",
+                    "commodity": "ELC",
+                    "processes": ["PP_WIND"],
+                    "minimum_share": 1.5,  # Invalid: > 1
+                },
+            ],
+        }
+    }
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(data, schema)

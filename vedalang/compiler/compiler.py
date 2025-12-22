@@ -237,8 +237,22 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     first_region = regions[0] if regions else "REG1"
     process_file_path = f"VT_{first_region}_{model_name}.xlsx"
 
-    # Compile trade links if present
-    trade_link_files = _compile_trade_links(model.get("trade_links", []))
+    # Compile trade links if present - returns files, process declarations, and topology
+    trade_link_files, trade_process_rows, trade_topology_rows = _compile_trade_links(
+        model.get("trade_links", []),
+        model.get("commodities", []),
+    )
+
+    # Merge trade process declarations into main process/topology rows
+    process_rows.extend(trade_process_rows)
+    topology_rows.extend(trade_topology_rows)
+
+    # Compile constraints if present - returns UC file(s)
+    constraint_files = _compile_constraints(
+        model.get("constraints", []),
+        default_region,
+        model_years,
+    )
 
     # Build TableIR structure
     tableir = {
@@ -261,6 +275,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
             },
             *scenario_files,
             *trade_link_files,
+            *constraint_files,
         ]
     }
 
@@ -522,68 +537,157 @@ def _compile_demand_projections(
     return rows
 
 
-def _compile_trade_links(trade_links: list[dict]) -> list[dict]:
+def _compile_trade_links(
+    trade_links: list[dict],
+    commodities: list[dict],
+) -> tuple[list[dict], list[dict], list[dict]]:
     """
-    Compile trade link definitions to TableIR files.
+    Compile trade link definitions to TableIR structures.
 
-    Uses the matrix format ~TRADELINKS (not ~TRADELINKS_DINS) because
-    xl2times harmonise_tradelinks properly converts it and adds required
-    metadata columns.
+    Uses the matrix format ~TRADELINKS because xl2times harmonise_tradelinks
+    properly converts it.
 
-    Matrix format has sheet name encoding direction: "Bi_COMM" or "Uni_COMM"
-    First column is the commodity name, other columns are destination regions.
-    Rows are origin regions, cell values are 1 (or process name) for trade link.
+    IMPORTANT: VedaLang explicitly emits trade process declarations to ~FI_PROCESS
+    to avoid relying on xl2times's complete_processes auto-generation.
+
+    Matrix format: sheet name encodes direction (Bi_COMM or Uni_COMM),
+    first column is commodity, other columns are destination regions.
+    Cell value is explicit process name (NOT numeric 1).
+
+    Process naming follows VEDA convention: T{B|U}_{COMM}_{REG1}_{REG2}_01
 
     Args:
         trade_links: List of trade link definitions from VedaLang source
+        commodities: List of commodity definitions (for unit lookup)
 
     Returns:
-        List of TableIR file definitions (empty if no trade links)
+        Tuple of:
+        - List of TableIR file definitions
+        - List of process declaration rows for ~FI_PROCESS
+        - List of topology rows for ~FI_T (input/output flows)
     """
     if not trade_links:
-        return []
+        return [], [], []
+
+    from collections import defaultdict
+
+    # Build commodity lookup for unit
+    comm_units = {c["name"]: c.get("unit", "PJ") for c in commodities}
 
     # Group trade links by commodity and bidirectional flag
-    # Each unique (commodity, bidirectional) combo becomes one sheet
-    from collections import defaultdict
     grouped: dict[tuple[str, bool], list[dict]] = defaultdict(list)
-
     for link in trade_links:
         commodity = link["commodity"]
         bidirectional = link.get("bidirectional", True)
         grouped[(commodity, bidirectional)].append(link)
 
-    sheets = []
+    # Build sheets for trade links (matrix format)
+    tradelink_sheets = []
+    efficiency_rows = []
+    process_rows = []  # Explicit trade process declarations
+    topology_rows = []  # Trade process topology (inputs/outputs)
+    emitted_processes: set[str] = set()  # Track to avoid duplicates
+
     for (commodity, bidirectional), links in grouped.items():
         # Sheet name encodes direction and commodity
         direction = "Bi" if bidirectional else "Uni"
         sheet_name = f"{direction}_{commodity}"
+        direction_code = "B" if bidirectional else "U"
 
-        # Build matrix: first column is commodity, other columns are destinations
-        # Build sparse matrix rows - only include rows with actual links
-        rows = []
-        origins_with_links: set[str] = set()
+        # Collect all unique regions for matrix
+        all_regions: set[str] = set()
         for link in links:
-            origins_with_links.add(link["origin"])
+            all_regions.add(link["origin"])
+            all_regions.add(link["destination"])
 
-        for origin in sorted(origins_with_links):
+        # Build matrix rows - one row per origin, columns are destinations
+        rows = []
+        for origin in sorted(all_regions):
+            # Check if this origin has any outgoing links
+            outgoing = [lnk for lnk in links if lnk["origin"] == origin]
+            if not outgoing:
+                continue
+
             row: dict = {commodity: origin}
-            for link in links:
-                if link["origin"] == origin:
-                    row[link["destination"]] = 1
+            for link in outgoing:
+                dest = link["destination"]
+                efficiency = link.get("efficiency")
+
+                # Generate predictable process name
+                process_name = f"T_{direction_code}_{commodity}_{origin}_{dest}_01"
+
+                # Cell value: use explicit process name
+                row[dest] = process_name
+
+                # Emit explicit process declaration for ORIGIN region
+                # (IRE processes are declared in the exporting region)
+                if process_name not in emitted_processes:
+                    unit = comm_units.get(commodity, "PJ")
+                    process_rows.append({
+                        "region": origin,
+                        "techname": process_name,
+                        "techdesc": f"Trade {commodity} from {origin} to {dest}",
+                        "sets": "IRE",
+                        "tact": unit,
+                        "tcap": "",  # Trade processes typically don't have capacity
+                    })
+
+                    # For bidirectional, also declare in destination region
+                    if bidirectional:
+                        process_rows.append({
+                            "region": dest,
+                            "techname": process_name,
+                            "techdesc": f"Trade {commodity} from {origin} to {dest}",
+                            "sets": "IRE",
+                            "tact": unit,
+                            "tcap": "",
+                        })
+
+                    # Emit topology rows - IRE processes need commodity flows
+                    # Origin exports (OUT), destination imports (IN)
+                    topology_rows.append({
+                        "region": origin,
+                        "techname": process_name,
+                        "commodity-out": commodity,
+                    })
+                    topology_rows.append({
+                        "region": dest,
+                        "techname": process_name,
+                        "commodity-in": commodity,
+                    })
+
+                    emitted_processes.add(process_name)
+
+                # If efficiency specified, emit ~FI_T row for IRE_FLO
+                if efficiency is not None:
+                    efficiency_rows.append({
+                        "region": origin,
+                        "techname": process_name,
+                        "commodity-out": commodity,
+                        "eff": efficiency,
+                    })
+
             rows.append(row)
 
-        sheets.append({
+        tradelink_sheets.append({
             "name": sheet_name,
             "tables": [{"tag": "~TRADELINKS", "rows": rows}],
         })
 
-    return [
-        {
-            "path": "SuppXLS/Trades/ScenTrade__Trade_Links.xlsx",
-            "sheets": sheets,
-        }
-    ]
+    # Build trade file with all sheets
+    trade_file = {
+        "path": "SuppXLS/Trades/ScenTrade__Trade_Links.xlsx",
+        "sheets": tradelink_sheets,
+    }
+
+    # If we have efficiency rows, add them to a separate sheet
+    if efficiency_rows:
+        trade_file["sheets"].append({
+            "name": "TradeParams",
+            "tables": [{"tag": "~FI_T", "rows": efficiency_rows}],
+        })
+
+    return [trade_file], process_rows, topology_rows
 
 
 def _compile_timeslices(
@@ -637,6 +741,277 @@ def _compile_timeslices(
         })
 
     return timeslice_rows, yrfr_rows
+
+
+def _compile_constraints(
+    constraints: list[dict],
+    region: str,
+    model_years: list[int],
+) -> list[dict]:
+    """
+    Compile constraint definitions to TableIR files with ~UC_T tables.
+
+    Supports two constraint types:
+    1. emission_cap: Bounds on commodity production (uses UC_COMPRD + UC_RHSRT)
+    2. activity_share: Share constraints on process activity (uses UC_ACT + UC_RHSRT)
+
+    Args:
+        constraints: List of constraint definitions from VedaLang source
+        region: Default region for the model
+        model_years: List of model representative years
+
+    Returns:
+        List of TableIR file definitions containing ~UC_T tables
+    """
+    if not constraints:
+        return []
+
+    uc_rows = []
+
+    for constraint in constraints:
+        constraint_type = constraint["type"]
+        uc_name = constraint["name"]
+        commodity = constraint.get("commodity")
+        limtype = constraint.get("limtype", "up").upper()
+
+        if constraint_type == "emission_cap":
+            uc_rows.extend(
+                _compile_emission_cap(
+                    uc_name, commodity, constraint, region, model_years, limtype
+                )
+            )
+        elif constraint_type == "activity_share":
+            uc_rows.extend(
+                _compile_activity_share(
+                    uc_name, commodity, constraint, region, model_years
+                )
+            )
+
+    if not uc_rows:
+        return []
+
+    # Build UC file
+    return [
+        {
+            "path": "SuppXLS/Scen_UC_Constraints.xlsx",
+            "sheets": [
+                {
+                    "name": "UC_Constraints",
+                    "tables": [{"tag": "~UC_T", "rows": uc_rows}],
+                }
+            ],
+        }
+    ]
+
+
+def _compile_emission_cap(
+    uc_name: str,
+    commodity: str,
+    constraint: dict,
+    region: str,
+    model_years: list[int],
+    limtype: str,
+) -> list[dict]:
+    """
+    Compile an emission_cap constraint to ~UC_T rows.
+
+    Emission cap uses:
+    - UC_COMPRD with coefficient 1 (LHS side) to sum commodity production
+    - UC_RHSRT with the limit value (RHS side)
+
+    Args:
+        uc_name: Constraint name
+        commodity: Target commodity to cap
+        constraint: Full constraint definition
+        region: Model region
+        model_years: List of model years
+        limtype: Limit type (UP, LO, FX)
+
+    Returns:
+        List of ~UC_T rows
+    """
+    rows = []
+
+    # Get RHS values - either single limit or year-specific
+    if "years" in constraint:
+        sparse_values = constraint["years"]
+        interpolation = constraint.get("interpolation", "interp_extrap")
+        dense_values = _expand_series_to_years(
+            sparse_values, model_years, interpolation
+        )
+    elif "limit" in constraint:
+        # Single limit applies to all years
+        dense_values = {y: constraint["limit"] for y in model_years}
+    else:
+        # No limit specified - skip this constraint
+        return []
+
+    # Emit LHS coefficient row: UC_COMPRD for the commodity
+    # This says "include commodity production in the constraint"
+    description = f"Emission cap on {commodity}"
+    for year in sorted(dense_values.keys()):
+        rows.append({
+            "uc_n": uc_name,
+            "description": description,
+            "region": region,
+            "year": year,
+            "attribute": "UC_COMPRD",
+            "commodity": commodity,
+            "side": "LHS",
+            "value": 1,
+        })
+
+    # Emit RHS row: UC_RHSRT with the limit
+    for year in sorted(dense_values.keys()):
+        rows.append({
+            "uc_n": uc_name,
+            "description": description,
+            "region": region,
+            "year": year,
+            "attribute": "UC_RHSRT",
+            "limtype": limtype,
+            "value": dense_values[year],
+        })
+
+    return rows
+
+
+def _compile_activity_share(
+    uc_name: str,
+    commodity: str,
+    constraint: dict,
+    region: str,
+    model_years: list[int],
+) -> list[dict]:
+    """
+    Compile an activity_share constraint to ~UC_T rows.
+
+    Activity share uses:
+    - UC_ACT with coefficient 1 for target processes (LHS)
+    - UC_ACT with -share for all processes producing the commodity (LHS)
+    - UC_RHSRT with 0 (constraint is: target >= share * total)
+
+    For minimum_share: limtype=LO; for maximum_share: limtype=UP.
+
+    Simplified approach: use commodity production as the denominator.
+
+    Args:
+        uc_name: Constraint name
+        commodity: Reference commodity (e.g., ELC)
+        constraint: Full constraint definition
+        region: Model region
+        model_years: List of model years
+
+    Returns:
+        List of ~UC_T rows
+    """
+    rows = []
+    processes = constraint.get("processes", [])
+    minimum_share = constraint.get("minimum_share")
+    maximum_share = constraint.get("maximum_share")
+
+    if not processes:
+        return []
+
+    # Generate rows for minimum share constraint
+    if minimum_share is not None:
+        rows.extend(
+            _compile_share_constraint(
+                uc_name + "_LO" if maximum_share is not None else uc_name,
+                commodity,
+                processes,
+                minimum_share,
+                "LO",
+                region,
+                model_years,
+            )
+        )
+
+    # Generate rows for maximum share constraint
+    if maximum_share is not None:
+        rows.extend(
+            _compile_share_constraint(
+                uc_name + "_UP" if minimum_share is not None else uc_name,
+                commodity,
+                processes,
+                maximum_share,
+                "UP",
+                region,
+                model_years,
+            )
+        )
+
+    return rows
+
+
+def _compile_share_constraint(
+    uc_name: str,
+    commodity: str,
+    processes: list[str],
+    share: float,
+    limtype: str,
+    region: str,
+    model_years: list[int],
+) -> list[dict]:
+    """
+    Compile a single share constraint (either min or max).
+
+    The constraint is: sum(process_act) - share * commodity_prod {>= | <=} 0.
+
+    Args:
+        uc_name: Constraint name
+        commodity: Reference commodity
+        processes: Target processes
+        share: Share value (0-1)
+        limtype: LO for minimum, UP for maximum
+        region: Model region
+        model_years: List of model years
+
+    Returns:
+        List of ~UC_T rows
+    """
+    rows = []
+    bound_type = "minimum" if limtype == "LO" else "maximum"
+    description = f"Activity share ({bound_type} {share:.0%}) on {commodity}"
+
+    for year in model_years:
+        # LHS: Add target process activities with coefficient 1
+        for process in processes:
+            rows.append({
+                "uc_n": uc_name,
+                "description": description,
+                "region": region,
+                "year": year,
+                "attribute": "UC_ACT",
+                "process": process,
+                "side": "LHS",
+                "value": 1,
+            })
+
+        # LHS: Subtract share * commodity production
+        rows.append({
+            "uc_n": uc_name,
+            "description": description,
+            "region": region,
+            "year": year,
+            "attribute": "UC_COMPRD",
+            "commodity": commodity,
+            "side": "LHS",
+            "value": -share,
+        })
+
+        # RHS: The bound is 0
+        rows.append({
+            "uc_n": uc_name,
+            "description": description,
+            "region": region,
+            "year": year,
+            "attribute": "UC_RHSRT",
+            "limtype": limtype,
+            "value": 0,
+        })
+
+    return rows
 
 
 def load_vedalang(path: Path) -> dict:
