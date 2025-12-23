@@ -11,6 +11,9 @@ SCHEMA_PATH = (
     Path(__file__).parent.parent.parent / "vedalang" / "schema" / "tableir.schema.json"
 )
 
+# Scalar tags that should NOT have a header row - values are emitted directly
+SCALAR_TAGS = {"~STARTYEAR", "~ACTIVEPDEF"}
+
 
 def load_schema() -> dict:
     """Load the TableIR JSON schema."""
@@ -59,32 +62,50 @@ def emit_excel(tableir: dict, out_dir: Path, validate: bool = True) -> list[Path
                 # Emit ~UC_SETS declarations before the table tag if present
                 uc_sets = table.get("uc_sets", {})
                 for uc_key, uc_value in uc_sets.items():
-                    # Format: ~UC_SETS: R_E: AllRegions or ~UC_SETS: T_E:
-                    uc_sets_cell = f"~UC_SETS: {uc_key}: {uc_value}"
+                    # Format: ~UC_SETS: R_E: AllRegions or ~UC_SETS: T_E
+                    # Note: Empty values should not have trailing space
+                    if uc_value:
+                        uc_sets_cell = f"~UC_SETS: {uc_key}: {uc_value}"
+                    else:
+                        uc_sets_cell = f"~UC_SETS: {uc_key}"
                     ws.cell(row=current_row, column=1, value=uc_sets_cell)
                     current_row += 1
 
-                ws.cell(row=current_row, column=1, value=table["tag"])
+                tag = table["tag"]
+                ws.cell(row=current_row, column=1, value=tag)
                 current_row += 1
 
                 rows = table.get("rows", [])
                 if rows:
-                    columns = []
-                    for row in rows:
-                        for key in row.keys():
-                            if key not in columns:
-                                columns.append(key)
+                    # Check if this is a scalar tag (no header row needed)
+                    is_scalar = tag in SCALAR_TAGS
 
-                    for col_idx, col_name in enumerate(columns, start=1):
-                        ws.cell(row=current_row, column=col_idx, value=col_name)
-                    current_row += 1
-
-                    for row in rows:
-                        for col_idx, col_name in enumerate(columns, start=1):
-                            value = row.get(col_name)
+                    if is_scalar:
+                        # Scalar tags: emit values directly without header row
+                        # Rows should have single "value" key
+                        for row in rows:
+                            value = row.get("value")
                             if value is not None:
-                                ws.cell(row=current_row, column=col_idx, value=value)
+                                ws.cell(row=current_row, column=1, value=value)
+                            current_row += 1
+                    else:
+                        # Normal tables: collect columns and emit header + data
+                        columns = []
+                        for row in rows:
+                            for key in row.keys():
+                                if key not in columns:
+                                    columns.append(key)
+
+                        for col_idx, col_name in enumerate(columns, start=1):
+                            ws.cell(row=current_row, column=col_idx, value=col_name)
                         current_row += 1
+
+                        for row in rows:
+                            for col_idx, col_name in enumerate(columns, start=1):
+                                val = row.get(col_name)
+                                if val is not None:
+                                    ws.cell(row=current_row, column=col_idx, value=val)
+                            current_row += 1
 
                 current_row += 1
 

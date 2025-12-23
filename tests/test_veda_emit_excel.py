@@ -95,8 +95,8 @@ def test_uc_sets_emitted_before_table():
 
         # Row 1: ~UC_SETS: R_E: AllRegions
         assert ws.cell(1, 1).value == "~UC_SETS: R_E: AllRegions"
-        # Row 2: ~UC_SETS: T_E:
-        assert ws.cell(2, 1).value == "~UC_SETS: T_E: "
+        # Row 2: ~UC_SETS: T_E (no trailing colon/space for empty value)
+        assert ws.cell(2, 1).value == "~UC_SETS: T_E"
         # Row 3: ~UC_T
         assert ws.cell(3, 1).value == "~UC_T"
         # Row 4: header
