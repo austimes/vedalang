@@ -12,7 +12,7 @@ VedaLang is a typed DSL that compiles to VEDA Excel tables for TIMES energy mode
 | xl2times diagnostics | ✅ Hardened |
 | Design challenges (DC1-DC5) | ✅ All passing |
 | Schema evolution policy | ✅ In place |
-| Test coverage | ✅ 162+ tests passing |
+| Test coverage | ✅ 230+ tests passing |
 | Primitives Exploration | ✅ Complete |
 | Schema Extensions | ✅ All implemented |
 | **MiniSystem Stress Test** | 🔄 **ACTIVE** |
@@ -23,15 +23,19 @@ VedaLang is a typed DSL that compiles to VEDA Excel tables for TIMES energy mode
 
 **Epic:** `vedalang-93s` — Phase 2: MiniSystem Stress Test
 
+### Completed Tasks
+
+| Issue | Description | Outcome |
+|-------|-------------|---------|
+| `vedalang-5dw` | Design MiniSystem model specification | ✅ docs/minisystem_spec.md |
+| `vedalang-scv` | Implement MiniSystem model in VedaLang | ✅ vedalang/examples/minisystem.veda.yaml |
+| `vedalang-4t8` | Wire MiniSystem as golden CI test | ✅ 18 tests passing |
+| `vedalang-6qs` | Add time-varying process attributes | ✅ Compiler + 4 tests |
+| `vedalang-1lb` | Ergonomic improvements based on authoring friction | ✅ 3 improvements + 9 tests |
+
 ### Open Tasks
 
-| Issue | Priority | Description | Status |
-|-------|----------|-------------|--------|
-| `vedalang-5dw` | P1 | Design MiniSystem model specification | 🔄 Open |
-| `vedalang-scv` | P1 | Implement MiniSystem model in VedaLang | 🔄 Open |
-| `vedalang-4t8` | P1 | Wire MiniSystem as golden CI test | 🔄 Open |
-| `vedalang-1lb` | P2 | Ergonomic improvements based on authoring friction | 🔄 Open |
-| `vedalang-6qs` | P2 | Add time-varying process attributes (time_series) | 🔄 Open |
+_No remaining open tasks in this phase._
 
 ### Future Work (P3)
 
@@ -45,7 +49,7 @@ VedaLang is a typed DSL that compiles to VEDA Excel tables for TIMES energy mode
 
 ## Completed Work Summary
 
-**53 issues closed** across all phases.
+**57 issues closed** across all phases.
 
 ### Phase 0: Toolchain Validation ✅
 - `vedalang compile` works
@@ -102,12 +106,14 @@ All 10 energy system primitives explored and implemented:
 | Inter-regional trade | ✅ |
 | User constraints | ✅ |
 | Trade link efficiency (IRE_FLO) | ✅ |
+| Time-varying process attributes | ✅ |
+| Shorthand input/output syntax | ✅ |
+| Default commodity units | ✅ |
 
 ### Not Yet Implemented
 
 | Concept | Issue | Priority |
 |---------|-------|----------|
-| Time-varying attributes | `vedalang-6qs` | P2 |
 | Storage primitives (enhanced) | `vedalang-jis` | P3 |
 | Scenario composition | `vedalang-9xy` | P3 |
 | Units/dimension checking | `vedalang-a9m` | P3 |
@@ -173,7 +179,7 @@ veda-devtools/
 │   └── examples/             # 10+ example files
 ├── tools/
 ├── rules/
-├── tests/                    # 162+ tests
+├── tests/                    # 230+ tests
 ├── fixtures/
 └── xl2times/                 # Submodule (hardened)
 ```

@@ -1,0 +1,258 @@
+# MiniSystem: Comprehensive VedaLang Stress Test Model
+# Version: 1.0
+# Issue: vedalang-scv
+#
+# A 2-region power system model that exercises every implemented VedaLang feature:
+# - Multi-region with trade
+# - All commodity types (energy, emission, demand, material)
+# - All process types (supply, thermal, renewable, hydrogen, demand)
+# - Timeslice structure (season × daynite)
+# - Scenarios (CO2 price, demand projections)
+# - User constraints (emission cap, activity share)
+# - Bounds (activity, capacity, new capacity)
+
+model:
+  name: MiniSystem
+  description: Comprehensive stress-test for VedaLang
+
+  regions:
+    - NORTH
+    - SOUTH
+
+  start_year: 2020
+  time_periods: [10, 10, 10]
+
+  timeslices:
+    season:
+      - code: S
+        name: Summer
+      - code: W
+        name: Winter
+    daynite:
+      - code: D
+        name: Day
+      - code: N
+        name: Night
+    fractions:
+      SD: 0.25
+      SN: 0.22
+      WD: 0.28
+      WN: 0.25
+
+  # ============================================================
+  # COMMODITIES
+  # ============================================================
+  commodities:
+    # Energy commodities
+    - name: NG
+      type: energy
+      unit: PJ
+      description: Natural Gas
+
+    - name: ELC
+      type: energy
+      unit: PJ
+      description: Electricity
+
+    # Emission commodities
+    - name: CO2
+      type: emission
+      unit: Mt
+      description: Carbon dioxide
+
+    # Demand commodities
+    - name: RSD
+      type: demand
+      unit: PJ
+      description: Residential demand
+
+    - name: IND
+      type: demand
+      unit: PJ
+      description: Industrial demand
+
+    # Material commodities
+    - name: H2
+      type: material
+      unit: PJ
+      description: Hydrogen
+
+  # ============================================================
+  # PROCESSES
+  # ============================================================
+  processes:
+    # Supply process: Natural gas import
+    - name: IMP_NG
+      description: Natural gas import supply
+      sets: [IMP]
+      primary_commodity_group: NRGO
+      outputs:
+        - commodity: NG
+      cost: 5.0
+      activity_bound:
+        up: 500
+
+    # Thermal generation: CCGT
+    - name: PP_CCGT
+      description: Combined cycle gas turbine
+      sets: [ELE]
+      primary_commodity_group: NRGO
+      inputs:
+        - commodity: NG
+      outputs:
+        - commodity: ELC
+        - commodity: CO2
+          share: 0.05
+      efficiency: 0.55
+      invcost: 800
+      fixom: 20
+      varom: 2
+      life: 30
+      cap_bound:
+        up: 10
+      ncap_bound:
+        up: 2
+
+    # Renewable generation: Wind
+    - name: PP_WIND
+      description: Onshore wind plant
+      sets: [ELE]
+      primary_commodity_group: NRGO
+      outputs:
+        - commodity: ELC
+      invcost: 1200
+      fixom: 25
+      life: 25
+      cap_bound:
+        lo: 3
+        up: 30
+
+    # Renewable generation: Solar
+    - name: PP_SOLAR
+      description: Solar PV plant (with declining costs)
+      sets: [ELE]
+      primary_commodity_group: NRGO
+      outputs:
+        - commodity: ELC
+      # Time-varying investment cost - demonstrates cost decline
+      invcost:
+        values:
+          "2020": 900
+          "2030": 550
+          "2040": 350
+        interpolation: interp_extrap
+      fixom: 15
+      life: 25
+      ncap_bound:
+        fx: 1
+
+    # Hydrogen production: Electrolyzer
+    - name: PP_ELYZ
+      description: Electrolysis plant
+      sets: [ELE]
+      primary_commodity_group: MATO
+      inputs:
+        - commodity: ELC
+      outputs:
+        - commodity: H2
+      efficiency: 0.70
+      invcost: 500
+      life: 20
+
+    # Demand device: Residential
+    - name: DMD_RSD
+      description: Residential electricity demand
+      sets: [DMD]
+      primary_commodity_group: DEMO
+      inputs:
+        - commodity: ELC
+      outputs:
+        - commodity: RSD
+
+    # Demand device: Industrial (multi-input)
+    - name: DMD_IND
+      description: Industrial demand (electricity and gas)
+      sets: [DMD]
+      primary_commodity_group: DEMO
+      inputs:
+        - commodity: ELC
+        - commodity: NG
+      outputs:
+        - commodity: IND
+      efficiency: 0.90
+
+  # ============================================================
+  # TRADE LINKS
+  # ============================================================
+  trade_links:
+    # Electricity trade with 3% transmission loss
+    - origin: NORTH
+      destination: SOUTH
+      commodity: ELC
+      bidirectional: true
+      efficiency: 0.97
+
+    # Gas trade with no loss
+    - origin: NORTH
+      destination: SOUTH
+      commodity: NG
+      bidirectional: true
+
+  # ============================================================
+  # SCENARIOS
+  # ============================================================
+  scenarios:
+    # CO2 price trajectory
+    - name: CO2_Price
+      description: Carbon price trajectory 2025-2050
+      type: commodity_price
+      commodity: CO2
+      interpolation: interp_extrap
+      values:
+        "2025": 50
+        "2030": 100
+        "2050": 200
+
+    # Residential demand projection
+    - name: DemandRSD
+      description: Residential demand growth
+      type: demand_projection
+      commodity: RSD
+      interpolation: interp_extrap
+      values:
+        "2020": 100
+        "2030": 120
+        "2050": 160
+
+    # Industrial demand projection
+    - name: DemandIND
+      description: Industrial demand growth
+      type: demand_projection
+      commodity: IND
+      interpolation: interp_extrap
+      values:
+        "2020": 200
+        "2030": 220
+        "2050": 250
+
+  # ============================================================
+  # USER CONSTRAINTS
+  # ============================================================
+  constraints:
+    # CO2 emission cap
+    - name: CO2_CAP
+      type: emission_cap
+      commodity: CO2
+      limtype: up
+      years:
+        "2020": 100
+        "2030": 75
+        "2050": 25
+      interpolation: interp_extrap
+
+    # Renewable energy target (30% minimum)
+    - name: REN_TARGET
+      type: activity_share
+      commodity: ELC
+      processes: [PP_WIND, PP_SOLAR]
+      minimum_share: 0.30

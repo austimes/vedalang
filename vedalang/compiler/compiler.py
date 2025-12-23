@@ -14,6 +14,134 @@ ENERGY_UNITS = {"PJ", "TJ", "GJ", "MWh", "GWh", "TWh", "MTOE", "KTOE"}
 POWER_UNITS = {"GW", "MW", "kW", "TW"}
 MASS_UNITS = {"Mt", "kt", "t", "Gt"}
 
+# Default units by commodity type
+DEFAULT_UNITS = {
+    "energy": "PJ",
+    "demand": "PJ",
+    "emission": "Mt",
+    "material": "Mt",
+}
+
+# Process attributes that support time-varying values
+TIME_VARYING_ATTRS = {
+    "efficiency", "invcost", "fixom", "varom", "life", "cost", "availability_factor"
+}
+
+# Map VedaLang attribute names to their TableIR/VEDA column names
+ATTR_TO_COLUMN = {
+    "efficiency": "eff",
+    "invcost": "invcost",
+    "fixom": "fixom",
+    "varom": "varom",
+    "life": "life",
+    "cost": "cost",
+    "availability_factor": "avail",
+}
+
+# Interpolation mode to VEDA code mapping
+INTERPOLATION_CODES = {
+    "none": -1,
+    "interp_only": 1,
+    "interp_extrap_eps": 2,
+    "interp_extrap": 3,
+    "interp_extrap_back": 4,
+    "interp_extrap_forward": 5,
+}
+
+
+def _is_time_varying(value) -> bool:
+    """Check if a value is a time-varying specification (dict with 'values' key)."""
+    return isinstance(value, dict) and "values" in value
+
+
+def _normalize_process_flows(process: dict) -> dict:
+    """
+    Normalize process input/output shorthand to standard array format.
+
+    Converts:
+      input: "NG" → inputs: [{commodity: "NG"}]
+      output: "ELC" → outputs: [{commodity: "ELC"}]
+
+    Args:
+        process: Process definition (may have shorthand or standard format)
+
+    Returns:
+        Process with normalized inputs/outputs arrays
+    """
+    result = process.copy()
+
+    # Normalize single input string to array
+    if "input" in result and "inputs" not in result:
+        result["inputs"] = [{"commodity": result["input"]}]
+        del result["input"]
+
+    # Normalize single output string to array
+    if "output" in result and "outputs" not in result:
+        result["outputs"] = [{"commodity": result["output"]}]
+        del result["output"]
+
+    return result
+
+
+def _get_default_unit(commodity_type: str) -> str:
+    """Get default unit for a commodity type."""
+    return DEFAULT_UNITS.get(commodity_type, "PJ")
+
+
+def _get_scalar_value(value):
+    """Get scalar value from scalar or time-varying spec (returns None for latter)."""
+    if _is_time_varying(value):
+        # Return None - caller should use _expand_time_varying_rows instead
+        return None
+    return value
+
+
+def _expand_time_varying_attr(
+    attr_name: str,
+    value,
+    base_row: dict,
+) -> list[dict]:
+    """
+    Expand a time-varying attribute into multiple rows with YEAR column.
+
+    Args:
+        attr_name: The attribute name (e.g., 'invcost', 'efficiency')
+        value: Either a scalar or a time-varying spec with 'values' dict
+        base_row: Base row dict to copy for each year (region, techname, etc.)
+
+    Returns:
+        List of row dicts, one per year (or single row for scalar values)
+    """
+    column = ATTR_TO_COLUMN.get(attr_name, attr_name)
+
+    if not _is_time_varying(value):
+        # Scalar value - return single row
+        row = base_row.copy()
+        row[column] = value
+        return [row]
+
+    # Time-varying value - expand to multiple rows
+    rows = []
+    values = value["values"]
+    interpolation = value.get("interpolation", "interp_extrap")
+    interp_code = INTERPOLATION_CODES.get(interpolation, 3)
+
+    # First, emit a year=0 row with interpolation code if not 'none'
+    if interp_code != -1:
+        interp_row = base_row.copy()
+        interp_row["year"] = 0
+        interp_row[column] = interp_code
+        rows.append(interp_row)
+
+    # Emit one row per year
+    for year_str, val in sorted(values.items()):
+        row = base_row.copy()
+        row["year"] = int(year_str)
+        row[column] = val
+        rows.append(row)
+
+    return rows
+
 
 class SemanticValidationError(Exception):
     """Raised when semantic validation fails."""
@@ -77,7 +205,9 @@ def validate_cross_references(model: dict) -> tuple[list[str], list[str]]:
         return ""
 
     # Validate process references
-    for process in model.get("processes", []):
+    for raw_process in model.get("processes", []):
+        # Normalize shorthand syntax before validation
+        process = _normalize_process_flows(raw_process)
         proc_name = process["name"]
 
         # Check input commodity references
@@ -251,18 +381,23 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # Use lowercase column names for xl2times compatibility
     comm_rows = []
     for commodity in model.get("commodities", []):
+        comm_type = commodity.get("type", "energy")
+        # Use explicit unit or default based on commodity type
+        unit = commodity.get("unit") or _get_default_unit(comm_type)
         comm_rows.append({
             "region": default_region,
-            "csets": _commodity_type_to_csets(commodity.get("type", "energy")),
+            "csets": _commodity_type_to_csets(comm_type),
             "commname": commodity["name"],
-            "unit": commodity.get("unit", "PJ"),
+            "unit": unit,
         })
 
     # Build process table (~FI_PROCESS)
     # Use lowercase column names for xl2times compatibility
     # primary_commodity_group is REQUIRED in schema - use directly, no inference
     process_rows = []
-    for process in model.get("processes", []):
+    for raw_process in model.get("processes", []):
+        # Normalize shorthand input/output syntax
+        process = _normalize_process_flows(raw_process)
         process_rows.append({
             "region": default_region,
             "techname": process["name"],
@@ -276,22 +411,22 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # Build topology table (~FI_T) for inputs/outputs
     # Use lowercase column names for xl2times compatibility
     topology_rows = []
-    for process in model.get("processes", []):
+    for raw_process in model.get("processes", []):
+        # Normalize shorthand input/output syntax
+        process = _normalize_process_flows(raw_process)
         inputs = process.get("inputs", [])
         outputs = process.get("outputs", [])
 
-        # Collect cost parameters to merge into rows
-        cost_params = {}
-        if "invcost" in process:
-            cost_params["invcost"] = process["invcost"]
-        if "fixom" in process:
-            cost_params["fixom"] = process["fixom"]
-        if "varom" in process:
-            cost_params["varom"] = process["varom"]
-        if "life" in process:
-            cost_params["life"] = process["life"]
-        if "cost" in process:
-            cost_params["cost"] = process["cost"]
+        # Collect cost parameters - separate scalar from time-varying
+        cost_params = {}  # Scalar values to merge into rows
+        time_varying_attrs = []  # (attr_name, value) tuples for separate rows
+        for attr in ["invcost", "fixom", "varom", "life", "cost"]:
+            if attr in process:
+                val = process[attr]
+                if _is_time_varying(val):
+                    time_varying_attrs.append((attr, val))
+                else:
+                    cost_params[attr] = val
 
         # Add input flows
         for inp in inputs:
@@ -324,17 +459,34 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
 
         # Add efficiency row with cost and bound parameters if specified
         if "efficiency" in process:
-            row = {
-                "region": default_region,
-                "techname": process["name"],
-                "eff": process["efficiency"],
-            }
-            row.update(cost_params)
-            # Merge first bound into efficiency row if present
-            if bound_params:
-                first_bound = bound_params.pop(0)
-                row.update(first_bound)
-            topology_rows.append(row)
+            eff_val = process["efficiency"]
+            if _is_time_varying(eff_val):
+                # Time-varying efficiency - add to time_varying_attrs
+                time_varying_attrs.append(("efficiency", eff_val))
+                # Still emit a base row with scalar cost params if any
+                if cost_params:
+                    row = {
+                        "region": default_region,
+                        "techname": process["name"],
+                    }
+                    row.update(cost_params)
+                    if bound_params:
+                        first_bound = bound_params.pop(0)
+                        row.update(first_bound)
+                    topology_rows.append(row)
+            else:
+                # Scalar efficiency
+                row = {
+                    "region": default_region,
+                    "techname": process["name"],
+                    "eff": eff_val,
+                }
+                row.update(cost_params)
+                # Merge first bound into efficiency row if present
+                if bound_params:
+                    first_bound = bound_params.pop(0)
+                    row.update(first_bound)
+                topology_rows.append(row)
 
         # Emit remaining bounds merged with commodity-out references
         # xl2times requires rows to have Comm-IN, Comm-OUT, EFF, or Value
@@ -349,6 +501,19 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
                 row["commodity-out"] = first_output
             row.update(bound_param)
             topology_rows.append(row)
+
+        # Emit time-varying attributes as separate year-indexed rows
+        # xl2times requires at least one commodity reference per row
+        first_output = outputs[0]["commodity"] if outputs else None
+        for attr_name, attr_value in time_varying_attrs:
+            base_row = {
+                "region": default_region,
+                "techname": process["name"],
+            }
+            if first_output:
+                base_row["commodity-out"] = first_output
+            expanded_rows = _expand_time_varying_attr(attr_name, attr_value, base_row)
+            topology_rows.extend(expanded_rows)
 
     # Build system settings tables
     regions = model.get("regions", ["REG1"])

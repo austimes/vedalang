@@ -1753,3 +1753,500 @@ def test_all_examples_pass_semantic_validation():
         source = load_vedalang(example_file)
         tableir = compile_vedalang_to_tableir(source)
         assert "files" in tableir, f"Failed for {example_file.name}"
+
+
+# =============================================================================
+# Time-Varying Process Attributes Tests
+# =============================================================================
+
+
+def test_time_varying_invcost():
+    """Time-varying invcost should emit year-indexed rows."""
+    source = {
+        "model": {
+            "name": "TimeVaryTest",
+            "regions": ["REG1"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [
+                {
+                    "name": "SolarPV",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "outputs": [{"commodity": "ELC"}],
+                    "invcost": {"values": {"2020": 1000, "2030": 600, "2050": 300}},
+                }
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_T rows for SolarPV
+    fit_rows = []
+    for f in tableir["files"]:
+        for s in f.get("sheets", []):
+            for t in s.get("tables", []):
+                if t["tag"] == "~FI_T":
+                    fit_rows.extend(
+                        r for r in t["rows"] if r.get("techname") == "SolarPV"
+                    )
+
+    # Should have rows with year column for invcost
+    invcost_rows = [r for r in fit_rows if "invcost" in r and "year" in r]
+    assert len(invcost_rows) == 4  # year=0 (interp) + 3 data years
+
+    # Check interpolation row (year=0)
+    interp_row = [r for r in invcost_rows if r["year"] == 0][0]
+    assert interp_row["invcost"] == 3  # interp_extrap code
+
+    # Check data rows
+    years_values = {r["year"]: r["invcost"] for r in invcost_rows if r["year"] > 0}
+    assert years_values[2020] == 1000
+    assert years_values[2030] == 600
+    assert years_values[2050] == 300
+
+
+def test_time_varying_efficiency():
+    """Time-varying efficiency should emit year-indexed rows."""
+    source = {
+        "model": {
+            "name": "TimeVaryTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "inputs": [{"commodity": "NG"}],
+                    "outputs": [{"commodity": "ELC"}],
+                    "efficiency": {
+                        "values": {"2020": 0.55, "2030": 0.60, "2050": 0.65},
+                        "interpolation": "interp_extrap",
+                    },
+                }
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_T rows
+    fit_rows = []
+    for f in tableir["files"]:
+        for s in f.get("sheets", []):
+            for t in s.get("tables", []):
+                if t["tag"] == "~FI_T":
+                    fit_rows.extend(r for r in t["rows"] if r.get("techname") == "CCGT")
+
+    # Should have rows with year column for eff
+    eff_rows = [r for r in fit_rows if "eff" in r and "year" in r]
+    assert len(eff_rows) == 4  # year=0 + 3 data years
+
+    years_values = {r["year"]: r["eff"] for r in eff_rows if r["year"] > 0}
+    assert years_values[2020] == 0.55
+    assert years_values[2030] == 0.60
+    assert years_values[2050] == 0.65
+
+
+def test_time_varying_mixed_with_scalar():
+    """Time-varying and scalar attributes can coexist."""
+    source = {
+        "model": {
+            "name": "MixedTest",
+            "regions": ["REG1"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [
+                {
+                    "name": "Wind",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "outputs": [{"commodity": "ELC"}],
+                    "invcost": {"values": {"2020": 1500, "2030": 1000}},
+                    "life": 25,  # Scalar
+                    "fixom": 30,  # Scalar
+                }
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    fit_rows = []
+    for f in tableir["files"]:
+        for s in f.get("sheets", []):
+            for t in s.get("tables", []):
+                if t["tag"] == "~FI_T":
+                    fit_rows.extend(r for r in t["rows"] if r.get("techname") == "Wind")
+
+    # Should have year-indexed invcost rows
+    invcost_rows = [r for r in fit_rows if "invcost" in r and "year" in r]
+    assert len(invcost_rows) == 3  # year=0 + 2 data years
+
+    # Should have a row with scalar life and fixom (merged)
+    scalar_rows = [r for r in fit_rows if "life" in r or "fixom" in r]
+    assert len(scalar_rows) >= 1
+    # At least one row should have both
+    row_with_both = [r for r in scalar_rows if "life" in r and "fixom" in r]
+    assert len(row_with_both) >= 1
+    assert row_with_both[0]["life"] == 25
+    assert row_with_both[0]["fixom"] == 30
+
+
+def test_time_varying_no_interpolation():
+    """Interpolation mode 'none' should not emit year=0 row."""
+    source = {
+        "model": {
+            "name": "NoInterpTest",
+            "regions": ["REG1"],
+            "commodities": [{"name": "ELC", "type": "energy"}],
+            "processes": [
+                {
+                    "name": "Coal",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "outputs": [{"commodity": "ELC"}],
+                    "invcost": {
+                        "values": {"2020": 2000, "2030": 2100},
+                        "interpolation": "none",
+                    },
+                }
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    fit_rows = []
+    for f in tableir["files"]:
+        for s in f.get("sheets", []):
+            for t in s.get("tables", []):
+                if t["tag"] == "~FI_T":
+                    fit_rows.extend(r for r in t["rows"] if r.get("techname") == "Coal")
+
+    invcost_rows = [r for r in fit_rows if "invcost" in r and "year" in r]
+    # Should only have 2 rows (no year=0 for interpolation)
+    assert len(invcost_rows) == 2
+    years = [r["year"] for r in invcost_rows]
+    assert 0 not in years
+    assert 2020 in years
+    assert 2030 in years
+
+
+# =============================================================================
+# Ergonomic Features Tests
+# =============================================================================
+
+
+def test_single_input_string_shorthand():
+    """Single input can be specified as string instead of array."""
+    source = {
+        "model": {
+            "name": "ShorthandInputTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "input": "NG",  # Shorthand instead of inputs array
+                    "outputs": [{"commodity": "ELC"}],
+                    "efficiency": 0.55,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_T rows
+    fit_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_T":
+                    fit_rows.extend(t["rows"])
+
+    # Should have input row for NG
+    input_rows = [r for r in fit_rows if r.get("commodity-in") == "NG"]
+    assert len(input_rows) == 1
+    assert input_rows[0]["techname"] == "PP_CCGT"
+
+
+def test_single_output_string_shorthand():
+    """Single output can be specified as string instead of array."""
+    source = {
+        "model": {
+            "name": "ShorthandOutputTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "inputs": [{"commodity": "NG"}],
+                    "output": "ELC",  # Shorthand instead of outputs array
+                    "efficiency": 0.55,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_T rows
+    fit_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_T":
+                    fit_rows.extend(t["rows"])
+
+    # Should have output row for ELC
+    output_rows = [r for r in fit_rows if r.get("commodity-out") == "ELC"]
+    assert len(output_rows) >= 1
+
+
+def test_both_input_output_shorthand():
+    """Both input and output can use string shorthand."""
+    source = {
+        "model": {
+            "name": "BothShorthandTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "NG", "type": "energy"},
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "input": "NG",  # Shorthand
+                    "output": "ELC",  # Shorthand
+                    "efficiency": 0.55,
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_T rows
+    fit_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_T":
+                    fit_rows.extend(t["rows"])
+
+    # Should have both input and output
+    input_rows = [r for r in fit_rows if r.get("commodity-in") == "NG"]
+    output_rows = [r for r in fit_rows if r.get("commodity-out") == "ELC"]
+    assert len(input_rows) == 1
+    assert len(output_rows) >= 1
+
+
+def test_default_commodity_units_energy():
+    """Energy commodities default to PJ unit."""
+    source = {
+        "model": {
+            "name": "DefaultUnitTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},  # No unit specified
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "output": "ELC",
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_COMM rows
+    comm_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_COMM":
+                    comm_rows.extend(t["rows"])
+
+    # ELC should have default unit PJ
+    elc_row = [r for r in comm_rows if r["commname"] == "ELC"][0]
+    assert elc_row["unit"] == "PJ"
+
+
+def test_default_commodity_units_emission():
+    """Emission commodities default to Mt unit."""
+    source = {
+        "model": {
+            "name": "EmissionUnitTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "CO2", "type": "emission"},  # No unit specified
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "output": "ELC",
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_COMM rows
+    comm_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_COMM":
+                    comm_rows.extend(t["rows"])
+
+    # CO2 should have default unit Mt
+    co2_row = [r for r in comm_rows if r["commname"] == "CO2"][0]
+    assert co2_row["unit"] == "Mt"
+
+
+def test_default_commodity_units_demand():
+    """Demand commodities default to PJ unit."""
+    source = {
+        "model": {
+            "name": "DemandUnitTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "RSD", "type": "demand"},  # No unit specified
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "DMD_RSD",
+                    "sets": ["DMD"],
+                    "primary_commodity_group": "DEMO",
+                    "input": "ELC",
+                    "output": "RSD",
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_COMM rows
+    comm_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_COMM":
+                    comm_rows.extend(t["rows"])
+
+    # RSD should have default unit PJ
+    rsd_row = [r for r in comm_rows if r["commname"] == "RSD"][0]
+    assert rsd_row["unit"] == "PJ"
+
+
+def test_default_commodity_units_material():
+    """Material commodities default to Mt unit."""
+    source = {
+        "model": {
+            "name": "MaterialUnitTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "H2", "type": "material"},  # No unit specified
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_ELYZ",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "MATO",
+                    "input": "ELC",
+                    "output": "H2",
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_COMM rows
+    comm_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_COMM":
+                    comm_rows.extend(t["rows"])
+
+    # H2 should have default unit Mt
+    h2_row = [r for r in comm_rows if r["commname"] == "H2"][0]
+    assert h2_row["unit"] == "Mt"
+
+
+def test_explicit_unit_overrides_default():
+    """Explicitly specified unit should override default."""
+    source = {
+        "model": {
+            "name": "ExplicitUnitTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "ELC", "type": "energy", "unit": "TWh"},  # Explicit unit
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "output": "ELC",
+                },
+            ],
+        }
+    }
+    tableir = compile_vedalang_to_tableir(source)
+
+    # Find ~FI_COMM rows
+    comm_rows = []
+    for f in tableir["files"]:
+        for s in f["sheets"]:
+            for t in s["tables"]:
+                if t["tag"] == "~FI_COMM":
+                    comm_rows.extend(t["rows"])
+
+    # ELC should have explicit unit TWh
+    elc_row = [r for r in comm_rows if r["commname"] == "ELC"][0]
+    assert elc_row["unit"] == "TWh"
+
+
+def test_shorthand_validation_unknown_commodity():
+    """Unknown commodity in shorthand syntax should raise SemanticValidationError."""
+    source = {
+        "model": {
+            "name": "BadShorthandTest",
+            "regions": ["REG1"],
+            "commodities": [
+                {"name": "ELC", "type": "energy"},
+            ],
+            "processes": [
+                {
+                    "name": "PP_CCGT",
+                    "sets": ["ELE"],
+                    "primary_commodity_group": "NRGO",
+                    "input": "MISSING_NG",  # Unknown commodity in shorthand
+                    "output": "ELC",
+                },
+            ],
+        }
+    }
+    with pytest.raises(SemanticValidationError) as exc_info:
+        compile_vedalang_to_tableir(source)
+    assert "MISSING_NG" in str(exc_info.value)
+    assert "PP_CCGT" in str(exc_info.value)

@@ -216,74 +216,103 @@
       "type": "object",
       "required": ["name", "type"],
       "properties": {
-        "name": { "type": "string", "description": "Commodity identifier" },
+        "name": { "type": "string", "description": "Commodity identifier (e.g., ELC, NG, CO2)" },
         "type": { 
           "type": "string",
           "enum": ["energy", "material", "emission", "demand"],
-          "description": "Commodity type category"
+          "description": "Commodity type: energy (fuels, electricity), material (hydrogen, steel), emission (CO2, NOx), demand (end-use services)"
         },
-        "unit": { "type": "string", "description": "Unit of measurement" },
-        "description": { "type": "string" }
+        "unit": { 
+          "type": "string", 
+          "description": "Unit of measurement. Defaults: energy/demand→PJ, emission/material→Mt"
+        },
+        "description": { "type": "string", "description": "Human-readable commodity description" }
       }
     },
     "process": {
       "type": "object",
       "required": ["name", "sets", "primary_commodity_group"],
       "properties": {
-        "name": { "type": "string", "description": "Process identifier" },
-        "description": { "type": "string" },
+        "name": { "type": "string", "description": "Process identifier (e.g., PP_CCGT, IMP_NG)" },
+        "description": { "type": "string", "description": "Human-readable process description" },
         "sets": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "Process set memberships (e.g., ELE, IND)"
+          "description": "Process set memberships (e.g., ELE for electricity, DMD for demand, IMP for import)"
         },
         "primary_commodity_group": {
           "type": "string",
           "enum": ["DEMI", "DEMO", "MATI", "MATO", "NRGI", "NRGO", "ENVI", "ENVO", "FINI", "FINO"],
-          "description": "Primary commodity group (PCG). REQUIRED. Defines which commodity flows determine process activity. No inference - must be explicit."
+          "description": "Primary commodity group (PCG). REQUIRED. Defines which commodity flows determine process activity. Common values: NRGO (energy output), DEMO (demand output), MATO (material output)."
         },
-        "activity_unit": { "type": "string", "default": "PJ" },
-        "capacity_unit": { "type": "string", "default": "GW" },
+        "activity_unit": { "type": "string", "default": "PJ", "description": "Unit for process activity (default: PJ)" },
+        "capacity_unit": { "type": "string", "default": "GW", "description": "Unit for process capacity (default: GW)" },
+        "input": {
+          "type": "string",
+          "description": "Single input commodity name (shorthand for inputs with one item)"
+        },
         "inputs": {
           "type": "array",
           "items": { "$ref": "#/$defs/flow" },
-          "description": "Input commodity flows"
+          "description": "Input commodity flows (use 'input' for single commodity shorthand)"
+        },
+        "output": {
+          "type": "string",
+          "description": "Single output commodity name (shorthand for outputs with one item)"
         },
         "outputs": {
           "type": "array",
           "items": { "$ref": "#/$defs/flow" },
-          "description": "Output commodity flows"
+          "description": "Output commodity flows (use 'output' for single commodity shorthand)"
         },
         "efficiency": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "description": "Process efficiency (0-1)"
+          "oneOf": [
+            { "type": "number", "minimum": 0, "maximum": 1 },
+            { "$ref": "#/$defs/time_varying_value" }
+          ],
+          "description": "Process efficiency (0-1). Can be scalar or time-varying."
         },
         "invcost": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Investment cost per unit capacity (NCAP_COST)"
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "$ref": "#/$defs/time_varying_value" }
+          ],
+          "description": "Investment cost per unit capacity (NCAP_COST). Can be scalar or time-varying."
         },
         "fixom": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Fixed O&M per unit capacity per year (FOM)"
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "$ref": "#/$defs/time_varying_value" }
+          ],
+          "description": "Fixed O&M per unit capacity per year (FOM). Can be scalar or time-varying."
         },
         "varom": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Variable O&M per unit activity (VOM)"
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "$ref": "#/$defs/time_varying_value" }
+          ],
+          "description": "Variable O&M per unit activity (VOM). Can be scalar or time-varying."
         },
         "life": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Technical lifetime in years (LIFE)"
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "$ref": "#/$defs/time_varying_value" }
+          ],
+          "description": "Technical lifetime in years (LIFE). Can be scalar or time-varying."
         },
         "cost": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Activity cost for supply processes (ACT_COST)"
+          "oneOf": [
+            { "type": "number", "minimum": 0 },
+            { "$ref": "#/$defs/time_varying_value" }
+          ],
+          "description": "Activity cost for supply processes (ACT_COST). Can be scalar or time-varying."
+        },
+        "availability_factor": {
+          "oneOf": [
+            { "type": "number", "minimum": 0, "maximum": 1 },
+            { "$ref": "#/$defs/time_varying_value" }
+          ],
+          "description": "Availability factor (0-1). Can be scalar or time-varying."
         },
         "activity_bound": {
           "$ref": "#/$defs/bound",
@@ -404,6 +433,33 @@
         }
       },
       "required": ["values", "interpolation"]
+    },
+    "time_varying_value": {
+      "type": "object",
+      "description": "Time-varying process attribute with year->value mapping and optional interpolation",
+      "properties": {
+        "values": {
+          "type": "object",
+          "description": "Year -> value mapping (e.g., {\"2020\": 1000, \"2030\": 600})",
+          "additionalProperties": { "type": "number" },
+          "propertyNames": { "pattern": "^[12][0-9]{3}$" }
+        },
+        "interpolation": {
+          "type": "string",
+          "enum": [
+            "none",
+            "interp_only",
+            "interp_extrap_eps",
+            "interp_extrap",
+            "interp_extrap_back",
+            "interp_extrap_forward"
+          ],
+          "default": "interp_extrap",
+          "description": "VEDA interpolation/extrapolation mode (default: interp_extrap)"
+        }
+      },
+      "required": ["values"],
+      "additionalProperties": false
     }
   }
 }

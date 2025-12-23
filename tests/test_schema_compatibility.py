@@ -185,13 +185,24 @@ class TestPropertyTypesPreserved:
             "model.regions type was changed! This is a breaking change."
         )
 
-    def test_process_efficiency_is_number(self, schema: dict):
-        """process.efficiency must remain a number type."""
+    def test_process_efficiency_accepts_number(self, schema: dict):
+        """process.efficiency must accept number type (scalar or in oneOf)."""
         process_def = schema.get("$defs", {}).get("process", {})
         eff_prop = process_def.get("properties", {}).get("efficiency", {})
-        assert eff_prop.get("type") == "number", (
-            "process.efficiency type was changed! This is a breaking change."
-        )
+        # Can be direct type or oneOf (for time-varying support)
+        if "oneOf" in eff_prop:
+            # Check that at least one option accepts number
+            number_options = [
+                opt for opt in eff_prop["oneOf"]
+                if opt.get("type") == "number"
+            ]
+            assert len(number_options) >= 1, (
+                "process.efficiency oneOf must include a number option"
+            )
+        else:
+            assert eff_prop.get("type") == "number", (
+                "process.efficiency type was changed! This is a breaking change."
+            )
 
 
 # =============================================================================
