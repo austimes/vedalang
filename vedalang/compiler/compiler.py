@@ -519,7 +519,12 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     regions = model.get("regions", ["REG1"])
 
     # ~BOOKREGIONS_MAP - maps book regions to internal regions
-    bookregions_rows = [{"bookname": r, "region": r} for r in regions]
+    # Use a single bookname for all regions to ensure all are treated as internal
+    # The bookname must match the VT_{bookname}_* file pattern
+    # IMPORTANT: Bookname must be uppercase for xl2times compatibility
+    model_name = model.get("name", "Model")
+    bookname = model_name.upper()  # Uppercase for xl2times BookRegions_Map matching
+    bookregions_rows = [{"bookname": bookname, "region": r} for r in regions]
 
     # ~STARTYEAR - model start year
     start_year = model.get("start_year", 2020)
@@ -542,17 +547,17 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # Derive model years for time-series expansion
     model_years = _get_model_years(model)
 
-    # Build scenario files (~TFM_INS-TS tables) for commodity_price scenarios
+    # Build scenario files (~TFM_INS tables) for commodity_price scenarios
     scenario_files = []
     for scenario in model.get("scenarios", []):
         scenario_rows = _compile_scenario(scenario, default_region, model_years)
         if scenario_rows:
             scenario_file = {
-                "path": f"Scen_{scenario['name']}/Scen_{scenario['name']}.xlsx",
+                "path": f"SuppXLS/Scen_{scenario['name']}.xlsx",
                 "sheets": [
                     {
                         "name": "Scenario",
-                        "tables": [{"tag": "~TFM_INS-TS", "rows": scenario_rows}],
+                        "tables": [{"tag": "~TFM_INS", "rows": scenario_rows}],
                     }
                 ],
             }
@@ -598,11 +603,9 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
             "tables": [{"tag": "~TFM_INS", "rows": yrfr_rows}],
         })
 
-    # Build process file - use VT_{region}_ prefix for internal region recognition
-    # For multi-region models, use the first region for the file name
-    model_name = model.get("name", "Model")
-    first_region = regions[0] if regions else "REG1"
-    process_file_path = f"VT_{first_region}_{model_name}.xlsx"
+    # Build process file - use VT_{bookname}_ prefix for internal region recognition
+    # All regions map to this single bookname via BOOKREGIONS_MAP
+    process_file_path = f"VT_{bookname}_{model_name}.xlsx"
 
     # Compile trade links if present - returns files, process declarations, and topology
     trade_link_files, trade_process_rows, trade_topology_rows = _compile_trade_links(
@@ -625,7 +628,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     tableir = {
         "files": [
             {
-                "path": "SysSettings/SysSettings.xlsx",
+                "path": "SysSettings.xlsx",
                 "sheets": syssettings_sheets,
             },
             {
@@ -816,7 +819,7 @@ def _compile_scenario(
     model_years: list[int],
 ) -> list[dict]:
     """
-    Compile a scenario definition to TableIR rows for ~TFM_INS-TS.
+    Compile a scenario definition to TableIR rows for ~TFM_INS.
 
     Expands sparse time-series to dense rows for all model years using
     VEDA-compatible interpolation semantics. No year=0 rows are emitted;
@@ -828,7 +831,7 @@ def _compile_scenario(
         model_years: List of model representative years
 
     Returns:
-        List of rows for the ~TFM_INS-TS table (one per model year)
+        List of rows for the ~TFM_INS table (one row per specified year)
     """
     scenario_type = scenario.get("type")
     rows = []
@@ -836,24 +839,20 @@ def _compile_scenario(
     if scenario_type == "commodity_price":
         commodity = scenario["commodity"]
         sparse_values = scenario.get("values", {})
-        interpolation = scenario["interpolation"]  # Required field
 
-        # Expand to all model years using VEDA-compatible interpolation
-        dense_values = _expand_series_to_years(
-            sparse_values, model_years, interpolation
-        )
-
-        # Emit one row per year (canonical long format, dense)
-        for year in sorted(dense_values.keys()):
+        # Use TFM_INS with long format (one row per year)
+        # COM_CSTNET = cost on net of commodity (e.g., emissions tax)
+        for year_str, value in sorted(sparse_values.items()):
             rows.append({
+                "attribute": "COM_CSTNET",
                 "region": region,
-                "year": year,
-                "pset_co": commodity,
-                "cost": dense_values[year],
+                "year": int(year_str),
+                "commodity": commodity,
+                "value": value,
             })
 
     # Note: demand_projection is handled separately in compile_vedalang_to_tableir
-    # as it emits to ~FI_T table, not ~TFM_INS-TS
+    # as it emits to ~FI_T table, not ~TFM_INS
 
     return rows
 

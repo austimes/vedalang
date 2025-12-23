@@ -32,10 +32,13 @@ VedaLang is a typed DSL that compiles to VEDA Excel tables for TIMES energy mode
 | `vedalang-4t8` | Wire MiniSystem as golden CI test | ✅ 18 tests passing |
 | `vedalang-6qs` | Add time-varying process attributes | ✅ Compiler + 4 tests |
 | `vedalang-1lb` | Ergonomic improvements based on authoring friction | ✅ 3 improvements + 9 tests |
+| `vedalang-sqh` | VedaOnline/Veda2 directory structure compatibility | ✅ Fixed |
 
 ### Open Tasks
 
-_No remaining open tasks in this phase._
+| Issue | Priority | Description | Status |
+|-------|----------|-------------|--------|
+| `vedalang-iil` | P2 | xl2times --force-veda flag | 🔄 Open |
 
 ### Future Work (P3)
 
@@ -49,7 +52,7 @@ _No remaining open tasks in this phase._
 
 ## Completed Work Summary
 
-**57 issues closed** across all phases.
+**60 issues closed** across all phases.
 
 ### Phase 0: Toolchain Validation ✅
 - `vedalang compile` works
