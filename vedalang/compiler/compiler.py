@@ -552,11 +552,25 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # Derive model years for time-series expansion
     model_years = _get_model_years(model)
 
-    # Build scenario files (~TFM_DINS-AT tables) for commodity_price scenarios
-    # Uses ~TFM_DINS-AT instead of ~TFM_INS for VedaOnline compatibility
+    # Build scenario files (~TFM_DINS-AT tables)
+    # ARCHITECTURE/SCENARIO SEPARATION:
+    # - Scenario data (demand projections, commodity prices) goes to Scen_* files
+    # - This prevents forward-fill contamination when mixed with process topology
+    # - Uses ~TFM_DINS-AT for VedaOnline compatibility
     scenario_files = []
     for scenario in model.get("scenarios", []):
-        scenario_rows = _compile_scenario(scenario, default_region, model_years)
+        scenario_type = scenario.get("type")
+        scenario_rows = []
+
+        if scenario_type == "commodity_price":
+            scenario_rows = _compile_commodity_price_scenario(
+                scenario, regions, model_years
+            )
+        elif scenario_type == "demand_projection":
+            scenario_rows = _compile_demand_projection_scenario(
+                scenario, regions, model_years
+            )
+
         if scenario_rows:
             scenario_file = {
                 "path": f"SuppXLS/Scen_{scenario['name']}.xlsx",
@@ -568,12 +582,6 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
                 ],
             }
             scenario_files.append(scenario_file)
-
-    # Compile demand projections - these go into ~FI_T table
-    demand_projection_rows = _compile_demand_projections(
-        model.get("scenarios", []), default_region, model_years
-    )
-    topology_rows.extend(demand_projection_rows)
 
     # Compile timeslices if defined
     timeslice_rows = []
@@ -631,6 +639,8 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     )
 
     # Build TableIR structure
+    # ARCHITECTURE ONLY: VT_* and SysSettings files contain model structure
+    # Scenario data (demand projections, prices) is in separate Scen_* files
     tableir = {
         "files": [
             {
@@ -646,7 +656,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
                             {"tag": "~FI_PROCESS", "rows": process_rows},
                             {"tag": "~FI_T", "rows": topology_rows},
                         ],
-                    }
+                    },
                 ],
             },
             *scenario_files,
@@ -826,97 +836,91 @@ def _expand_series_to_years(
     return result
 
 
-def _compile_scenario(
+def _compile_commodity_price_scenario(
     scenario: dict,
-    region: str,
+    regions: list[str],
     model_years: list[int],
 ) -> list[dict]:
     """
-    Compile a scenario definition to TableIR rows for ~TFM_DINS-AT.
+    Compile a commodity_price scenario to TableIR rows for ~TFM_DINS-AT.
 
     Uses ~TFM_DINS-AT tag (not ~TFM_INS) for VedaOnline compatibility.
     The attribute name becomes a column header, not a 'value' column.
 
     Expands sparse time-series to dense rows for all model years using
-    VEDA-compatible interpolation semantics. No year=0 rows are emitted;
-    the compiler handles all interpolation.
+    VEDA-compatible interpolation semantics.
 
     Args:
-        scenario: Scenario definition from VedaLang source
-        region: Default region for the model
+        scenario: commodity_price scenario definition from VedaLang source
+        regions: List of model regions (rows emitted for each)
         model_years: List of model representative years
 
     Returns:
-        List of rows for the ~TFM_DINS-AT table (one row per specified year)
+        List of rows for the ~TFM_DINS-AT table (one row per region × year)
     """
-    scenario_type = scenario.get("type")
+    assert scenario.get("type") == "commodity_price"
+
+    commodity = scenario["commodity"]
+    sparse_values = scenario.get("values", {})
+    interpolation = scenario.get("interpolation", "interp_extrap")
+
+    # Expand to all model years using VEDA-compatible interpolation
+    dense_values = _expand_series_to_years(
+        sparse_values, model_years, interpolation
+    )
+
     rows = []
-
-    if scenario_type == "commodity_price":
-        commodity = scenario["commodity"]
-        sparse_values = scenario.get("values", {})
-
-        # Use TFM_DINS-AT with attribute as column header (not 'value' column)
-        # cset_cn = explicit commodity name
-        # com_cstnet = cost on net of commodity (lowercase for xl2times)
-        for year_str, value in sorted(sparse_values.items()):
+    for region in regions:
+        for year, value in sorted(dense_values.items()):
             rows.append({
                 "region": region,
                 "cset_cn": commodity,
-                "year": int(year_str),
+                "year": year,
                 "com_cstnet": value,
             })
-
-    # Note: demand_projection is handled separately in compile_vedalang_to_tableir
-    # as it emits to ~FI_T table, not ~TFM_DINS-AT
 
     return rows
 
 
-def _compile_demand_projections(
-    scenarios: list[dict],
-    region: str,
+def _compile_demand_projection_scenario(
+    scenario: dict,
+    regions: list[str],
     model_years: list[int],
 ) -> list[dict]:
     """
-    Compile demand_projection scenarios to TableIR rows for ~FI_T.
+    Compile one demand_projection scenario to ~TFM_DINS-AT rows.
 
-    Uses wide-in-attribute format where 'DEMAND' is a column header
-    (not a value in an 'attribute' column). This is the correct FI-style
-    format where attributes are column headers with no 'value' column.
+    Uses wide-in-attribute format where 'com_proj' is a column header
+    in ~TFM_DINS-AT. This properly separates scenario data from model
+    architecture, avoiding forward-fill contamination in xl2times.
 
     Args:
-        scenarios: List of scenario definitions from VedaLang source
-        region: Default region for the model
+        scenario: A single demand_projection scenario definition
+        regions: List of model regions (rows emitted for each)
         model_years: List of model representative years
 
     Returns:
-        List of rows for the ~FI_T table (one per model year per commodity)
+        List of rows for ~TFM_DINS-AT table (one per region × year)
     """
+    assert scenario.get("type") == "demand_projection"
+
+    commodity = scenario["commodity"]
+    sparse_values = scenario.get("values", {})
+    interpolation = scenario.get("interpolation", "interp_extrap")
+
+    # Expand to all model years using VEDA-compatible interpolation
+    dense_values = _expand_series_to_years(
+        sparse_values, model_years, interpolation
+    )
+
     rows = []
-
-    for scenario in scenarios:
-        if scenario.get("type") != "demand_projection":
-            continue
-
-        commodity = scenario["commodity"]
-        sparse_values = scenario.get("values", {})
-        interpolation = scenario["interpolation"]
-
-        # Expand to all model years using VEDA-compatible interpolation
-        dense_values = _expand_series_to_years(
-            sparse_values, model_years, interpolation
-        )
-
-        # Wide-in-attribute format: com_proj is a column header, not a value
-        # This matches VEDA FI-style tables where attributes are columns
-        # NOTE: Use canonical 'com_proj', not alias 'demand'
-        for year in sorted(dense_values.keys()):
+    for region in regions:
+        for year, value in sorted(dense_values.items()):
             rows.append({
                 "region": region,
-                "commodity": commodity,
+                "cset_cn": commodity,  # Commodity selector for TFM tables
                 "year": year,
-                "com_proj": dense_values[year],  # Canonical attribute name
+                "com_proj": value,  # Canonical attribute column
             })
 
     return rows
@@ -1083,18 +1087,16 @@ def _compile_timeslices(
     1. ~TIMESLICES table with season/weekly/daynite columns
     2. ~TFM_INS rows with attribute=YRFR for year fractions
 
-    The ~TIMESLICES table format emits parent codes and explicit leaf timeslice
-    names. This gives VedaLang explicit control over timeslice naming rather
-    than relying on xl2times cross-product expansion.
+    The ~TIMESLICES table format emits level codes in a cross-product pattern.
+    xl2times expects level codes and does its own concatenation to form leaf
+    timeslice names.
 
     For example, with seasons [S, W] and daynites [D, N], we emit:
         Season | Weekly | DayNite
-        S      |        |         <- parent season code
-        W      |        |         <- parent season code
-               |        | SD      <- explicit leaf timeslice
-               |        | SN
-               |        | WD
-               |        | WN
+        S      |        | D       <- (S, D) -> xl2times produces "SD"
+        S      |        | N       <- (S, N) -> xl2times produces "SN"
+        W      |        | D       <- (W, D) -> xl2times produces "WD"
+        W      |        | N       <- (W, N) -> xl2times produces "WN"
 
     Args:
         timeslices: Timeslice definition from VedaLang source
@@ -1102,43 +1104,55 @@ def _compile_timeslices(
 
     Returns:
         Tuple of (timeslice_rows, yrfr_rows)
+
+    Raises:
+        ValueError: If user-provided fractions keys don't match expected leaves
     """
     season_codes = [s["code"] for s in timeslices.get("season", [])]
     weekly_codes = [w["code"] for w in timeslices.get("weekly", [])]
     daynite_codes = [d["code"] for d in timeslices.get("daynite", [])]
 
+    # Validate fractions keys match expected leaf names
+    fractions = timeslices.get("fractions", {})
+    if fractions:
+        expected_leaves = set(_generate_leaf_timeslices(
+            season_codes, weekly_codes, daynite_codes
+        ))
+        user_leaves = set(fractions.keys())
+        if user_leaves != expected_leaves:
+            missing = expected_leaves - user_leaves
+            extra = user_leaves - expected_leaves
+            msg_parts = ["Timeslice fractions mismatch:"]
+            if missing:
+                msg_parts.append(f"  Missing: {sorted(missing)}")
+            if extra:
+                msg_parts.append(f"  Unknown: {sorted(extra)}")
+            msg_parts.append(
+                f"  Expected leaves from level codes: {sorted(expected_leaves)}"
+            )
+            raise ValueError("\n".join(msg_parts))
+
     timeslice_rows = []
 
-    # Emit parent season codes (each on its own row with empty other columns)
-    for season in season_codes:
-        timeslice_rows.append({
-            "season": season,
-            "weekly": "",
-            "daynite": "",
-        })
+    # Emit cross-product of level codes
+    # xl2times expects level codes and concatenates them to form leaf names
+    import itertools
 
-    # Emit parent weekly codes (if any)
-    for weekly in weekly_codes:
-        timeslice_rows.append({
-            "season": "",
-            "weekly": weekly,
-            "daynite": "",
-        })
+    s_list = season_codes if season_codes else [""]
+    w_list = weekly_codes if weekly_codes else [""]
+    d_list = daynite_codes if daynite_codes else [""]
 
-    # Generate and emit explicit leaf timeslice names
-    # The leaf names are the concatenation of all level codes
-    leaf_timeslices = _generate_leaf_timeslices(
-        season_codes, weekly_codes, daynite_codes
-    )
-    for leaf in leaf_timeslices:
+    for s, w, d in itertools.product(s_list, w_list, d_list):
+        # Skip if all are empty
+        if not s and not w and not d:
+            continue
         timeslice_rows.append({
-            "season": "",
-            "weekly": "",
-            "daynite": leaf,
+            "season": s,
+            "weekly": w,
+            "daynite": d,
         })
 
     # Build ~TFM_INS rows for year fractions
-    fractions = timeslices.get("fractions", {})
     yrfr_rows = []
     for ts_name, fraction in fractions.items():
         # YRFR applies to all regions via allregions column

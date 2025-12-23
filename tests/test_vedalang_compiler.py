@@ -152,7 +152,12 @@ def test_process_cost_attributes():
 
 
 def test_demand_projection_scenario():
-    """demand_projection scenario should emit to ~FI_T with attribute=DEMAND."""
+    """demand_projection scenario should emit to ~TFM_DINS-AT in Scen_* file.
+
+    Architecture/scenario separation: demand projections are scenario data,
+    not model architecture. They go to separate Scen_* files to avoid
+    forward-fill contamination in xl2times.
+    """
     source = {
         "model": {
             "name": "DemandTest",
@@ -190,17 +195,14 @@ def test_demand_projection_scenario():
     }
     tableir = compile_vedalang_to_tableir(source)
 
-    # Find ~FI_T table
-    fit_rows = []
+    # Find Scen_BaseDemand file with ~TFM_DINS-AT table
+    demand_rows = []
     for f in tableir["files"]:
-        for s in f["sheets"]:
-            for t in s["tables"]:
-                if t["tag"] == "~FI_T":
-                    fit_rows.extend(t["rows"])
-
-    # Find demand projection rows (wide-in-attribute format)
-    # NOTE: Use canonical 'com_proj', not alias 'demand'
-    demand_rows = [r for r in fit_rows if "com_proj" in r]
+        if "Scen_BaseDemand" in f["path"]:
+            for s in f["sheets"]:
+                for t in s["tables"]:
+                    if t["tag"] == "~TFM_DINS-AT":
+                        demand_rows.extend(t["rows"])
 
     # Should have 4 rows (one per model year: 2020, 2030, 2040, 2050)
     assert len(demand_rows) == 4
@@ -209,12 +211,12 @@ def test_demand_projection_scenario():
     years = sorted([r["year"] for r in demand_rows])
     assert years == [2020, 2030, 2040, 2050]
 
-    # Check commodity is correct
+    # Check commodity selector is correct (cset_cn for TFM tables)
     for row in demand_rows:
-        assert row["commodity"] == "RSD"
+        assert row["cset_cn"] == "RSD"
         assert row["region"] == "REG1"
 
-    # Check values are interpolated correctly (com_proj is column header, not 'value')
+    # Check values are interpolated correctly (com_proj is column header)
     values_by_year = {r["year"]: r["com_proj"] for r in demand_rows}
     assert values_by_year[2020] == 100.0
     assert values_by_year[2030] == 120.0
@@ -222,8 +224,12 @@ def test_demand_projection_scenario():
     assert values_by_year[2050] == 160.0
 
 
-def test_demand_projection_no_scenario_file():
-    """demand_projection should NOT create a separate scenario file."""
+def test_demand_projection_creates_scenario_file():
+    """demand_projection SHOULD create a separate Scen_* scenario file.
+
+    This is the correct architecture/scenario separation: demand projections
+    are scenario data and belong in Scen_* files, not VT_* architecture files.
+    """
     source = {
         "model": {
             "name": "DemandTest",
@@ -252,9 +258,9 @@ def test_demand_projection_no_scenario_file():
     }
     tableir = compile_vedalang_to_tableir(source)
 
-    # Should NOT have a Scen_BaseDemand file
+    # SHOULD have a Scen_BaseDemand file (architecture/scenario separation)
     file_paths = [f["path"] for f in tableir["files"]]
-    assert not any("Scen_BaseDemand" in p for p in file_paths)
+    assert any("Scen_BaseDemand" in p for p in file_paths)
 
 
 def test_process_capacity_bounds():
@@ -436,23 +442,28 @@ def test_compile_timeslices():
     assert len(timeslice_tables) == 1
     ts_rows = timeslice_tables[0]["rows"]
 
-    # 6 rows: 2 parent seasons + 4 leaf timeslices
-    # Parents: S, W (each with empty daynite)
-    # Leaves: SD, SN, WD, WN (explicit names in daynite column)
-    assert len(ts_rows) == 6
+    # 4 rows: cross-product of season × daynite level codes
+    # xl2times expects level codes and does concatenation itself
+    # (S, D), (S, N), (W, D), (W, N)
+    assert len(ts_rows) == 4
 
-    # Check parent season rows (first 2 rows)
-    parent_seasons = [r["season"] for r in ts_rows if r.get("season")]
-    assert set(parent_seasons) == {"S", "W"}
+    # Check that each row has level codes (not leaf names)
+    # All rows should have season code populated
+    seasons_in_rows = {r["season"] for r in ts_rows}
+    assert seasons_in_rows == {"S", "W"}
 
-    # Check leaf timeslice rows (last 4 rows, in daynite column)
-    leaf_timeslices = [r["daynite"] for r in ts_rows if r.get("daynite")]
-    assert set(leaf_timeslices) == {"SD", "SN", "WD", "WN"}
+    # All rows should have daynite level code (D or N, not SD/SN/WD/WN)
+    daynites_in_rows = {r["daynite"] for r in ts_rows}
+    assert daynites_in_rows == {"D", "N"}
 
     # Each row should have weekly column (empty for this test)
     for row in ts_rows:
         assert "weekly" in row
         assert row["weekly"] == ""
+
+    # Verify all 4 combinations are present
+    combos = {(r["season"], r["daynite"]) for r in ts_rows}
+    assert combos == {("S", "D"), ("S", "N"), ("W", "D"), ("W", "N")}
 
 
 def test_compile_timeslices_yrfr():
@@ -505,15 +516,15 @@ def test_compile_example_with_timeslices():
     source = load_vedalang(EXAMPLES_DIR / "example_with_timeslices.veda.yaml")
     tableir = compile_vedalang_to_tableir(source)
 
-    # Should have timeslice table with parent codes and explicit leaves
+    # Should have timeslice table with cross-product of level codes
     has_timeslices = False
     for f in tableir["files"]:
         for s in f["sheets"]:
             for t in s["tables"]:
                 if t["tag"] == "~TIMESLICES":
                     has_timeslices = True
-                    # 6 rows: 2 parent seasons + 4 explicit leaf timeslices
-                    assert len(t["rows"]) == 6
+                    # 4 rows: cross-product of season × daynite level codes
+                    assert len(t["rows"]) == 4
 
     assert has_timeslices
 
