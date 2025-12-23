@@ -7,6 +7,8 @@ import jsonschema
 import yaml
 from openpyxl import Workbook
 
+from vedalang.compiler.online_compat import validate_online_compat
+
 SCHEMA_PATH = (
     Path(__file__).parent.parent.parent / "vedalang" / "schema" / "tableir.schema.json"
 )
@@ -41,6 +43,13 @@ def emit_excel(tableir: dict, out_dir: Path, validate: bool = True) -> list[Path
     """
     if validate:
         validate_tableir(tableir)
+
+        online_errors = validate_online_compat(tableir)
+        if online_errors:
+            raise ValueError(
+                "VEDA Online compatibility errors:\n"
+                + "\n".join(f"  - {e}" for e in online_errors)
+            )
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -84,6 +93,12 @@ def emit_excel(tableir: dict, out_dir: Path, validate: bool = True) -> list[Path
                         # Scalar tags: emit values directly without header row
                         # Rows should have single "value" key
                         for row in rows:
+                            extra_keys = set(row.keys()) - {"value"}
+                            if extra_keys:
+                                raise ValueError(
+                                    f"Scalar tag {tag} rows must only have "
+                                    f"'value' key, found: {extra_keys}"
+                                )
                             value = row.get("value")
                             if value is not None:
                                 ws.cell(row=current_row, column=1, value=value)
