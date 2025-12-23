@@ -917,7 +917,7 @@ def test_emission_cap_constraint():
                     uc_rows.extend(t["rows"])
 
     # Should have rows for 2 years (2020, 2030)
-    # Each year: 1 uc_comprd row + 1 uc_rhs row = 2 rows
+    # Each year: 1 uc_comprd row + 1 uc_rhsrt row = 2 rows
     assert len(uc_rows) == 4
 
     # Check uc_comprd rows (VedaOnline format: attribute as column header)
@@ -929,13 +929,13 @@ def test_emission_cap_constraint():
         assert row["side"] == "LHS"
         assert row["uc_comprd"] == 1
 
-    # Check uc_rhs rows (VedaOnline format: attribute as column header)
-    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
+    # Check uc_rhsrt rows (VedaOnline format: attribute as column header)
+    rhs_rows = [r for r in uc_rows if "uc_rhsrt" in r]
     assert len(rhs_rows) == 2
     for row in rhs_rows:
         assert row["uc_n"] == "CO2_CAP"
         assert row["limtype"] == "UP"
-        assert row["uc_rhs"] == 100
+        assert row["uc_rhsrt"] == 100
 
 
 def test_emission_cap_with_year_trajectory():
@@ -977,9 +977,9 @@ def test_emission_cap_with_year_trajectory():
                 if t["tag"] == "~UC_T":
                     uc_rows.extend(t["rows"])
 
-    # Check RHS values are interpolated (VedaOnline format: uc_rhs as column header)
-    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
-    by_year = {r["year"]: r["uc_rhs"] for r in rhs_rows}
+    # Check RHS values are interpolated (VedaOnline format: uc_rhsrt as column header)
+    rhs_rows = [r for r in uc_rows if "uc_rhsrt" in r]
+    by_year = {r["year"]: r["uc_rhsrt"] for r in rhs_rows}
 
     assert by_year[2020] == 100
     assert by_year[2030] == 75  # Interpolated
@@ -1028,7 +1028,7 @@ def test_activity_share_minimum():
                     uc_rows.extend(t["rows"])
 
     # Should have rows for 1 year (2020):
-    # 2 uc_act (PP_WIND, PP_SOLAR) + 1 uc_comprd + 1 uc_rhs = 4 rows
+    # 2 uc_act (PP_WIND, PP_SOLAR) + 1 uc_comprd + 1 uc_rhsrt = 4 rows
     assert len(uc_rows) == 4
 
     # Check uc_act rows (VedaOnline format: coefficient = 1 for target processes)
@@ -1047,10 +1047,10 @@ def test_activity_share_minimum():
     assert comprd_rows[0]["uc_comprd"] == -0.30
     assert comprd_rows[0]["side"] == "LHS"
 
-    # Check uc_rhs row (VedaOnline format: RHS = 0, limtype = LO)
-    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
+    # Check uc_rhsrt row (VedaOnline format: RHS = 0, limtype = LO)
+    rhs_rows = [r for r in uc_rows if "uc_rhsrt" in r]
     assert len(rhs_rows) == 1
-    assert rhs_rows[0]["uc_rhs"] == 0
+    assert rhs_rows[0]["uc_rhsrt"] == 0
     assert rhs_rows[0]["limtype"] == "LO"
 
 
@@ -1088,8 +1088,8 @@ def test_activity_share_maximum():
                 if t["tag"] == "~UC_T":
                     uc_rows.extend(t["rows"])
 
-    # Check uc_rhs has limtype = UP (VedaOnline format)
-    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
+    # Check uc_rhsrt has limtype = UP (VedaOnline format)
+    rhs_rows = [r for r in uc_rows if "uc_rhsrt" in r]
     assert len(rhs_rows) == 1
     assert rhs_rows[0]["limtype"] == "UP"
 
@@ -1140,7 +1140,7 @@ def test_activity_share_both_min_max():
     lo_rhs = [
         r
         for r in uc_rows
-        if r["uc_n"] == "WIND_BAND_LO" and "uc_rhs" in r
+        if r["uc_n"] == "WIND_BAND_LO" and "uc_rhsrt" in r
     ]
     assert len(lo_rhs) == 1
     assert lo_rhs[0]["limtype"] == "LO"
@@ -1156,7 +1156,7 @@ def test_activity_share_both_min_max():
     up_rhs = [
         r
         for r in uc_rows
-        if r["uc_n"] == "WIND_BAND_UP" and "uc_rhs" in r
+        if r["uc_n"] == "WIND_BAND_UP" and "uc_rhsrt" in r
     ]
     assert len(up_rhs) == 1
     assert up_rhs[0]["limtype"] == "UP"
@@ -1397,7 +1397,7 @@ def test_emission_cap_lower_bound():
                     uc_rows.extend(t["rows"])
 
     # Check limtype is LO (VedaOnline format)
-    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
+    rhs_rows = [r for r in uc_rows if "uc_rhsrt" in r]
     assert all(r["limtype"] == "LO" for r in rhs_rows)
 
 

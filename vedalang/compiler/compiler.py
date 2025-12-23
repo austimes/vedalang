@@ -1317,7 +1317,8 @@ def _compile_emission_cap(
             "uc_comprd": 1,
         })
 
-    # Emit RHS row: use uc_rhs as column header with limtype (lowercase for xl2times)
+    # Use uc_rhsrt (region + year variant) for year-specific RHS values
+    # UC_RHSRT indexes: [region, uc_n, year, limtype]
     for year in sorted(dense_values.keys()):
         rows.append({
             "uc_n": uc_name,
@@ -1325,7 +1326,7 @@ def _compile_emission_cap(
             "region": region,
             "year": year,
             "limtype": limtype,
-            "uc_rhs": dense_values[year],
+            "uc_rhsrt": dense_values[year],
         })
 
     return rows
@@ -1459,14 +1460,14 @@ def _compile_share_constraint(
         })
 
         # RHS: The bound is 0
-        # Use uc_rhs as column header with limtype (lowercase for xl2times)
+        # Use uc_rhsrt (region + year variant) since we have year-specific constraints
         rows.append({
             "uc_n": uc_name,
             "description": description,
             "region": region,
             "year": year,
             "limtype": limtype,
-            "uc_rhs": 0,
+            "uc_rhsrt": 0,
         })
 
     return rows

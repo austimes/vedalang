@@ -289,7 +289,7 @@ def apply_manual_layouts(schemas: dict[str, VedaTableSchema]) -> None:
         )
         # Add columns that VedaLang emits for user constraints
         schemas["uc_t"].allowed_columns.update({
-            "uc_comprd", "uc_rhs", "commodity", "uc_sets", "value",
+            "uc_comprd", "uc_rhs", "uc_rhsrt", "commodity", "uc_sets", "value",
             "process", "uc_act",  # Activity share constraints
         })
 

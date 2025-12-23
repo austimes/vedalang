@@ -38,6 +38,7 @@ vedalang = "vedalang.compiler.cli:main"
 veda_check = "tools.veda_check.cli:main"
 veda_pattern = "tools.veda_patterns.cli:main"
 veda_run_times = "tools.veda_run_times.cli:main"
+veda-dev = "tools.veda_dev.cli:main"
 xl2times = "xl2times.__main__:main"
 
 [tool.setuptools.packages.find]

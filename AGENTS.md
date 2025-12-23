@@ -164,26 +164,56 @@ veda-devtools/
 └── tests/
 ```
 
-## Commands
+## CLI Tools
+
+The Design Agent has access to the following CLI tools:
+
+### Primary Tool: `veda-dev` (Design Agent Hub)
+
+The unified CLI for VedaLang design iteration. Use this for most workflows.
 
 ```bash
-# Emit Excel from TableIR (low-level, for pattern experimentation)
-veda_emit_excel tables.yaml --out model.xlsx
+# Full pipeline: VedaLang → TableIR → Excel → DD (preferred workflow)
+veda-dev pipeline model.veda.yaml --no-solver --json
 
+# Full pipeline with TIMES solver
+veda-dev pipeline model.veda.yaml --times-src ~/TIMES_model --case base --json
+
+# Validate VedaLang source
+veda-dev check model.veda.yaml --json
+
+# Emit Excel from TableIR (for pattern experimentation)
+veda-dev emit-excel tables.yaml --out output/
+
+# Run TIMES solver on DD files
+veda-dev run-times dd_dir/ --times-src ~/TIMES_model --json
+
+# Pattern library utilities
+veda-dev pattern list --json
+veda-dev pattern show thermal_plant --json
+```
+
+**Key flags:**
+- `--json` — Machine-readable output for agent consumption
+- `--no-solver` — Stop before TIMES (useful when GAMS unavailable)
+- `--keep-workdir` — Preserve temp files for debugging
+- `-v` — Verbose output
+
+### Standalone Tools
+
+These remain available for users and external tooling:
+
+| Tool | Purpose |
+|------|---------|
+| `vedalang compile` | VedaLang → TableIR/Excel compiler |
+| `xl2times` | Excel → DD files (validation oracle) |
+
+```bash
 # Compile VedaLang to Excel
 vedalang compile src/ --out model.xlsx
 
 # Validate Excel through xl2times
 xl2times model.xlsx --case base --diagnostics-json diag.json
-
-# Full pipeline: compile + validate (preferred)
-veda_check src/ --from-vedalang --case base
-
-# Run TIMES model through GAMS (requires TIMES source and GAMS license)
-veda_run_times dd_output_dir/ --times-src ~/TIMES_model --case base
-
-# Run with JSON output for agent consumption
-veda_run_times dd_output_dir/ --times-src ~/TIMES_model --case base --json
 ```
 
 ## TableIR Example

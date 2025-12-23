@@ -1,0 +1,379 @@
+"""Pipeline orchestrator for full VedaLang -> TIMES cycle."""
+
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+
+@dataclass
+class StepResult:
+    """Result from a single pipeline step."""
+
+    skipped: bool = False
+    success: bool = True
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    artifacts: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class PipelineResult:
+    """Full pipeline execution result."""
+
+    success: bool = False
+    input_path: str = ""
+    input_kind: str = ""
+    work_dir: str = ""
+    steps: dict[str, StepResult] = field(default_factory=dict)
+    artifacts: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        """Convert to JSON-serializable dict."""
+        return {
+            "success": self.success,
+            "input": {"path": self.input_path, "kind": self.input_kind},
+            "work_dir": self.work_dir,
+            "artifacts": self.artifacts,
+            "steps": {
+                name: {
+                    "skipped": step.skipped,
+                    "success": step.success,
+                    "errors": step.errors,
+                    "warnings": step.warnings,
+                    **step.artifacts,
+                }
+                for name, step in self.steps.items()
+            },
+        }
+
+
+def detect_input_kind(path: Path) -> str:
+    """Auto-detect input type based on file extension/content."""
+    if path.suffix == ".yaml" and ".veda" in path.name:
+        return "vedalang"
+    if path.suffix in (".yaml", ".json"):
+        return "tableir"
+    if path.suffix == ".xlsx":
+        return "excel"
+    if path.is_dir():
+        if list(path.glob("*.dd")):
+            return "dd"
+        if list(path.glob("*.xlsx")):
+            return "excel"
+    return "unknown"
+
+
+def run_pipeline(
+    input_path: Path,
+    *,
+    input_kind: str | None = None,
+    case: str = "scenario",
+    times_src: Path | None = None,
+    gams_binary: str = "gams",
+    solver: str = "CBC",
+    work_dir: Path | None = None,
+    keep_workdir: bool = False,
+    no_solver: bool = False,
+    verbose: bool = False,
+) -> PipelineResult:
+    """Run the full VedaLang -> TIMES pipeline.
+
+    Stages:
+    1. compile: VedaLang -> TableIR (if vedalang input)
+    2. emit_excel: TableIR -> Excel (if vedalang/tableir input)
+    3. xl2times: Excel -> DD files
+    4. run_times: DD -> TIMES solution (unless no_solver)
+    """
+    result = PipelineResult()
+    result.input_path = str(input_path)
+
+    # Auto-detect input kind
+    if input_kind is None:
+        input_kind = detect_input_kind(input_path)
+    result.input_kind = input_kind
+
+    # Set up work directory
+    if work_dir is None:
+        work_dir = Path(
+            tempfile.mkdtemp(prefix=f"veda-dev-{datetime.now():%Y%m%d-%H%M%S}-")
+        )
+    else:
+        work_dir.mkdir(parents=True, exist_ok=True)
+    result.work_dir = str(work_dir)
+
+    try:
+        tableir_file: Path | None = None
+        excel_dir: Path | None = None
+        dd_dir: Path | None = None
+
+        # Step 1: Compile VedaLang -> TableIR
+        compile_result = StepResult()
+        if input_kind == "vedalang":
+            try:
+                from vedalang.compiler import compile_vedalang_to_tableir, load_vedalang
+
+                if verbose:
+                    print(f"[compile] Loading {input_path}")
+
+                source = load_vedalang(input_path)
+                tableir = compile_vedalang_to_tableir(source, validate=True)
+
+                tableir_file = work_dir / "model.tableir.yaml"
+                import yaml
+
+                with open(tableir_file, "w") as f:
+                    yaml.dump(tableir, f, default_flow_style=False, sort_keys=False)
+
+                compile_result.artifacts["tableir_file"] = str(tableir_file)
+                compile_result.artifacts["file_count"] = len(tableir.get("files", []))
+                if verbose:
+                    count = compile_result.artifacts["file_count"]
+                    print(f"[compile] Created TableIR with {count} files")
+            except Exception as e:
+                compile_result.success = False
+                compile_result.errors.append(str(e))
+        else:
+            compile_result.skipped = True
+            if input_kind == "tableir":
+                tableir_file = input_path
+        result.steps["compile"] = compile_result
+
+        if not compile_result.success:
+            return result
+
+        # Step 2: Emit Excel
+        emit_result = StepResult()
+        if input_kind in ("vedalang", "tableir") and tableir_file:
+            try:
+                from tools.veda_emit_excel import emit_excel, load_tableir
+
+                if verbose:
+                    print(f"[emit_excel] Emitting from {tableir_file}")
+
+                tableir = load_tableir(tableir_file)
+                excel_dir = work_dir / "excel"
+                created = emit_excel(tableir, excel_dir, validate=False)
+
+                emit_result.artifacts["excel_dir"] = str(excel_dir)
+                emit_result.artifacts["excel_files"] = [str(p) for p in created]
+                emit_result.artifacts["file_count"] = len(created)
+                if verbose:
+                    print(f"[emit_excel] Created {len(created)} Excel file(s)")
+            except Exception as e:
+                emit_result.success = False
+                emit_result.errors.append(str(e))
+        else:
+            emit_result.skipped = True
+            if input_kind == "excel":
+                excel_dir = input_path if input_path.is_dir() else input_path.parent
+        result.steps["emit_excel"] = emit_result
+
+        if not emit_result.success:
+            return result
+
+        # Step 3: xl2times (Excel -> DD)
+        xl2times_result = StepResult()
+        if input_kind in ("vedalang", "tableir", "excel") and excel_dir:
+            try:
+                dd_dir = work_dir / "dd"
+                dd_dir.mkdir(parents=True, exist_ok=True)
+                diag_file = work_dir / "xl2times_diagnostics.json"
+                manifest_file = work_dir / "xl2times_manifest.json"
+
+                # Extract regions from Excel files or model
+                # For now, use a default; in production, parse from model
+                regions = "NORTH,SOUTH"  # TODO: Extract from model
+
+                cmd = [
+                    sys.executable,
+                    "-m",
+                    "xl2times",
+                    str(excel_dir),
+                    "--dd",
+                    "--output_dir",
+                    str(dd_dir),
+                    "--regions",
+                    regions,
+                    "--diagnostics-json",
+                    str(diag_file),
+                    "--manifest-json",
+                    str(manifest_file),
+                ]
+
+                if verbose:
+                    print(f"[xl2times] Running: {' '.join(cmd)}")
+
+                proc = subprocess.run(
+                    cmd, capture_output=True, text=True, cwd=str(work_dir)
+                )
+
+                xl2times_result.artifacts["dd_dir"] = str(dd_dir)
+                xl2times_result.artifacts["command"] = " ".join(cmd)
+                xl2times_result.artifacts["return_code"] = proc.returncode
+
+                if diag_file.exists():
+                    with open(diag_file) as f:
+                        diag_data = json.load(f)
+                    xl2times_result.artifacts["diagnostics"] = diag_data
+                    for d in diag_data.get("diagnostics", []):
+                        if d.get("severity") == "error":
+                            xl2times_result.errors.append(d.get("message", ""))
+                        elif d.get("severity") == "warning":
+                            xl2times_result.warnings.append(d.get("message", ""))
+
+                if manifest_file.exists():
+                    xl2times_result.artifacts["manifest_file"] = str(manifest_file)
+
+                if proc.returncode != 0:
+                    xl2times_result.success = False
+                    if proc.stderr:
+                        xl2times_result.errors.append(proc.stderr[-500:])
+                elif verbose:
+                    print(f"[xl2times] DD files written to {dd_dir}")
+            except Exception as e:
+                xl2times_result.success = False
+                xl2times_result.errors.append(str(e))
+        else:
+            xl2times_result.skipped = True
+            if input_kind == "dd":
+                dd_dir = input_path
+        result.steps["xl2times"] = xl2times_result
+
+        if not xl2times_result.success:
+            return result
+
+        # Step 4: Run TIMES solver
+        run_times_result = StepResult()
+        if no_solver:
+            run_times_result.skipped = True
+        elif dd_dir:
+            try:
+                from tools.veda_run_times.runner import find_times_source, run_times
+
+                effective_times_src = times_src
+                if effective_times_src is None:
+                    effective_times_src = find_times_source()
+
+                if effective_times_src is None:
+                    run_times_result.success = False
+                    run_times_result.errors.append(
+                        "TIMES source not found. Set TIMES_SRC env or use --times-src"
+                    )
+                else:
+                    if verbose:
+                        print(f"[run_times] Using TIMES source: {effective_times_src}")
+
+                    times_result = run_times(
+                        dd_dir=dd_dir,
+                        case=case,
+                        times_src=effective_times_src,
+                        gams_binary=gams_binary,
+                        solver=solver,
+                        keep_workdir=True,  # We manage cleanup ourselves
+                        verbose=verbose,
+                    )
+
+                    run_times_result.success = times_result.success
+                    run_times_result.artifacts["case"] = times_result.case
+                    run_times_result.artifacts["times_work_dir"] = str(
+                        times_result.work_dir
+                    )
+                    run_times_result.artifacts["gams_return_code"] = (
+                        times_result.return_code
+                    )
+                    run_times_result.artifacts["model_status"] = (
+                        times_result.model_status
+                    )
+                    run_times_result.artifacts["solve_status"] = (
+                        times_result.solve_status
+                    )
+                    run_times_result.artifacts["objective"] = times_result.objective
+
+                    if times_result.lst_file:
+                        run_times_result.artifacts["lst_file"] = str(
+                            times_result.lst_file
+                        )
+                    if times_result.gdx_files:
+                        run_times_result.artifacts["gdx_files"] = [
+                            str(f) for f in times_result.gdx_files
+                        ]
+                    run_times_result.errors.extend(times_result.errors)
+            except Exception as e:
+                run_times_result.success = False
+                run_times_result.errors.append(str(e))
+        else:
+            run_times_result.skipped = True
+        result.steps["run_times"] = run_times_result
+
+        # Aggregate success
+        result.success = all(
+            step.success or step.skipped for step in result.steps.values()
+        )
+
+        # Collect top-level artifacts
+        result.artifacts["work_dir"] = str(work_dir)
+        if tableir_file:
+            result.artifacts["tableir_file"] = str(tableir_file)
+        if excel_dir:
+            result.artifacts["excel_dir"] = str(excel_dir)
+        if dd_dir:
+            result.artifacts["dd_dir"] = str(dd_dir)
+
+    finally:
+        # Clean up work dir on success if not keeping
+        if not keep_workdir and result.success:
+            try:
+                shutil.rmtree(work_dir)
+                result.work_dir = "(cleaned up)"
+            except Exception:
+                pass
+
+    return result
+
+
+def format_result_table(result: PipelineResult) -> str:
+    """Format pipeline result as a human-readable table."""
+    status = "✓ PASS" if result.success else "✗ FAIL"
+
+    lines = [
+        "┌" + "─" * 65 + "┐",
+        "│ veda-dev pipeline results" + " " * 39 + "│",
+        "├" + "─" * 65 + "┤",
+        f"│ Input: {result.input_path[:55]}".ljust(66) + "│",
+        f"│ Kind: {result.input_kind}".ljust(66) + "│",
+        f"│ Work dir: {result.work_dir[:52]}".ljust(66) + "│",
+        "├" + "─" * 65 + "┤",
+    ]
+
+    for name, step in result.steps.items():
+        if step.skipped:
+            step_status = "⊘ skip"
+        elif step.success:
+            step_status = "✓ ok"
+        else:
+            step_status = "✗ fail"
+        lines.append(f"│ {name:15} {step_status}".ljust(66) + "│")
+
+    lines.append("├" + "─" * 65 + "┤")
+    lines.append(f"│ Overall: {status}".ljust(66) + "│")
+    lines.append("└" + "─" * 65 + "┘")
+
+    # Show errors
+    all_errors = []
+    for name, step in result.steps.items():
+        for err in step.errors:
+            all_errors.append(f"[{name}] {err}")
+
+    if all_errors:
+        lines.append("")
+        lines.append("Errors:")
+        for err in all_errors[:10]:
+            lines.append(f"  - {err[:70]}")
+
+    return "\n".join(lines)
