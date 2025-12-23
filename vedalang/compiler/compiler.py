@@ -1083,6 +1083,19 @@ def _compile_timeslices(
     1. ~TIMESLICES table with season/weekly/daynite columns
     2. ~TFM_INS rows with attribute=YRFR for year fractions
 
+    The ~TIMESLICES table format emits parent codes and explicit leaf timeslice
+    names. This gives VedaLang explicit control over timeslice naming rather
+    than relying on xl2times cross-product expansion.
+
+    For example, with seasons [S, W] and daynites [D, N], we emit:
+        Season | Weekly | DayNite
+        S      |        |         <- parent season code
+        W      |        |         <- parent season code
+               |        | SD      <- explicit leaf timeslice
+               |        | SN
+               |        | WD
+               |        | WN
+
     Args:
         timeslices: Timeslice definition from VedaLang source
         regions: List of region codes
@@ -1094,22 +1107,35 @@ def _compile_timeslices(
     weekly_codes = [w["code"] for w in timeslices.get("weekly", [])]
     daynite_codes = [d["code"] for d in timeslices.get("daynite", [])]
 
-    # Build ~TIMESLICES rows (Cartesian product of all levels)
     timeslice_rows = []
 
-    # Handle case where some levels are empty
-    seasons = season_codes if season_codes else [""]
-    weeklies = weekly_codes if weekly_codes else [""]
-    daynites = daynite_codes if daynite_codes else [""]
+    # Emit parent season codes (each on its own row with empty other columns)
+    for season in season_codes:
+        timeslice_rows.append({
+            "season": season,
+            "weekly": "",
+            "daynite": "",
+        })
 
-    for season in seasons:
-        for weekly in weeklies:
-            for daynite in daynites:
-                timeslice_rows.append({
-                    "season": season,
-                    "weekly": weekly,
-                    "daynite": daynite,
-                })
+    # Emit parent weekly codes (if any)
+    for weekly in weekly_codes:
+        timeslice_rows.append({
+            "season": "",
+            "weekly": weekly,
+            "daynite": "",
+        })
+
+    # Generate and emit explicit leaf timeslice names
+    # The leaf names are the concatenation of all level codes
+    leaf_timeslices = _generate_leaf_timeslices(
+        season_codes, weekly_codes, daynite_codes
+    )
+    for leaf in leaf_timeslices:
+        timeslice_rows.append({
+            "season": "",
+            "weekly": "",
+            "daynite": leaf,
+        })
 
     # Build ~TFM_INS rows for year fractions
     fractions = timeslices.get("fractions", {})
@@ -1123,6 +1149,41 @@ def _compile_timeslices(
         })
 
     return timeslice_rows, yrfr_rows
+
+
+def _generate_leaf_timeslices(
+    seasons: list[str],
+    weeklies: list[str],
+    daynites: list[str],
+) -> list[str]:
+    """
+    Generate explicit leaf timeslice names by concatenating level codes.
+
+    The leaf timeslice name is formed by concatenating codes from each level
+    in order: season + weekly + daynite.
+
+    Args:
+        seasons: List of season codes (e.g., ["S", "W"])
+        weeklies: List of weekly codes (e.g., [])
+        daynites: List of daynite codes (e.g., ["D", "N"])
+
+    Returns:
+        List of leaf timeslice names (e.g., ["SD", "SN", "WD", "WN"])
+    """
+    import itertools
+
+    # Use [""] as placeholder for empty levels to ensure product works
+    s_list = seasons if seasons else [""]
+    w_list = weeklies if weeklies else [""]
+    d_list = daynites if daynites else [""]
+
+    leaves = []
+    for s, w, d in itertools.product(s_list, w_list, d_list):
+        leaf = s + w + d
+        if leaf:  # Only add non-empty leaf names
+            leaves.append(leaf)
+
+    return leaves
 
 
 def _compile_constraints(

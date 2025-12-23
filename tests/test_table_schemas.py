@@ -14,7 +14,7 @@ from vedalang.compiler.table_schemas import (
 )
 
 PROJECT_ROOT = Path(__file__).parent.parent
-VEDA_TAGS_PATH = PROJECT_ROOT / "xl2times" / "xl2times" / "config" / "veda-tags.json"
+VEDA_TAGS_PATH = PROJECT_ROOT / "xl2times" / "config" / "veda-tags.json"
 
 
 class TestLoadVedaTagsSchemas:
@@ -538,8 +538,14 @@ class TestAttributeMaster:
             assert "com_cstnet" in dins_at.allowed_columns
             assert "ncap_cost" in dins_at.allowed_columns
 
-    def test_compiler_emitted_attributes_are_canonical(self):
-        """All attributes emitted by the compiler must be CANONICAL names."""
+    def test_compiler_emitted_attributes_are_canonical_or_whitelisted(self):
+        """Attributes emitted by compiler should be canonical, with some exceptions.
+
+        Most attributes must use canonical VEDA column headers. However, 'cost'
+        is an intentional exception: xl2times handles the COST -> IRE_PRICE
+        transformation specially for IMP/EXP processes (populating other_indexes).
+        Using the canonical 'ire_price' header would bypass this logic.
+        """
         from vedalang.compiler.compiler import ATTR_TO_COLUMN
 
         attrs = load_attribute_master()
@@ -550,30 +556,41 @@ class TestAttributeMaster:
             if canonical:
                 canonical_headers.add(canonical.lower())
 
-        # Columns the compiler emits - must all be canonical
+        # 'cost' is allowed because xl2times only handles COST -> IRE_PRICE correctly
+        whitelisted_aliases = {"cost"}
+
+        # Columns the compiler emits - must all be canonical or whitelisted
         emitted_headers = {col.lower() for col in ATTR_TO_COLUMN.values()}
         # Plus other attribute columns used in compiler output
         emitted_headers.update({"com_proj", "com_cstnet"})  # canonical names
 
-        missing = emitted_headers - canonical_headers
+        missing = emitted_headers - canonical_headers - whitelisted_aliases
         assert not missing, f"Compiler emits non-canonical attributes: {missing}"
 
-    def test_compiler_attr_mappings_use_canonical_veda_names(self):
-        """ATTR_TO_COLUMN values must map to CANONICAL VEDA attribute headers only."""
+    def test_compiler_attr_mappings_use_valid_veda_names(self):
+        """ATTR_TO_COLUMN values must be valid VEDA attribute headers.
+
+        Most should be canonical, but 'cost' is whitelisted because xl2times
+        only handles COST -> IRE_PRICE transformation correctly with the alias.
+        """
         from vedalang.compiler.compiler import ATTR_TO_COLUMN
 
         attrs = load_attribute_master()
-        # Only canonical column headers (no aliases)
+        # Canonical column headers
         canonical_headers: set[str] = set()
         for meta in attrs.values():
             canonical = meta.get("column_header", "")
             if canonical:
                 canonical_headers.add(canonical.lower())
 
+        # 'cost' is a whitelisted alias for xl2times compatibility
+        whitelisted_aliases = {"cost"}
+        valid_headers = canonical_headers | whitelisted_aliases
+
         for vedalang_name, column in ATTR_TO_COLUMN.items():
-            assert column.lower() in canonical_headers, (
+            assert column.lower() in valid_headers, (
                 f"ATTR_TO_COLUMN['{vedalang_name}'] = '{column}' "
-                f"is not a canonical VEDA attribute column"
+                f"is not a valid VEDA attribute column"
             )
 
     def test_alias_column_rejected_with_helpful_message(self):

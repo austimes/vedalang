@@ -1,0 +1,1250 @@
+{
+  "ACT2FLO": {
+    "defaults": {
+      "cg": [
+        "other_indexes",
+        "commodity",
+        "commodity-in",
+        "commodity-out"
+      ]
+    },
+    "times-attribute": "PRC_ACTFLO"
+  },
+  "ACTBND": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "ACT_BND"
+  },
+  "ACTCOST": {
+    "times-attribute": "ACT_COST"
+  },
+  "ACTFLO": {
+    "defaults": {
+      "cg": [
+        "other_indexes",
+        "commodity",
+        "commodity-in",
+        "commodity-out"
+      ]
+    },
+    "times-attribute": "PRC_ACTFLO"
+  },
+  "ACT_BND": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "ACT_CSTRMP": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "ACT_CSTSD": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "ACT_CSTUP": {
+    "defaults": {
+      "tslvl": "DAYNITE"
+    }
+  },
+  "ACT_CUM": {
+    "defaults": {
+      "limtype": "UP",
+      "year2": "EOH"
+    }
+  },
+  "ACT_EFF": {
+    "defaults": {
+      "cg": [
+        "other_indexes",
+        "commodity",
+        "commodity-in",
+        "commodity-out"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "ACT_FLO": {
+    "defaults": {
+      "cg": [
+        "other_indexes",
+        "commodity",
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "ACT_LOSPL": {
+    "defaults": {
+      "limtype": "FX"
+    }
+  },
+  "ACT_LOSSD": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "ACT_SDTIME": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "ACT_TIME": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "ACT_UPS": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "AF": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "NCAP_AF"
+  },
+  "AFA": {
+    "defaults": {
+      "limtype": "UP"
+    },
+    "times-attribute": "NCAP_AFA"
+  },
+  "AFAC": {
+    "defaults": {
+      "cg": ["other_indexes"]
+    },
+    "times-attribute": "NCAP_AFAC"
+  },
+  "AFC": {
+    "defaults": {
+      "cg": [
+        "other_indexes",
+        "commodity",
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "NCAP_AFC"
+  },
+  "AFCS": {
+    "defaults": {
+      "cg": ["other_indexes"]
+    },
+    "times-attribute": "NCAP_AFCS"
+  },
+  "AFM": {
+    "times-attribute": "NCAP_AFM"
+  },
+  "AFS": {
+    "times-attribute": "NCAP_AFS"
+  },
+  "AFSX": {
+    "times-attribute": "NCAP_AFSX"
+  },
+  "AFX": {
+    "times-attribute": "NCAP_AFX"
+  },
+  "ARAF": {
+    "times-attribute": "NCAP_AFA"
+  },
+  "AVAILABILITY": {
+    "times-attribute": "NCAP_AF"
+  },
+  "BNDACT": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "ACT_BND"
+  },
+  "BNDCAP": {
+    "times-attribute": "CAP_BND"
+  },
+  "BNDCST": {
+    "times-attribute": "REG_BNDCST"
+  },
+  "BNDINV": {
+    "times-attribute": "NCAP_BND"
+  },
+  "BS_BNDPRS": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "BS_DELTA": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "BS_DEMDET": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "BS_MAINT": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "BS_OMEGA": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "BS_RMAX": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "BS_SHARE": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "BS_SIGMA": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "BS_STIME": {
+    "defaults": {
+      "limtype": "LO"
+    }
+  },
+  "CAGG": {
+    "times-attribute": "COM_AGG"
+  },
+  "CAP2ACT": {
+    "times-attribute": "PRC_CAPACT"
+  },
+  "CAPUNIT": {
+    "times-attribute": "PRC_CAPACT"
+  },
+  "CAP_BND": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "CBNDNET": {
+    "times-attribute": "COM_BNDNET"
+  },
+  "CBNDPRD": {
+    "times-attribute": "COM_BNDPRD"
+  },
+  "CBPRICE": {
+    "times-attribute": "COM_BPRICE"
+  },
+  "CCSTNET": {
+    "times-attribute": "COM_CSTNET"
+  },
+  "CCSTPRD": {
+    "times-attribute": "COM_CSTPRD"
+  },
+  "CEFF": {
+    "defaults": {
+      "cg": [
+        "commodity",
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "ACT_EFF"
+  },
+  "CEFF-I": {
+    "defaults": {
+      "cg": [
+        "commodity",
+        "commodity-in"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "ACT_EFF"
+  },
+  "CEFF-O": {
+    "defaults": {
+      "cg": [
+        "commodity",
+        "commodity-out"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "ACT_EFF"
+  },
+  "CEFFICIENCY": {
+    "defaults": {
+      "cg": [
+        "commodity",
+        "commodity-in",
+        "commodity-out"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "ACT_EFF"
+  },
+  "CEH": {
+    "times-attribute": "VDA_CEH"
+  },
+  "CELAST": {
+    "times-attribute": "COM_ELAST"
+  },
+  "CF": {
+    "times-attribute": "NCAP_AF"
+  },
+  "CHPR": {
+    "defaults": {
+      "limtype": "FX"
+    },
+    "times-attribute": "NCAP_CHPR"
+  },
+  "CLAG": {
+    "times-attribute": "NCAP_CLAG"
+  },
+  "CLED": {
+    "times-attribute": "NCAP_CLED"
+  },
+  "COM_BNDNET": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_BNDPRD": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_BPRICE": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_CSTBAL": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_CSTNET": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_CSTPRD": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_CUMNET": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "COM_CUMPRD": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "COM_ELAST": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_IE": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_SUBNET": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_SUBPRD": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_TAXNET": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COM_TAXPRD": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "COST": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "IRE_PRICE"
+  },
+  "CPX": {
+    "times-attribute": "NCAP_CPX"
+  },
+  "CSTEP": {
+    "times-attribute": "COM_STEP"
+  },
+  "CSUBNET": {
+    "times-attribute": "COM_SUBNET"
+  },
+  "CSUBPRD": {
+    "times-attribute": "COM_SUBPRD"
+  },
+  "CTAXNET": {
+    "times-attribute": "COM_TAXNET"
+  },
+  "CTAXPRD": {
+    "times-attribute": "COM_TAXPRD"
+  },
+  "CUM": {
+    "defaults": {
+      "limtype": "UP",
+      "year2": "EOH"
+    },
+    "times-attribute": "ACT_CUM"
+  },
+  "CUMCST": {
+    "times-attribute": "REG_CUMCST"
+  },
+  "CURREX": {
+    "times-attribute": "G_CHNGMONY"
+  },
+  "CVOC": {
+    "times-attribute": "COM_VOC"
+  },
+  "DAMCOST": {
+    "times-attribute": "DAM_COST"
+  },
+  "DBQTY": {
+    "times-attribute": "DAM_BQTY"
+  },
+  "DCOST": {
+    "times-attribute": "NCAP_DCOST"
+  },
+  "DELAST": {
+    "times-attribute": "DAM_ELAST"
+  },
+  "DELIF": {
+    "times-attribute": "NCAP_DELIF"
+  },
+  "DELIV": {
+    "defaults": {
+      "commodity": [
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "FLO_DELIV"
+  },
+  "DEMAND": {
+    "times-attribute": "COM_PROJ"
+  },
+  "DISCOUNT": {
+    "times-attribute": "G_DRATE"
+  },
+  "DISCRATE": {
+    "times-attribute": "NCAP_DRATE"
+  },
+  "DLAG": {
+    "times-attribute": "NCAP_DLAG"
+  },
+  "DLAGC": {
+    "times-attribute": "NCAP_DLAGC"
+  },
+  "DLIFE": {
+    "times-attribute": "NCAP_DLIFE"
+  },
+  "DRATE": {
+    "times-attribute": "NCAP_DRATE"
+  },
+  "DSTEP": {
+    "times-attribute": "DAM_STEP"
+  },
+  "DVOC": {
+    "times-attribute": "DAM_VOC"
+  },
+  "EFF": {
+    "defaults": {
+      "cg": [
+        "ACT"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "ACT_EFF"
+  },
+  "EFFICIENCY": {
+    "defaults": {
+      "cg": [
+        "ACT"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "ACT_EFF"
+  },
+  "ELASTX": {
+    "times-attribute": "COM_ELASTX"
+  },
+  "ELIFE": {
+    "times-attribute": "NCAP_ELIFE"
+  },
+  "EMCB": {
+    "times-attribute": "VDA_EMCB"
+  },
+  "END": {
+    "defaults": {
+      "year2": "EOH"
+    },
+    "times-attribute": "PRC_NOFF"
+  },
+  "ENVACT": {
+    "defaults": {
+      "commodity": [
+        "commodity-out",
+        "commodity-in",
+        "commodity-out-aux",
+        "commodity-in-aux"
+      ],
+      "cg": [
+        "ACT"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "FLO_EMIS"
+  },
+  "ENVBND": {
+    "times-attribute": "COM_BNDNET"
+  },
+  "ENVCAP": {
+    "times-attribute": "NCAP_COM"
+  },
+  "ENVCOST": {
+    "times-attribute": "COM_CSTNET"
+  },
+  "ENVCUM": {
+    "times-attribute": "COM_CUMNET"
+  },
+  "ENV_ACT": {
+    "defaults": {
+      "commodity": [
+        "commodity-out",
+        "commodity-in",
+        "commodity-out-aux",
+        "commodity-in-aux"
+      ],
+      "cg": [
+        "ACT"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "FLO_EMIS"
+  },
+  "ENV_CAP": {
+    "times-attribute": "NCAP_COM"
+  },
+  "ENV_COST": {
+    "times-attribute": "COM_CSTNET"
+  },
+  "ENV_CUMMAX": {
+    "times-attribute": "COM_CUMNET"
+  },
+  "FCOST": {
+    "times-attribute": "FLO_COST"
+  },
+  "FEMIS": {
+    "defaults": {
+      "commodity": [
+        "commodity-out",
+        "commodity-in",
+        "commodity-out-aux",
+        "commodity-in-aux"
+      ],
+      "cg": ["other_indexes"],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "FLO_EMIS"
+  },
+  "FIXOM": {
+    "times-attribute": "NCAP_FOM"
+  },
+  "FLOSHAR": {
+    "defaults": {
+      "commodity": [
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "cg": ["other_indexes"],
+      "limtype": "FX",
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "FLO_SHAR"
+  },
+  "FLO_BND": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "FLO_COST": {
+    "defaults": {
+      "commodity": [
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "FLO_CUM": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "FLO_DELIV": {
+    "defaults": {
+      "commodity": [
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "FLO_EFF": {
+    "defaults": {
+      "commodity": [
+        "commodity-out",
+        "commodity-in",
+        "commodity-out-aux",
+        "commodity-in-aux"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "FLO_EMIS"
+  },
+  "FLO_EMIS": {
+    "defaults": {
+      "commodity": [
+        "commodity-out",
+        "commodity-in",
+        "commodity-out-aux",
+        "commodity-in-aux"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "FLO_FR": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "FLO_FUNC": {
+    "defaults": {
+      "commodity": [
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "FLO_MARK": {
+    "defaults": {
+      "commodity": [
+        "commodity-out",
+        "commodity-in",
+        "commodity-out-aux",
+        "commodity-in-aux"
+      ],
+      "limtype": "UP"
+    }
+  },
+  "FLO_SHAR": {
+    "defaults": {
+      "commodity": [
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "limtype": "FX",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "FLO_SUB": {
+    "defaults": {
+      "commodity": [
+        "commodity-out",
+        "commodity-in",
+        "commodity-out-aux",
+        "commodity-in-aux"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "FLO_TAX": {
+    "defaults": {
+      "commodity": [
+        "commodity-out",
+        "commodity-in",
+        "commodity-out-aux",
+        "commodity-in-aux"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "FMSHARE": {
+    "times-attribute": "FLO_MARK"
+  },
+  "FOMM": {
+    "times-attribute": "NCAP_FOMM"
+  },
+  "FOMX": {
+    "times-attribute": "NCAP_FOMX"
+  },
+  "FRACTION": {
+    "times-attribute": "COM_IE"
+  },
+  "FSUB": {
+    "times-attribute": "NCAP_FSUB"
+  },
+  "FSUBM": {
+    "times-attribute": "NCAP_FSUBM"
+  },
+  "FSUBX": {
+    "times-attribute": "NCAP_FSUBX"
+  },
+  "FTAXM": {
+    "times-attribute": "NCAP_FTAXM"
+  },
+  "FTAXX": {
+    "times-attribute": "NCAP_FTAXX"
+  },
+  "GR_DEMFR": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "GR_VARGEN": {
+    "defaults": {
+      "limtype": "LO"
+    }
+  },
+  "G_YRFR": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "HRESERV": {
+    "times-attribute": "COM_PKRSV"
+  },
+  "IBOND": {
+    "times-attribute": "NCAP_BND"
+  },
+  "IFLOSUM": {
+    "times-attribute": "IRE_FLOSUM"
+  },
+  "ILED": {
+    "times-attribute": "NCAP_ILED"
+  },
+  "INPUT": {
+    "defaults": {
+      "cg": [
+        "commodity",
+        "commodity-in",
+        "commodity-in-aux"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "VDA_FLOP"
+  },
+  "INVCOST": {
+    "times-attribute": "NCAP_COST"
+  },
+  "IRE_BND": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "IRE_FLOSUM": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "IRE_PRICE": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "IRE_XBND": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "IRE_XXBND": {
+    "times-attribute": "IRE_XBND"
+  },
+  "ISPCT": {
+    "times-attribute": "NCAP_ISPCT"
+  },
+  "ITAX": {
+    "times-attribute": "NCAP_ITAX"
+  },
+  "LIFE": {
+    "times-attribute": "NCAP_TLIFE"
+  },
+  "NCAP_AF": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "NCAP_AFA": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "NCAP_AFAC": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "NCAP_AFC": {
+    "defaults": {
+      "cg": [
+        "other_indexes",
+        "commodity",
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "NCAP_AFCS": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "NCAP_AFS": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "NCAP_AFSX": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "NCAP_BND": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "NCAP_CHPR": {
+    "defaults": {
+      "limtype": "FX"
+    }
+  },
+  "NCAP_PKCNT": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "OCOM": {
+    "times-attribute": "NCAP_OCOM"
+  },
+  "OLIFE": {
+    "times-attribute": "NCAP_OLIFE"
+  },
+  "OUTPUT": {
+    "defaults": {
+      "cg": [
+        "commodity",
+        "commodity-out",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "VDA_FLOP"
+  },
+  "PASTI": {
+    "times-attribute": "NCAP_PASTI"
+  },
+  "PASTY": {
+    "times-attribute": "NCAP_PASTY"
+  },
+  "PEAK": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "NCAP_PKCNT"
+  },
+  "PEAK(CON)": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "NCAP_PKCNT"
+  },
+  "PKCNT": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "NCAP_PKCNT"
+  },
+  "PKCOI": {
+    "times-attribute": "FLO_PKCOI"
+  },
+  "PKFLX": {
+    "times-attribute": "COM_PKFLX"
+  },
+  "PRC_ACTFLO":{
+    "defaults": {
+      "cg": [
+        "other_indexes",
+        "commodity",
+        "commodity-in",
+        "commodity-out"
+      ]
+    }
+  },
+  "PRC_FOFF": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "PRC_MARK": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "RCAP_BND": {
+    "defaults": {
+      "limtype": "LO"
+    }
+  },
+  "REG_BDNCAP": {
+    "defaults": {
+      "limtype": "FX"
+    }
+  },
+  "REG_BNDCST": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "REG_CUMCST": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "RESID": {
+    "times-attribute": "PRC_RESID"
+  },
+  "RFRIR": {
+    "times-attribute": "G_RFRIR"
+  },
+  "SDAMCOST": {
+    "times-attribute": "S_DAM_COST"
+  },
+  "SHARE": {
+    "defaults": {
+      "commodity": [
+        "commodity-in",
+        "commodity-out"
+      ],
+      "cg": ["other_indexes", "veda_cg"],
+      "limtype": "FX",
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "FLO_SHAR"
+  },
+  "SHARE-I": {
+    "defaults": {
+      "commodity": [
+        "commodity-in",
+        "commodity-out"
+      ],
+      "cg": ["veda_cg"],
+      "limtype": "FX",
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "FLO_SHAR"
+  },
+  "SHARE-O": {
+    "defaults": {
+      "commodity": [
+        "commodity-out",
+        "commodity-in"
+      ],
+      "cg": ["veda_cg"],
+      "limtype": "FX",
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "FLO_SHAR"
+  },
+  "SRAF": {
+    "times-attribute": "NCAP_AFS"
+  },
+  "START": {
+    "times-attribute": "NCAP_START"
+  },
+  "STGIN_BND": {
+    "defaults": {
+      "commodity": [
+        "commodity-in"
+      ],
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "STGOUT_BND": {
+    "defaults": {
+      "commodity": [
+        "commodity-out"
+      ],
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "STG_CHRG": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "STG_LOSS": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "STG_SIFT": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "STOCK": {
+    "times-attribute": "PRC_RESID"
+  },
+  "S_CAP_BND": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "S_CHRG": {
+    "times-attribute": "STG_CHRG"
+  },
+  "S_COM_CUMNET": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "S_COM_CUMPRD": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "S_DCOST": {
+    "times-attribute": "S_DAM_COST"
+  },
+  "S_EFF": {
+    "times-attribute": "STG_EFF"
+  },
+  "S_FLO_CUM": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "S_INBND": {
+    "times-attribute": "STGIN_BND"
+  },
+  "S_LOSS": {
+    "times-attribute": "STG_LOSS"
+  },
+  "S_OUTBND": {
+    "times-attribute": "STGOUT_BND"
+  },
+  "S_UC_RHS": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "S_UC_RHSR": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "S_UC_RHSRT": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "S_UC_RHSRTS": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "S_UC_RHSTS": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "TFTAX": {
+    "times-attribute": "NCAP_FTAX"
+  },
+  "TISUB": {
+    "times-attribute": "NCAP_ISUB"
+  },
+  "TSCVT": {
+    "times-attribute": "IRE_TSCVT"
+  },
+  "TS_CYCLE": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "UC_ACT": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "UC_COMCON": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "UC_COMNET": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "UC_COMPRD": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "UC_DYNBND": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "UC_FLO": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "UC_IRE": {
+    "defaults": {
+      "tslvl": "ANNUAL"
+    }
+  },
+  "UC_IRE-E": {
+    "defaults": {
+      "other_indexes": ["EXP"],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "UC_IRE"
+  },
+  "UC_IRE-I": {
+    "defaults": {
+      "other_indexes": ["IMP"],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "UC_IRE"
+  },
+  "UC_RHS": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "UC_RHSR": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "UC_RHSRT": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "UC_RHSRTS": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "UC_RHST": {
+    "defaults": {
+      "limtype": "UP"
+    }
+  },
+  "UC_RHSTS": {
+    "defaults": {
+      "limtype": "UP",
+      "tslvl": "ANNUAL"
+    }
+  },
+  "UTILIZATION": {
+    "times-attribute": "NCAP_AF"
+  },
+  "VAROM": {
+    "times-attribute": "ACT_COST"
+  },
+  "VDA_EFF": {
+    "defaults": {
+      "cg": [
+        "ACT"
+      ],
+      "tslvl": "ANNUAL"
+    },
+    "times-attribute": "ACT_EFF"
+  },
+  "VDA_FLOP": {
+    "defaults": {
+      "cg": [
+        "other_indexes",
+        "commodity",
+        "commodity-in",
+        "commodity-out",
+        "commodity-in-aux",
+        "commodity-out-aux"
+      ],
+      "tslvl": "ANNUAL"
+    }
+  },
+  "YRFR": {
+    "times-attribute": "G_YRFR"
+  }
+}

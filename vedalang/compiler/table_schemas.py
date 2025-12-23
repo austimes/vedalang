@@ -77,11 +77,7 @@ class TableValidationError(Exception):
 
 # Default path to veda-tags.json (relative to this file)
 DEFAULT_VEDA_TAGS_PATH = (
-    Path(__file__).parent.parent.parent
-    / "xl2times"
-    / "xl2times"
-    / "config"
-    / "veda-tags.json"
+    Path(__file__).parent.parent.parent / "xl2times" / "config" / "veda-tags.json"
 )
 
 # Default path to attribute-master.json (VEDA attribute definitions)
@@ -217,9 +213,8 @@ def apply_manual_layouts(schemas: dict[str, VedaTableSchema]) -> None:
         )
         schemas["fi_t"].forbidden_headers.add("value")
         # Add common attribute column headers that VedaLang emits
-        # NOTE: Use CANONICAL attribute names only, never aliases
-        # Mappings: invcost->ncap_cost, fixom->ncap_fom, varom->act_cost,
-        #           life->ncap_tlife, cost->ire_price
+        # NOTE: Use CANONICAL attribute names from attribute-master.json.
+        # xl2times now recognizes both canonical names and aliases.
         schemas["fi_t"].allowed_columns.update({
             "com_proj", "eff", "ncap_cost", "ncap_fom", "act_cost", "ncap_tlife",
             "ire_price", "act_bnd", "cap_bnd", "ncap_bnd", "share-o", "share-i",

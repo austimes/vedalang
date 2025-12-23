@@ -94,9 +94,13 @@ Typed VedaLang    VEDA Excel (.xlsx)
                       │  (4) xl2times --diagnostics-json
                       ▼
                TIMES DD files + Diagnostics
+                      │
+                      │  (5) veda_run_times
+                      ▼
+               GAMS/TIMES Solution (.gdx)
 ```
 
-**Key insight**: VedaLang is the source; Excel is compiled output; xl2times is the validation oracle.
+**Key insight**: VedaLang is the source; Excel is compiled output; xl2times validates; GAMS solves.
 
 ## Toolchain Build Order
 
@@ -108,6 +112,7 @@ Tools needed for an agent to **design VedaLang itself**:
 | **T2** | `veda_emit_excel` | TableIR → Excel emitter (test VEDA patterns) |
 | **T3** | `vedalang` compiler | VedaLang → TableIR → Excel |
 | **T4** | `veda_check` | Orchestration wrapper with unified diagnostics |
+| **T5** | `veda_run_times` | Run DD files through GAMS/TIMES solver |
 
 ## Key Principle: Agent-Designed Language
 
@@ -148,7 +153,8 @@ veda-devtools/
 │   └── examples/                # Example VedaLang sources
 ├── tools/
 │   ├── veda_check/              # Unified validation CLI
-│   └── veda_emit_excel/         # TableIR → Excel emitter
+│   ├── veda_emit_excel/         # TableIR → Excel emitter
+│   └── veda_run_times/          # GAMS/TIMES runner
 ├── rules/
 │   ├── patterns.yaml            # Concept → VedaLang templates
 │   ├── decision_tree.yaml       # Intent routing
@@ -172,6 +178,12 @@ xl2times model.xlsx --case base --diagnostics-json diag.json
 
 # Full pipeline: compile + validate (preferred)
 veda_check src/ --from-vedalang --case base
+
+# Run TIMES model through GAMS (requires TIMES source and GAMS license)
+veda_run_times dd_output_dir/ --times-src ~/TIMES_model --case base
+
+# Run with JSON output for agent consumption
+veda_run_times dd_output_dir/ --times-src ~/TIMES_model --case base --json
 ```
 
 ## TableIR Example

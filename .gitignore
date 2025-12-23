@@ -18,6 +18,5 @@ output_invalid/
 *.log
 
 # Embedded repos (use submodule if needed)
-xl2times/
 experiments/trade/dd_output/
 experiments/trade/diagnostics.json

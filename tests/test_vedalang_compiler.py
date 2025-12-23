@@ -140,12 +140,14 @@ def test_process_cost_attributes():
     assert ccgt_row["act_cost"] == 2  # canonical for varom
     assert ccgt_row["ncap_tlife"] == 30  # canonical for life
 
-    # Find the cost row for IMP_NG (ire_price merged into commodity-out row)
+    # Find the cost row for IMP_NG (cost merged into commodity-out row)
+    # VedaLang emits canonical 'ire_price' column (not alias 'cost')
+    # xl2times now handles both canonical and alias names correctly
     imp_cost_rows = [
         r for r in fit_rows if r.get("process") == "IMP_NG" and "ire_price" in r
     ]
     assert len(imp_cost_rows) == 1
-    assert imp_cost_rows[0]["ire_price"] == 5.0  # canonical for cost
+    assert imp_cost_rows[0]["ire_price"] == 5.0
     assert imp_cost_rows[0]["commodity-out"] == "NG"  # Merged into output row
 
 
@@ -434,16 +436,20 @@ def test_compile_timeslices():
     assert len(timeslice_tables) == 1
     ts_rows = timeslice_tables[0]["rows"]
 
-    # Should have 4 rows (2 seasons × 2 daynite)
-    assert len(ts_rows) == 4
+    # 6 rows: 2 parent seasons + 4 leaf timeslices
+    # Parents: S, W (each with empty daynite)
+    # Leaves: SD, SN, WD, WN (explicit names in daynite column)
+    assert len(ts_rows) == 6
 
-    # Check structure
-    seasons = {r["season"] for r in ts_rows}
-    daynites = {r["daynite"] for r in ts_rows}
-    assert seasons == {"S", "W"}
-    assert daynites == {"D", "N"}
+    # Check parent season rows (first 2 rows)
+    parent_seasons = [r["season"] for r in ts_rows if r.get("season")]
+    assert set(parent_seasons) == {"S", "W"}
 
-    # Each row should have weekly column (empty)
+    # Check leaf timeslice rows (last 4 rows, in daynite column)
+    leaf_timeslices = [r["daynite"] for r in ts_rows if r.get("daynite")]
+    assert set(leaf_timeslices) == {"SD", "SN", "WD", "WN"}
+
+    # Each row should have weekly column (empty for this test)
     for row in ts_rows:
         assert "weekly" in row
         assert row["weekly"] == ""
@@ -499,14 +505,15 @@ def test_compile_example_with_timeslices():
     source = load_vedalang(EXAMPLES_DIR / "example_with_timeslices.veda.yaml")
     tableir = compile_vedalang_to_tableir(source)
 
-    # Should have timeslice table
+    # Should have timeslice table with parent codes and explicit leaves
     has_timeslices = False
     for f in tableir["files"]:
         for s in f["sheets"]:
             for t in s["tables"]:
                 if t["tag"] == "~TIMESLICES":
                     has_timeslices = True
-                    assert len(t["rows"]) == 4
+                    # 6 rows: 2 parent seasons + 4 explicit leaf timeslices
+                    assert len(t["rows"]) == 6
 
     assert has_timeslices
 

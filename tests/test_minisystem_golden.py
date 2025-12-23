@@ -182,9 +182,16 @@ class TestMiniSystemTableIRStructure:
         assert len(fit_rows) >= 10  # Multiple rows per process
 
     def test_has_timeslices(self, tableir):
-        """Should have ~TIMESLICES table."""
+        """Should have ~TIMESLICES table with parent codes and explicit leaves."""
         ts_rows = self._find_table_rows(tableir, "~TIMESLICES")
-        assert len(ts_rows) == 4  # 2 seasons × 2 daynite
+        # 6 rows: 2 parent seasons + 4 leaf timeslices
+        assert len(ts_rows) == 6
+        # Verify parent season codes are present
+        seasons = {r.get("season") for r in ts_rows if r.get("season")}
+        assert seasons == {"S", "W"}
+        # Verify explicit leaf timeslice names in daynite column
+        daynites = {r.get("daynite") for r in ts_rows if r.get("daynite")}
+        assert daynites == {"SD", "SN", "WD", "WN"}
 
     def test_has_trade_processes(self, tableir):
         """Trade links should create IRE processes."""
