@@ -22,7 +22,7 @@ class TestFiCommConstraints:
         tableir = make_tableir([
             {
                 "tag": "~FI_COMM",
-                "rows": [{"csets": "NRG", "commname": "ELC"}],
+                "rows": [{"csets": "NRG", "commodity": "ELC"}],
             }
         ])
         errors = check_tableir_invariants(tableir)
@@ -32,7 +32,7 @@ class TestFiCommConstraints:
         tableir = make_tableir([
             {
                 "tag": "~FI_COMM",
-                "rows": [{"commname": "ELC"}],
+                "rows": [{"commodity": "ELC"}],
             }
         ])
         errors = check_tableir_invariants(tableir)
@@ -69,7 +69,7 @@ class TestFiProcessConstraints:
         tableir = make_tableir([
             {
                 "tag": "~FI_PROCESS",
-                "rows": [{"techname": "PP_CCGT", "sets": "ELE"}],
+                "rows": [{"process": "PP_CCGT", "sets": "ELE"}],
             }
         ])
         errors = check_tableir_invariants(tableir)
@@ -90,7 +90,7 @@ class TestFiProcessConstraints:
         tableir = make_tableir([
             {
                 "tag": "~FI_PROCESS",
-                "rows": [{"techname": "PP_CCGT"}],
+                "rows": [{"process": "PP_CCGT"}],
             }
         ])
         errors = check_tableir_invariants(tableir)
@@ -105,7 +105,7 @@ class TestFiTConstraints:
         tableir = make_tableir([
             {
                 "tag": "~FI_T",
-                "rows": [{"techname": "PP_CCGT", "commodity-in": "NG"}],
+                "rows": [{"process": "PP_CCGT", "commodity-in": "NG"}],
             }
         ])
         errors = check_tableir_invariants(tableir)
@@ -115,7 +115,7 @@ class TestFiTConstraints:
         tableir = make_tableir([
             {
                 "tag": "~FI_T",
-                "rows": [{"techname": "PP_CCGT", "commodity-out": "ELC"}],
+                "rows": [{"process": "PP_CCGT", "commodity-out": "ELC"}],
             }
         ])
         errors = check_tableir_invariants(tableir)
@@ -127,7 +127,7 @@ class TestFiTConstraints:
                 "tag": "~FI_T",
                 "rows": [
                     {
-                        "techname": "PP_CCGT",
+                        "process": "PP_CCGT",
                         "commodity-in": "NG",
                         "commodity-out": "ELC",
                     }
@@ -141,13 +141,13 @@ class TestFiTConstraints:
         tableir = make_tableir([
             {
                 "tag": "~FI_T",
-                "rows": [{"techname": "PP_CCGT", "eff": 0.55}],
+                "rows": [{"process": "PP_CCGT", "eff": 0.55}],
             }
         ])
         errors = check_tableir_invariants(tableir)
         assert errors == []
 
-    def test_missing_techname(self):
+    def test_missing_process(self):
         tableir = make_tableir([
             {
                 "tag": "~FI_T",
@@ -156,13 +156,13 @@ class TestFiTConstraints:
         ])
         errors = check_tableir_invariants(tableir)
         assert len(errors) == 1
-        assert "TechName" in errors[0]
+        assert "Process" in errors[0]
 
     def test_missing_all_data_fields(self):
         tableir = make_tableir([
             {
                 "tag": "~FI_T",
-                "rows": [{"techname": "PP_CCGT", "region": "REG1"}],
+                "rows": [{"process": "PP_CCGT", "region": "REG1"}],
             }
         ])
         errors = check_tableir_invariants(tableir)
@@ -180,9 +180,9 @@ class TestMultipleRowsAndTables:
             {
                 "tag": "~FI_COMM",
                 "rows": [
-                    {"csets": "NRG", "commname": "ELC"},
-                    {"csets": "NRG", "commname": "NG"},
-                    {"csets": "ENV", "commname": "CO2"},
+                    {"csets": "NRG", "commodity": "ELC"},
+                    {"csets": "NRG", "commodity": "NG"},
+                    {"csets": "ENV", "commodity": "CO2"},
                 ],
             }
         ])
@@ -194,9 +194,9 @@ class TestMultipleRowsAndTables:
             {
                 "tag": "~FI_COMM",
                 "rows": [
-                    {"csets": "NRG", "commname": "ELC"},
+                    {"csets": "NRG", "commodity": "ELC"},
                     {"csets": "NRG"},
-                    {"commname": "CO2"},
+                    {"commodity": "CO2"},
                 ],
             }
         ])
@@ -209,11 +209,11 @@ class TestMultipleRowsAndTables:
         tableir = make_tableir([
             {
                 "tag": "~FI_COMM",
-                "rows": [{"csets": "NRG", "commname": "ELC"}],
+                "rows": [{"csets": "NRG", "commodity": "ELC"}],
             },
             {
                 "tag": "~FI_PROCESS",
-                "rows": [{"techname": "PP_CCGT", "sets": "ELE"}],
+                "rows": [{"process": "PP_CCGT", "sets": "ELE"}],
             },
         ])
         errors = check_tableir_invariants(tableir)
@@ -228,7 +228,7 @@ class TestCanonicalFormEnforcement:
         tableir = make_tableir([
             {
                 "tag": "~FI_COMM",
-                "rows": [{"csets": "NRG", "commname": "ELC"}],
+                "rows": [{"csets": "NRG", "commodity": "ELC"}],
             }
         ])
         errors = check_tableir_invariants(tableir)

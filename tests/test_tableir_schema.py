@@ -35,7 +35,7 @@ def valid_tableir():
                                 "tag": "~FI_PROCESS",
                                 "rows": [
                                     {
-                                        "techname": "PP_CCGT",
+                                        "process": "PP_CCGT",
                                         "sets": "ELE",
                                         "tact": "PJ",
                                         "tcap": "GW",
@@ -46,7 +46,7 @@ def valid_tableir():
                                 "tag": "~FI_T",
                                 "rows": [
                                     {
-                                        "techname": "PP_CCGT",
+                                        "process": "PP_CCGT",
                                         "commodity-in": "NG",
                                         "commodity-out": "ELC",
                                         "eff": 0.55,

@@ -49,14 +49,17 @@ tag_constraints:
     valid_files:
       - "SubRES_*/*.xlsx"
       - "BY_Trans/*.xlsx"
-    # Note: TechName is required for process rows, but commodity-level attributes
-    # (like DEMAND for COM_PROJ) use commodity column instead. We use any_of_fields
-    # to allow both patterns.
+    # FI_T supports two formats:
+    # 1. Long format: Process + Attribute + Value columns (process topology)
+    # 2. Wide-in-attribute: Process or Commodity + attribute as column headers (e.g., COM_PROJ, EFF)
+    # For wide format, the attribute name IS the column header, not a separate Attribute column.
+    # Note: "Process" is the canonical name (use_name in veda-tags.json), "TechName" is an alias.
+    # NOTE: Use canonical attribute names only (COM_PROJ), not aliases (DEMAND).
     any_of_fields:
-      - fields: ["TechName", "Attribute"]
-        description: Must have TechName (process rows) or Attribute (commodity rows like DEMAND)
-      - fields: ["Comm-IN", "Comm-OUT", "EFF", "Value"]
-        description: Must have at least one of input, output, efficiency, or value
+      - fields: ["Process", "Attribute", "Commodity", "COM_PROJ"]
+        description: Must have Process (canonical), Attribute, Commodity, or COM_PROJ column
+      - fields: ["Comm-IN", "Comm-OUT", "EFF", "Value", "COM_PROJ", "Commodity-Out", "Commodity-In"]
+        description: Must have at least one of input, output, efficiency, value, or com_proj
     optional_fields:
       - Share-I
       - Share-O

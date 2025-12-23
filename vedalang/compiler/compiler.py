@@ -28,14 +28,16 @@ TIME_VARYING_ATTRS = {
 }
 
 # Map VedaLang attribute names to their TableIR/VEDA column names
+# These must map to CANONICAL VEDA attribute column headers only
+# (from attribute-master.json "column_header" field, NOT aliases)
 ATTR_TO_COLUMN = {
-    "efficiency": "eff",
-    "invcost": "invcost",
-    "fixom": "fixom",
-    "varom": "varom",
-    "life": "life",
-    "cost": "cost",
-    "availability_factor": "avail",
+    "efficiency": "eff",  # EFF canonical
+    "invcost": "ncap_cost",  # NCAP_COST canonical (alias: invcost)
+    "fixom": "ncap_fom",  # NCAP_FOM canonical (alias: fixom)
+    "varom": "act_cost",  # ACT_COST canonical (alias: varom)
+    "life": "ncap_tlife",  # NCAP_TLIFE canonical (alias: life)
+    "cost": "ire_price",  # IRE_PRICE canonical (alias: cost)
+    "availability_factor": "ncap_af",  # NCAP_AF canonical (aliases: cf, utilization)
 }
 
 # Interpolation mode to VEDA code mapping
@@ -387,7 +389,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
         comm_rows.append({
             "region": default_region,
             "csets": _commodity_type_to_csets(comm_type),
-            "commname": commodity["name"],
+            "commodity": commodity["name"],
             "unit": unit,
         })
 
@@ -400,8 +402,8 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
         process = _normalize_process_flows(raw_process)
         process_rows.append({
             "region": default_region,
-            "techname": process["name"],
-            "techdesc": process.get("description", ""),
+            "process": process["name"],
+            "description": process.get("description", ""),
             "sets": ",".join(process.get("sets", [])),
             "tact": process.get("activity_unit", "PJ"),
             "tcap": process.get("capacity_unit", "GW"),
@@ -418,21 +420,24 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
         outputs = process.get("outputs", [])
 
         # Collect cost parameters - separate scalar from time-varying
-        cost_params = {}  # Scalar values to merge into rows
+        # Keys in cost_params use CANONICAL column names from ATTR_TO_COLUMN
+        cost_params = {}  # Scalar values to merge into rows (canonical column names)
         time_varying_attrs = []  # (attr_name, value) tuples for separate rows
         for attr in ["invcost", "fixom", "varom", "life", "cost"]:
             if attr in process:
                 val = process[attr]
+                # Map VedaLang attr name to canonical column name
+                column = ATTR_TO_COLUMN.get(attr, attr)
                 if _is_time_varying(val):
                     time_varying_attrs.append((attr, val))
                 else:
-                    cost_params[attr] = val
+                    cost_params[column] = val
 
         # Add input flows
         for inp in inputs:
             row = {
                 "region": default_region,
-                "techname": process["name"],
+                "process": process["name"],
                 "commodity-in": inp["commodity"],
             }
             if "share" in inp:
@@ -443,7 +448,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
         for i, out in enumerate(outputs):
             row = {
                 "region": default_region,
-                "techname": process["name"],
+                "process": process["name"],
                 "commodity-out": out["commodity"],
             }
             if "share" in out:
@@ -467,7 +472,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
                 if cost_params:
                     row = {
                         "region": default_region,
-                        "techname": process["name"],
+                        "process": process["name"],
                     }
                     row.update(cost_params)
                     if bound_params:
@@ -478,7 +483,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
                 # Scalar efficiency
                 row = {
                     "region": default_region,
-                    "techname": process["name"],
+                    "process": process["name"],
                     "eff": eff_val,
                 }
                 row.update(cost_params)
@@ -495,7 +500,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
             first_output = outputs[0]["commodity"] if outputs else None
             row = {
                 "region": default_region,
-                "techname": process["name"],
+                "process": process["name"],
             }
             if first_output:
                 row["commodity-out"] = first_output
@@ -508,7 +513,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
         for attr_name, attr_value in time_varying_attrs:
             base_row = {
                 "region": default_region,
-                "techname": process["name"],
+                "process": process["name"],
             }
             if first_output:
                 base_row["commodity-out"] = first_output
@@ -547,7 +552,8 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     # Derive model years for time-series expansion
     model_years = _get_model_years(model)
 
-    # Build scenario files (~TFM_INS tables) for commodity_price scenarios
+    # Build scenario files (~TFM_DINS-AT tables) for commodity_price scenarios
+    # Uses ~TFM_DINS-AT instead of ~TFM_INS for VedaOnline compatibility
     scenario_files = []
     for scenario in model.get("scenarios", []):
         scenario_rows = _compile_scenario(scenario, default_region, model_years)
@@ -557,7 +563,7 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
                 "sheets": [
                     {
                         "name": "Scenario",
-                        "tables": [{"tag": "~TFM_INS", "rows": scenario_rows}],
+                        "tables": [{"tag": "~TFM_DINS-AT", "rows": scenario_rows}],
                     }
                 ],
             }
@@ -652,6 +658,13 @@ def compile_vedalang_to_tableir(source: dict, validate: bool = True) -> dict:
     if validate:
         tableir_schema = load_tableir_schema()
         jsonschema.validate(tableir, tableir_schema)
+
+        # Validate against VEDA table schemas (canonical column names only)
+        from .table_schemas import TableValidationError, validate_tableir
+
+        table_errors = validate_tableir(tableir)
+        if table_errors:
+            raise TableValidationError(table_errors)
 
     return tableir
 
@@ -819,7 +832,10 @@ def _compile_scenario(
     model_years: list[int],
 ) -> list[dict]:
     """
-    Compile a scenario definition to TableIR rows for ~TFM_INS.
+    Compile a scenario definition to TableIR rows for ~TFM_DINS-AT.
+
+    Uses ~TFM_DINS-AT tag (not ~TFM_INS) for VedaOnline compatibility.
+    The attribute name becomes a column header, not a 'value' column.
 
     Expands sparse time-series to dense rows for all model years using
     VEDA-compatible interpolation semantics. No year=0 rows are emitted;
@@ -831,7 +847,7 @@ def _compile_scenario(
         model_years: List of model representative years
 
     Returns:
-        List of rows for the ~TFM_INS table (one row per specified year)
+        List of rows for the ~TFM_DINS-AT table (one row per specified year)
     """
     scenario_type = scenario.get("type")
     rows = []
@@ -840,19 +856,19 @@ def _compile_scenario(
         commodity = scenario["commodity"]
         sparse_values = scenario.get("values", {})
 
-        # Use TFM_INS with long format (one row per year)
-        # COM_CSTNET = cost on net of commodity (e.g., emissions tax)
+        # Use TFM_DINS-AT with attribute as column header (not 'value' column)
+        # cset_cn = explicit commodity name
+        # com_cstnet = cost on net of commodity (lowercase for xl2times)
         for year_str, value in sorted(sparse_values.items()):
             rows.append({
-                "attribute": "COM_CSTNET",
                 "region": region,
+                "cset_cn": commodity,
                 "year": int(year_str),
-                "commodity": commodity,
-                "value": value,
+                "com_cstnet": value,
             })
 
     # Note: demand_projection is handled separately in compile_vedalang_to_tableir
-    # as it emits to ~FI_T table, not ~TFM_INS
+    # as it emits to ~FI_T table, not ~TFM_DINS-AT
 
     return rows
 
@@ -865,7 +881,9 @@ def _compile_demand_projections(
     """
     Compile demand_projection scenarios to TableIR rows for ~FI_T.
 
-    Demand projections use attribute=DEMAND which maps to COM_PROJ in TIMES.
+    Uses wide-in-attribute format where 'DEMAND' is a column header
+    (not a value in an 'attribute' column). This is the correct FI-style
+    format where attributes are column headers with no 'value' column.
 
     Args:
         scenarios: List of scenario definitions from VedaLang source
@@ -890,14 +908,15 @@ def _compile_demand_projections(
             sparse_values, model_years, interpolation
         )
 
-        # Emit one row per year with attribute=DEMAND
+        # Wide-in-attribute format: com_proj is a column header, not a value
+        # This matches VEDA FI-style tables where attributes are columns
+        # NOTE: Use canonical 'com_proj', not alias 'demand'
         for year in sorted(dense_values.keys()):
             rows.append({
                 "region": region,
-                "attribute": "DEMAND",
                 "commodity": commodity,
                 "year": year,
-                "value": dense_values[year],
+                "com_proj": dense_values[year],  # Canonical attribute name
             })
 
     return rows
@@ -916,6 +935,10 @@ def _compile_trade_links(
     IMPORTANT: VedaLang explicitly emits trade process declarations to ~FI_PROCESS
     to avoid relying on xl2times's complete_processes auto-generation.
 
+    VedaOnline compatibility: ~FI_T tables are NOT allowed in ScenTrade files.
+    Trade efficiency rows are returned as topology_rows to be emitted in the
+    base VT_* file (which does allow ~FI_T).
+
     Matrix format: sheet name encodes direction (Bi_COMM or Uni_COMM),
     first column is commodity, other columns are destination regions.
     Cell value is explicit process name (NOT numeric 1).
@@ -928,9 +951,9 @@ def _compile_trade_links(
 
     Returns:
         Tuple of:
-        - List of TableIR file definitions
+        - List of TableIR file definitions (ScenTrade file with ~TRADELINKS only)
         - List of process declaration rows for ~FI_PROCESS
-        - List of topology rows for ~FI_T (input/output flows)
+        - List of topology rows for ~FI_T (includes trade efficiency rows)
     """
     if not trade_links:
         return [], [], []
@@ -949,9 +972,8 @@ def _compile_trade_links(
 
     # Build sheets for trade links (matrix format)
     tradelink_sheets = []
-    efficiency_rows = []
     process_rows = []  # Explicit trade process declarations
-    topology_rows = []  # Trade process topology (inputs/outputs)
+    topology_rows = []  # Trade process topology (inputs/outputs) + efficiency
     emitted_processes: set[str] = set()  # Track to avoid duplicates
 
     for (commodity, bidirectional), links in grouped.items():
@@ -991,8 +1013,8 @@ def _compile_trade_links(
                     unit = comm_units.get(commodity, "PJ")
                     process_rows.append({
                         "region": origin,
-                        "techname": process_name,
-                        "techdesc": f"Trade {commodity} from {origin} to {dest}",
+                        "process": process_name,
+                        "description": f"Trade {commodity} from {origin} to {dest}",
                         "sets": "IRE",
                         "tact": unit,
                         "tcap": "",  # Trade processes typically don't have capacity
@@ -1002,8 +1024,8 @@ def _compile_trade_links(
                     if bidirectional:
                         process_rows.append({
                             "region": dest,
-                            "techname": process_name,
-                            "techdesc": f"Trade {commodity} from {origin} to {dest}",
+                            "process": process_name,
+                            "description": f"Trade {commodity} from {origin} to {dest}",
                             "sets": "IRE",
                             "tact": unit,
                             "tcap": "",
@@ -1013,22 +1035,23 @@ def _compile_trade_links(
                     # Origin exports (OUT), destination imports (IN)
                     topology_rows.append({
                         "region": origin,
-                        "techname": process_name,
+                        "process": process_name,
                         "commodity-out": commodity,
                     })
                     topology_rows.append({
                         "region": dest,
-                        "techname": process_name,
+                        "process": process_name,
                         "commodity-in": commodity,
                     })
 
                     emitted_processes.add(process_name)
 
-                # If efficiency specified, emit ~FI_T row for IRE_FLO
+                # If efficiency specified, add to topology_rows (goes to base VT_* file)
+                # VedaOnline does NOT allow ~FI_T in ScenTrade files
                 if efficiency is not None:
-                    efficiency_rows.append({
+                    topology_rows.append({
                         "region": origin,
-                        "techname": process_name,
+                        "process": process_name,
                         "commodity-out": commodity,
                         "eff": efficiency,
                     })
@@ -1040,18 +1063,11 @@ def _compile_trade_links(
             "tables": [{"tag": "~TRADELINKS", "rows": rows}],
         })
 
-    # Build trade file with all sheets
+    # Build trade file with ~TRADELINKS only (no ~FI_T for VedaOnline compatibility)
     trade_file = {
         "path": "SuppXLS/Trades/ScenTrade__Trade_Links.xlsx",
         "sheets": tradelink_sheets,
     }
-
-    # If we have efficiency rows, add them to a separate sheet
-    if efficiency_rows:
-        trade_file["sheets"].append({
-            "name": "TradeParams",
-            "tables": [{"tag": "~FI_T", "rows": efficiency_rows}],
-        })
 
     return [trade_file], process_rows, topology_rows
 
@@ -1192,9 +1208,12 @@ def _compile_emission_cap(
     """
     Compile an emission_cap constraint to ~UC_T rows.
 
+    VedaOnline compatibility: uses attribute name as column header (not 'value').
+    UC_N is the row identifier, UC_RHS is the column header for RHS values.
+
     Emission cap uses:
     - UC_COMPRD with coefficient 1 (LHS side) to sum commodity production
-    - UC_RHSRT with the limit value (RHS side)
+    - UC_RHS with the limit value (RHS side)
 
     Args:
         uc_name: Constraint name
@@ -1224,7 +1243,7 @@ def _compile_emission_cap(
         return []
 
     # Emit LHS coefficient row: UC_COMPRD for the commodity
-    # This says "include commodity production in the constraint"
+    # Use uc_comprd as column header (lowercase for xl2times)
     description = f"Emission cap on {commodity}"
     for year in sorted(dense_values.keys()):
         rows.append({
@@ -1232,22 +1251,20 @@ def _compile_emission_cap(
             "description": description,
             "region": region,
             "year": year,
-            "attribute": "UC_COMPRD",
             "commodity": commodity,
             "side": "LHS",
-            "value": 1,
+            "uc_comprd": 1,
         })
 
-    # Emit RHS row: UC_RHSRT with the limit
+    # Emit RHS row: use uc_rhs as column header with limtype (lowercase for xl2times)
     for year in sorted(dense_values.keys()):
         rows.append({
             "uc_n": uc_name,
             "description": description,
             "region": region,
             "year": year,
-            "attribute": "UC_RHSRT",
             "limtype": limtype,
-            "value": dense_values[year],
+            "uc_rhs": dense_values[year],
         })
 
     return rows
@@ -1333,6 +1350,9 @@ def _compile_share_constraint(
     """
     Compile a single share constraint (either min or max).
 
+    VedaOnline compatibility: uses attribute name as column header (not 'value').
+    UC_ACT, UC_COMPRD, UC_RHS become column headers.
+
     The constraint is: sum(process_act) - share * commodity_prod {>= | <=} 0.
 
     Args:
@@ -1353,39 +1373,39 @@ def _compile_share_constraint(
 
     for year in model_years:
         # LHS: Add target process activities with coefficient 1
+        # Use uc_act as column header (lowercase for xl2times)
         for process in processes:
             rows.append({
                 "uc_n": uc_name,
                 "description": description,
                 "region": region,
                 "year": year,
-                "attribute": "UC_ACT",
                 "process": process,
                 "side": "LHS",
-                "value": 1,
+                "uc_act": 1,
             })
 
         # LHS: Subtract share * commodity production
+        # Use uc_comprd as column header (lowercase for xl2times)
         rows.append({
             "uc_n": uc_name,
             "description": description,
             "region": region,
             "year": year,
-            "attribute": "UC_COMPRD",
             "commodity": commodity,
             "side": "LHS",
-            "value": -share,
+            "uc_comprd": -share,
         })
 
         # RHS: The bound is 0
+        # Use uc_rhs as column header with limtype (lowercase for xl2times)
         rows.append({
             "uc_n": uc_name,
             "description": description,
             "region": region,
             "year": year,
-            "attribute": "UC_RHSRT",
             "limtype": limtype,
-            "value": 0,
+            "uc_rhs": 0,
         })
 
     return rows

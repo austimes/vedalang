@@ -54,7 +54,7 @@ def test_commodities_become_fi_comm():
                     comm_tables.append(t)
 
     assert len(comm_tables) >= 1
-    comm_names = [r.get("commname") for r in comm_tables[0]["rows"]]
+    comm_names = [r.get("commodity") for r in comm_tables[0]["rows"]]
     assert "ELC" in comm_names
     assert "NG" in comm_names
 
@@ -73,7 +73,7 @@ def test_processes_become_fi_process():
                     proc_tables.append(t)
 
     assert len(proc_tables) >= 1
-    tech_names = [r.get("techname") for r in proc_tables[0]["rows"]]
+    tech_names = [r.get("process") for r in proc_tables[0]["rows"]]
     assert "PP_CCGT" in tech_names
 
 
@@ -127,24 +127,25 @@ def test_process_cost_attributes():
                 if t["tag"] == "~FI_T":
                     fit_rows.extend(t["rows"])
 
-    # Find the cost row for PP_CCGT (has eff, invcost, fixom, varom, life)
+    # Find the cost row for PP_CCGT (has eff, ncap_cost, ncap_fom, act_cost, ncap_tlife)
+    # Note: VedaLang emits CANONICAL column names, not aliases
     ccgt_cost_rows = [
-        r for r in fit_rows if r.get("techname") == "PP_CCGT" and "eff" in r
+        r for r in fit_rows if r.get("process") == "PP_CCGT" and "eff" in r
     ]
     assert len(ccgt_cost_rows) == 1
     ccgt_row = ccgt_cost_rows[0]
     assert ccgt_row["eff"] == 0.55
-    assert ccgt_row["invcost"] == 800
-    assert ccgt_row["fixom"] == 20
-    assert ccgt_row["varom"] == 2
-    assert ccgt_row["life"] == 30
+    assert ccgt_row["ncap_cost"] == 800  # canonical for invcost
+    assert ccgt_row["ncap_fom"] == 20  # canonical for fixom
+    assert ccgt_row["act_cost"] == 2  # canonical for varom
+    assert ccgt_row["ncap_tlife"] == 30  # canonical for life
 
-    # Find the cost row for IMP_NG (cost merged into commodity-out row)
+    # Find the cost row for IMP_NG (ire_price merged into commodity-out row)
     imp_cost_rows = [
-        r for r in fit_rows if r.get("techname") == "IMP_NG" and "cost" in r
+        r for r in fit_rows if r.get("process") == "IMP_NG" and "ire_price" in r
     ]
     assert len(imp_cost_rows) == 1
-    assert imp_cost_rows[0]["cost"] == 5.0
+    assert imp_cost_rows[0]["ire_price"] == 5.0  # canonical for cost
     assert imp_cost_rows[0]["commodity-out"] == "NG"  # Merged into output row
 
 
@@ -195,8 +196,9 @@ def test_demand_projection_scenario():
                 if t["tag"] == "~FI_T":
                     fit_rows.extend(t["rows"])
 
-    # Find demand projection rows
-    demand_rows = [r for r in fit_rows if r.get("attribute") == "DEMAND"]
+    # Find demand projection rows (wide-in-attribute format)
+    # NOTE: Use canonical 'com_proj', not alias 'demand'
+    demand_rows = [r for r in fit_rows if "com_proj" in r]
 
     # Should have 4 rows (one per model year: 2020, 2030, 2040, 2050)
     assert len(demand_rows) == 4
@@ -210,8 +212,8 @@ def test_demand_projection_scenario():
         assert row["commodity"] == "RSD"
         assert row["region"] == "REG1"
 
-    # Check values are interpolated correctly
-    values_by_year = {r["year"]: r["value"] for r in demand_rows}
+    # Check values are interpolated correctly (com_proj is column header, not 'value')
+    values_by_year = {r["year"]: r["com_proj"] for r in demand_rows}
     assert values_by_year[2020] == 100.0
     assert values_by_year[2030] == 120.0
     assert values_by_year[2040] == 140.0  # Interpolated between 120 and 160
@@ -292,7 +294,7 @@ def test_process_capacity_bounds():
     cap_up = [r for r in bound_rows if r.get("cap_bnd") == 10.0]
     assert len(cap_up) == 1
     assert cap_up[0]["limtype"] == "UP"
-    assert cap_up[0]["techname"] == "PP_CCGT"
+    assert cap_up[0]["process"] == "PP_CCGT"
 
     # Check ncap_bnd upper bound
     ncap_up = [r for r in bound_rows if r.get("ncap_bnd") == 2.0]
@@ -371,14 +373,14 @@ def test_compile_example_with_bounds():
     ccgt_cap_up = [
         r
         for r in bound_rows
-        if r.get("techname") == "PP_CCGT" and r.get("cap_bnd") == 10.0
+        if r.get("process") == "PP_CCGT" and r.get("cap_bnd") == 10.0
     ]
     assert len(ccgt_cap_up) == 1
 
     wind_cap_lo = [
         r
         for r in bound_rows
-        if r.get("techname") == "PP_WIND" and r.get("limtype") == "LO"
+        if r.get("process") == "PP_WIND" and r.get("limtype") == "LO"
     ]
     assert len(wind_cap_lo) == 1
     assert wind_cap_lo[0]["cap_bnd"] == 5.0
@@ -638,21 +640,31 @@ def test_compile_example_with_trade():
 
     # Should have ~TRADELINKS tables (2 sheets for 2 commodities, both bidirectional)
     tradelinks_tables = []
-    fit_tables = []
     for s in trade_files[0]["sheets"]:
         for t in s["tables"]:
             if t["tag"] == "~TRADELINKS":
                 tradelinks_tables.append(t)
-            if t["tag"] == "~FI_T":
-                fit_tables.append(t)
     assert len(tradelinks_tables) == 2
-    # Should have 1 efficiency row (ELC has efficiency, NG does not)
-    assert len(fit_tables) == 1
-    assert fit_tables[0]["rows"][0]["eff"] == 0.98
+
+    # VedaOnline compatibility: ~FI_T tables go to base VT_* file, NOT ScenTrade
+    # Trade efficiency rows should be in the main process file's ~FI_T table
+    base_file = [f for f in tableir["files"] if f["path"].startswith("VT_")][0]
+    fit_rows = []
+    for s in base_file["sheets"]:
+        for t in s["tables"]:
+            if t["tag"] == "~FI_T":
+                fit_rows.extend(t["rows"])
+    # Check trade efficiency row is present (ELC has efficiency 0.98)
+    trade_eff_rows = [r for r in fit_rows if r.get("process", "").startswith("T_")]
+    assert any(r.get("eff") == 0.98 for r in trade_eff_rows)
 
 
 def test_trade_link_efficiency():
-    """Trade links with efficiency should emit ~FI_T row for IRE_FLO."""
+    """Trade links with efficiency should emit ~FI_T row in base VT_* file.
+
+    VedaOnline compatibility: ~FI_T tables are NOT allowed in ScenTrade files,
+    so trade efficiency rows go to the base VT_* file.
+    """
     source = {
         "model": {
             "name": "TradeEffTest",
@@ -690,18 +702,20 @@ def test_trade_link_efficiency():
     # Check that we emit process name (not just 1) to enable efficiency targeting
     assert tradelinks_tables[0]["rows"][0]["REG2"] == "T_B_ELC_REG1_REG2_01"
 
-    # Should have TradeParams sheet with ~FI_T table
+    # VedaOnline: ~FI_T goes to base VT_* file, NOT trade file
+    base_file = [f for f in tableir["files"] if f["path"].startswith("VT_")][0]
     fit_rows = []
-    for s in trade_files[0]["sheets"]:
+    for s in base_file["sheets"]:
         for t in s["tables"]:
             if t["tag"] == "~FI_T":
                 fit_rows.extend(t["rows"])
 
-    assert len(fit_rows) == 1
-    assert fit_rows[0]["techname"] == "T_B_ELC_REG1_REG2_01"
-    assert fit_rows[0]["eff"] == 0.95
-    assert fit_rows[0]["region"] == "REG1"
-    assert fit_rows[0]["commodity-out"] == "ELC"
+    # Find the trade efficiency row
+    trade_eff_rows = [r for r in fit_rows if r.get("process") == "T_B_ELC_REG1_REG2_01"
+                      and r.get("eff") == 0.95]
+    assert len(trade_eff_rows) == 1
+    assert trade_eff_rows[0]["region"] == "REG1"
+    assert trade_eff_rows[0]["commodity-out"] == "ELC"
 
 
 def test_trade_link_no_efficiency():
@@ -775,7 +789,7 @@ def test_trade_links_emit_explicit_process_declarations():
 
     # Trade process should be explicitly declared
     trade_proc_rows = [
-        r for r in process_rows if r.get("techname", "").startswith("T_")
+        r for r in process_rows if r.get("process", "").startswith("T_")
     ]
 
     # Bidirectional = declared in BOTH regions
@@ -786,7 +800,7 @@ def test_trade_links_emit_explicit_process_declarations():
     # Should have IRE set
     for row in trade_proc_rows:
         assert row["sets"] == "IRE"
-        assert row["techname"] == "T_B_ELC_REG1_REG2_01"
+        assert row["process"] == "T_B_ELC_REG1_REG2_01"
 
     # Should also have topology in ~FI_T (commodity-in/out flows)
     topology_rows = []
@@ -797,7 +811,7 @@ def test_trade_links_emit_explicit_process_declarations():
                     topology_rows.extend(t["rows"])
 
     trade_topo_rows = [
-        r for r in topology_rows if r.get("techname", "").startswith("T_")
+        r for r in topology_rows if r.get("process", "").startswith("T_")
     ]
     # One commodity-out (REG1), one commodity-in (REG2)
     assert len(trade_topo_rows) == 2
@@ -847,11 +861,11 @@ def test_trade_links_unidirectional_single_declaration():
 
     # Trade process should only be in origin (REG1)
     trade_proc_rows = [
-        r for r in process_rows if r.get("techname", "").startswith("T_")
+        r for r in process_rows if r.get("process", "").startswith("T_")
     ]
     assert len(trade_proc_rows) == 1
     assert trade_proc_rows[0]["region"] == "REG1"
-    assert trade_proc_rows[0]["techname"] == "T_U_ELC_REG1_REG2_01"
+    assert trade_proc_rows[0]["process"] == "T_U_ELC_REG1_REG2_01"
 
 
 # =============================================================================
@@ -896,25 +910,25 @@ def test_emission_cap_constraint():
                     uc_rows.extend(t["rows"])
 
     # Should have rows for 2 years (2020, 2030)
-    # Each year: 1 UC_COMPRD + 1 UC_RHSRT = 2 rows
+    # Each year: 1 uc_comprd row + 1 uc_rhs row = 2 rows
     assert len(uc_rows) == 4
 
-    # Check UC_COMPRD rows
-    comprd_rows = [r for r in uc_rows if r["attribute"] == "UC_COMPRD"]
+    # Check uc_comprd rows (VedaOnline format: attribute as column header)
+    comprd_rows = [r for r in uc_rows if "uc_comprd" in r]
     assert len(comprd_rows) == 2
     for row in comprd_rows:
         assert row["uc_n"] == "CO2_CAP"
         assert row["commodity"] == "CO2"
         assert row["side"] == "LHS"
-        assert row["value"] == 1
+        assert row["uc_comprd"] == 1
 
-    # Check UC_RHSRT rows
-    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
-    assert len(rhsrt_rows) == 2
-    for row in rhsrt_rows:
+    # Check uc_rhs rows (VedaOnline format: attribute as column header)
+    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
+    assert len(rhs_rows) == 2
+    for row in rhs_rows:
         assert row["uc_n"] == "CO2_CAP"
         assert row["limtype"] == "UP"
-        assert row["value"] == 100
+        assert row["uc_rhs"] == 100
 
 
 def test_emission_cap_with_year_trajectory():
@@ -956,9 +970,9 @@ def test_emission_cap_with_year_trajectory():
                 if t["tag"] == "~UC_T":
                     uc_rows.extend(t["rows"])
 
-    # Check RHS values are interpolated
-    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
-    by_year = {r["year"]: r["value"] for r in rhsrt_rows}
+    # Check RHS values are interpolated (VedaOnline format: uc_rhs as column header)
+    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
+    by_year = {r["year"]: r["uc_rhs"] for r in rhs_rows}
 
     assert by_year[2020] == 100
     assert by_year[2030] == 75  # Interpolated
@@ -1007,30 +1021,30 @@ def test_activity_share_minimum():
                     uc_rows.extend(t["rows"])
 
     # Should have rows for 1 year (2020):
-    # 2 UC_ACT (PP_WIND, PP_SOLAR) + 1 UC_COMPRD + 1 UC_RHSRT = 4 rows
+    # 2 uc_act (PP_WIND, PP_SOLAR) + 1 uc_comprd + 1 uc_rhs = 4 rows
     assert len(uc_rows) == 4
 
-    # Check UC_ACT rows (coefficient = 1 for target processes)
-    act_rows = [r for r in uc_rows if r["attribute"] == "UC_ACT"]
+    # Check uc_act rows (VedaOnline format: coefficient = 1 for target processes)
+    act_rows = [r for r in uc_rows if "uc_act" in r]
     assert len(act_rows) == 2
     processes = {r["process"] for r in act_rows}
     assert processes == {"PP_WIND", "PP_SOLAR"}
     for row in act_rows:
-        assert row["value"] == 1
+        assert row["uc_act"] == 1
         assert row["side"] == "LHS"
 
-    # Check UC_COMPRD row (coefficient = -share)
-    comprd_rows = [r for r in uc_rows if r["attribute"] == "UC_COMPRD"]
+    # Check uc_comprd row (VedaOnline format: coefficient = -share)
+    comprd_rows = [r for r in uc_rows if "uc_comprd" in r]
     assert len(comprd_rows) == 1
     assert comprd_rows[0]["commodity"] == "ELC"
-    assert comprd_rows[0]["value"] == -0.30
+    assert comprd_rows[0]["uc_comprd"] == -0.30
     assert comprd_rows[0]["side"] == "LHS"
 
-    # Check UC_RHSRT row (RHS = 0, limtype = LO)
-    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
-    assert len(rhsrt_rows) == 1
-    assert rhsrt_rows[0]["value"] == 0
-    assert rhsrt_rows[0]["limtype"] == "LO"
+    # Check uc_rhs row (VedaOnline format: RHS = 0, limtype = LO)
+    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
+    assert len(rhs_rows) == 1
+    assert rhs_rows[0]["uc_rhs"] == 0
+    assert rhs_rows[0]["limtype"] == "LO"
 
 
 def test_activity_share_maximum():
@@ -1067,14 +1081,14 @@ def test_activity_share_maximum():
                 if t["tag"] == "~UC_T":
                     uc_rows.extend(t["rows"])
 
-    # Check UC_RHSRT has limtype = UP
-    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
-    assert len(rhsrt_rows) == 1
-    assert rhsrt_rows[0]["limtype"] == "UP"
+    # Check uc_rhs has limtype = UP (VedaOnline format)
+    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
+    assert len(rhs_rows) == 1
+    assert rhs_rows[0]["limtype"] == "UP"
 
-    # Check UC_COMPRD has -0.20
-    comprd_rows = [r for r in uc_rows if r["attribute"] == "UC_COMPRD"]
-    assert comprd_rows[0]["value"] == -0.20
+    # Check uc_comprd has -0.20 (VedaOnline format)
+    comprd_rows = [r for r in uc_rows if "uc_comprd" in r]
+    assert comprd_rows[0]["uc_comprd"] == -0.20
 
 
 def test_activity_share_both_min_max():
@@ -1115,37 +1129,37 @@ def test_activity_share_both_min_max():
     uc_names = {r["uc_n"] for r in uc_rows}
     assert uc_names == {"WIND_BAND_LO", "WIND_BAND_UP"}
 
-    # Check LO constraint
-    lo_rhsrt = [
+    # Check LO constraint (VedaOnline format)
+    lo_rhs = [
         r
         for r in uc_rows
-        if r["uc_n"] == "WIND_BAND_LO" and r["attribute"] == "UC_RHSRT"
+        if r["uc_n"] == "WIND_BAND_LO" and "uc_rhs" in r
     ]
-    assert len(lo_rhsrt) == 1
-    assert lo_rhsrt[0]["limtype"] == "LO"
+    assert len(lo_rhs) == 1
+    assert lo_rhs[0]["limtype"] == "LO"
 
     lo_comprd = [
         r
         for r in uc_rows
-        if r["uc_n"] == "WIND_BAND_LO" and r["attribute"] == "UC_COMPRD"
+        if r["uc_n"] == "WIND_BAND_LO" and "uc_comprd" in r
     ]
-    assert lo_comprd[0]["value"] == -0.20
+    assert lo_comprd[0]["uc_comprd"] == -0.20
 
-    # Check UP constraint
-    up_rhsrt = [
+    # Check UP constraint (VedaOnline format)
+    up_rhs = [
         r
         for r in uc_rows
-        if r["uc_n"] == "WIND_BAND_UP" and r["attribute"] == "UC_RHSRT"
+        if r["uc_n"] == "WIND_BAND_UP" and "uc_rhs" in r
     ]
-    assert len(up_rhsrt) == 1
-    assert up_rhsrt[0]["limtype"] == "UP"
+    assert len(up_rhs) == 1
+    assert up_rhs[0]["limtype"] == "UP"
 
     up_comprd = [
         r
         for r in uc_rows
-        if r["uc_n"] == "WIND_BAND_UP" and r["attribute"] == "UC_COMPRD"
+        if r["uc_n"] == "WIND_BAND_UP" and "uc_comprd" in r
     ]
-    assert up_comprd[0]["value"] == -0.40
+    assert up_comprd[0]["uc_comprd"] == -0.40
 
 
 def test_constraint_file_path():
@@ -1262,7 +1276,7 @@ def test_pcg_explicit_nrgo():
                 if t["tag"] == "~FI_PROCESS":
                     process_rows.extend(t["rows"])
 
-    ccgt = [r for r in process_rows if r["techname"] == "PP_CCGT"][0]
+    ccgt = [r for r in process_rows if r["process"] == "PP_CCGT"][0]
     assert ccgt["primarycg"] == "NRGO"
 
 
@@ -1296,7 +1310,7 @@ def test_pcg_explicit_demo():
                 if t["tag"] == "~FI_PROCESS":
                     process_rows.extend(t["rows"])
 
-    dem = [r for r in process_rows if r["techname"] == "DEM_RSD"][0]
+    dem = [r for r in process_rows if r["process"] == "DEM_RSD"][0]
     assert dem["primarycg"] == "DEMO"
 
 
@@ -1327,7 +1341,7 @@ def test_pcg_always_emitted():
         "FINO",
     ]
     for row in process_rows:
-        assert "primarycg" in row, f"Process {row.get('techname')} missing primarycg"
+        assert "primarycg" in row, f"Process {row.get('process')} missing primarycg"
         assert row["primarycg"] in valid_pcgs
 
 
@@ -1375,9 +1389,9 @@ def test_emission_cap_lower_bound():
                 if t["tag"] == "~UC_T":
                     uc_rows.extend(t["rows"])
 
-    # Check limtype is LO
-    rhsrt_rows = [r for r in uc_rows if r["attribute"] == "UC_RHSRT"]
-    assert all(r["limtype"] == "LO" for r in rhsrt_rows)
+    # Check limtype is LO (VedaOnline format)
+    rhs_rows = [r for r in uc_rows if "uc_rhs" in r]
+    assert all(r["limtype"] == "LO" for r in rhs_rows)
 
 
 def test_uc_table_has_uc_sets_metadata():
@@ -1761,7 +1775,7 @@ def test_all_examples_pass_semantic_validation():
 
 
 def test_time_varying_invcost():
-    """Time-varying invcost should emit year-indexed rows."""
+    """Time-varying invcost should emit year-indexed rows with canonical column name."""
     source = {
         "model": {
             "name": "TimeVaryTest",
@@ -1787,19 +1801,19 @@ def test_time_varying_invcost():
             for t in s.get("tables", []):
                 if t["tag"] == "~FI_T":
                     fit_rows.extend(
-                        r for r in t["rows"] if r.get("techname") == "SolarPV"
+                        r for r in t["rows"] if r.get("process") == "SolarPV"
                     )
 
-    # Should have rows with year column for invcost
-    invcost_rows = [r for r in fit_rows if "invcost" in r and "year" in r]
-    assert len(invcost_rows) == 4  # year=0 (interp) + 3 data years
+    # Should have rows with year column for ncap_cost (canonical for invcost)
+    ncap_cost_rows = [r for r in fit_rows if "ncap_cost" in r and "year" in r]
+    assert len(ncap_cost_rows) == 4  # year=0 (interp) + 3 data years
 
     # Check interpolation row (year=0)
-    interp_row = [r for r in invcost_rows if r["year"] == 0][0]
-    assert interp_row["invcost"] == 3  # interp_extrap code
+    interp_row = [r for r in ncap_cost_rows if r["year"] == 0][0]
+    assert interp_row["ncap_cost"] == 3  # interp_extrap code
 
     # Check data rows
-    years_values = {r["year"]: r["invcost"] for r in invcost_rows if r["year"] > 0}
+    years_values = {r["year"]: r["ncap_cost"] for r in ncap_cost_rows if r["year"] > 0}
     assert years_values[2020] == 1000
     assert years_values[2030] == 600
     assert years_values[2050] == 300
@@ -1838,7 +1852,7 @@ def test_time_varying_efficiency():
         for s in f.get("sheets", []):
             for t in s.get("tables", []):
                 if t["tag"] == "~FI_T":
-                    fit_rows.extend(r for r in t["rows"] if r.get("techname") == "CCGT")
+                    fit_rows.extend(r for r in t["rows"] if r.get("process") == "CCGT")
 
     # Should have rows with year column for eff
     eff_rows = [r for r in fit_rows if "eff" in r and "year" in r]
@@ -1877,20 +1891,21 @@ def test_time_varying_mixed_with_scalar():
         for s in f.get("sheets", []):
             for t in s.get("tables", []):
                 if t["tag"] == "~FI_T":
-                    fit_rows.extend(r for r in t["rows"] if r.get("techname") == "Wind")
+                    fit_rows.extend(r for r in t["rows"] if r.get("process") == "Wind")
 
-    # Should have year-indexed invcost rows
-    invcost_rows = [r for r in fit_rows if "invcost" in r and "year" in r]
-    assert len(invcost_rows) == 3  # year=0 + 2 data years
+    # Should have year-indexed ncap_cost rows (canonical for invcost)
+    ncap_cost_rows = [r for r in fit_rows if "ncap_cost" in r and "year" in r]
+    assert len(ncap_cost_rows) == 3  # year=0 + 2 data years
 
-    # Should have a row with scalar life and fixom (merged)
-    scalar_rows = [r for r in fit_rows if "life" in r or "fixom" in r]
+    # Should have a row with scalar ncap_tlife and ncap_fom (merged)
+    # Using canonical names: life->ncap_tlife, fixom->ncap_fom
+    scalar_rows = [r for r in fit_rows if "ncap_tlife" in r or "ncap_fom" in r]
     assert len(scalar_rows) >= 1
     # At least one row should have both
-    row_with_both = [r for r in scalar_rows if "life" in r and "fixom" in r]
+    row_with_both = [r for r in scalar_rows if "ncap_tlife" in r and "ncap_fom" in r]
     assert len(row_with_both) >= 1
-    assert row_with_both[0]["life"] == 25
-    assert row_with_both[0]["fixom"] == 30
+    assert row_with_both[0]["ncap_tlife"] == 25
+    assert row_with_both[0]["ncap_fom"] == 30
 
 
 def test_time_varying_no_interpolation():
@@ -1921,12 +1936,12 @@ def test_time_varying_no_interpolation():
         for s in f.get("sheets", []):
             for t in s.get("tables", []):
                 if t["tag"] == "~FI_T":
-                    fit_rows.extend(r for r in t["rows"] if r.get("techname") == "Coal")
+                    fit_rows.extend(r for r in t["rows"] if r.get("process") == "Coal")
 
-    invcost_rows = [r for r in fit_rows if "invcost" in r and "year" in r]
+    ncap_cost_rows = [r for r in fit_rows if "ncap_cost" in r and "year" in r]
     # Should only have 2 rows (no year=0 for interpolation)
-    assert len(invcost_rows) == 2
-    years = [r["year"] for r in invcost_rows]
+    assert len(ncap_cost_rows) == 2
+    years = [r["year"] for r in ncap_cost_rows]
     assert 0 not in years
     assert 2020 in years
     assert 2030 in years
@@ -1972,7 +1987,7 @@ def test_single_input_string_shorthand():
     # Should have input row for NG
     input_rows = [r for r in fit_rows if r.get("commodity-in") == "NG"]
     assert len(input_rows) == 1
-    assert input_rows[0]["techname"] == "PP_CCGT"
+    assert input_rows[0]["process"] == "PP_CCGT"
 
 
 def test_single_output_string_shorthand():
@@ -2081,7 +2096,7 @@ def test_default_commodity_units_energy():
                     comm_rows.extend(t["rows"])
 
     # ELC should have default unit PJ
-    elc_row = [r for r in comm_rows if r["commname"] == "ELC"][0]
+    elc_row = [r for r in comm_rows if r["commodity"] == "ELC"][0]
     assert elc_row["unit"] == "PJ"
 
 
@@ -2116,7 +2131,7 @@ def test_default_commodity_units_emission():
                     comm_rows.extend(t["rows"])
 
     # CO2 should have default unit Mt
-    co2_row = [r for r in comm_rows if r["commname"] == "CO2"][0]
+    co2_row = [r for r in comm_rows if r["commodity"] == "CO2"][0]
     assert co2_row["unit"] == "Mt"
 
 
@@ -2152,7 +2167,7 @@ def test_default_commodity_units_demand():
                     comm_rows.extend(t["rows"])
 
     # RSD should have default unit PJ
-    rsd_row = [r for r in comm_rows if r["commname"] == "RSD"][0]
+    rsd_row = [r for r in comm_rows if r["commodity"] == "RSD"][0]
     assert rsd_row["unit"] == "PJ"
 
 
@@ -2188,7 +2203,7 @@ def test_default_commodity_units_material():
                     comm_rows.extend(t["rows"])
 
     # H2 should have default unit Mt
-    h2_row = [r for r in comm_rows if r["commname"] == "H2"][0]
+    h2_row = [r for r in comm_rows if r["commodity"] == "H2"][0]
     assert h2_row["unit"] == "Mt"
 
 
@@ -2222,7 +2237,7 @@ def test_explicit_unit_overrides_default():
                     comm_rows.extend(t["rows"])
 
     # ELC should have explicit unit TWh
-    elc_row = [r for r in comm_rows if r["commname"] == "ELC"][0]
+    elc_row = [r for r in comm_rows if r["commodity"] == "ELC"][0]
     assert elc_row["unit"] == "TWh"
 
 

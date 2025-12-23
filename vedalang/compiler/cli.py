@@ -36,6 +36,9 @@ def main():
     compile_parser.add_argument(
         "--no-validate", action="store_true", help="Skip schema validation"
     )
+    compile_parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
 
     args = parser.parse_args()
 
@@ -45,6 +48,8 @@ def main():
 
 def run_compile(args):
     """Run the compile command."""
+    verbose = args.verbose
+
     if not args.input.exists():
         print(f"Error: Input file not found: {args.input}", file=sys.stderr)
         sys.exit(1)
@@ -54,8 +59,17 @@ def run_compile(args):
         sys.exit(1)
 
     try:
+        if verbose:
+            print(f"Loading VedaLang source: {args.input}")
         source = load_vedalang(args.input)
+
+        if verbose:
+            print(f"Compiling (validate={not args.no_validate})...")
         tableir = compile_vedalang_to_tableir(source, validate=not args.no_validate)
+
+        if verbose:
+            file_count = len(tableir.get("files", []))
+            print(f"Compiled to {file_count} TableIR file(s)")
 
         if args.tableir:
             args.tableir.parent.mkdir(parents=True, exist_ok=True)
@@ -66,6 +80,8 @@ def run_compile(args):
         if args.out:
             from tools.veda_emit_excel import emit_excel
 
+            if verbose:
+                print(f"Emitting Excel to: {args.out}")
             created = emit_excel(tableir, args.out, validate=False)
             print(f"Created {len(created)} Excel file(s):")
             for path in created:

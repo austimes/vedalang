@@ -64,20 +64,20 @@ class TestMiniPlantCompilation:
     def test_commodity_rows_correct(self, mini_plant_tableir):
         """Commodities ELC and NG should appear in ~FI_COMM."""
         rows = self._get_table_rows(mini_plant_tableir, "~FI_COMM")
-        comm_names = [r.get("commname") for r in rows]
+        comm_names = [r.get("commodity") for r in rows]
         assert "ELC" in comm_names
         assert "NG" in comm_names
 
     def test_process_row_correct(self, mini_plant_tableir):
         """Process PP_CCGT should appear in ~FI_PROCESS."""
         rows = self._get_table_rows(mini_plant_tableir, "~FI_PROCESS")
-        tech_names = [r.get("techname") for r in rows]
+        tech_names = [r.get("process") for r in rows]
         assert "PP_CCGT" in tech_names
 
     def test_process_has_sets(self, mini_plant_tableir):
         """Process should have Sets=ELE."""
         rows = self._get_table_rows(mini_plant_tableir, "~FI_PROCESS")
-        pp_ccgt = next(r for r in rows if r.get("techname") == "PP_CCGT")
+        pp_ccgt = next(r for r in rows if r.get("process") == "PP_CCGT")
         assert pp_ccgt.get("sets") == "ELE"
 
     def test_fi_t_has_efficiency(self, mini_plant_tableir):

@@ -1,0 +1,448 @@
+# VedaLang LLM Guide
+
+> AI agent guidance for generating VedaLang source files.
+
+## Purpose & Scope
+
+**VedaLang** is a typed DSL that compiles to VEDA Excel tables for the TIMES energy model. You write VedaLang YAML; the compiler emits Excel; xl2times validates the output.
+
+```
+VedaLang (.veda.yaml) → Compiler → VEDA Excel (.xlsx) → xl2times → TIMES DD files
+```
+
+### Sources of Truth (Priority Order)
+
+1. **`vedalang/schema/vedalang.schema.json`** — What syntax is valid
+2. **`vedalang/schema/attribute-master.json`** — Canonical TIMES attribute names (use ONLY these, never aliases)
+3. **`rules/constraints.yaml`** — Valid tag/file/field combinations
+4. **`rules/patterns.yaml`** — Reusable modeling patterns
+
+### Golden Rules
+
+1. **Use canonical attribute names only** — never aliases (e.g., `ACT_COST` not `VAROM`)
+2. **Every process needs `primary_commodity_group`** — no exceptions
+3. **Interpolation is required for time-series** — always specify `interpolation` for `values` maps
+4. **Commodities must exist before reference** — define before using in processes
+5. **Validate via `veda_check`** — xl2times is the oracle, not your assumptions
+6. **Schema-first** — if the schema doesn't allow it, you can't do it
+7. **Fail fast, learn** — when xl2times rejects output, capture the pattern
+
+---
+
+## Mental Model & Workflow
+
+### When to Use VedaLang vs TableIR
+
+| Use Case | Tool |
+|----------|------|
+| New model from scratch | VedaLang |
+| Quick pattern experiment | TableIR + `veda_emit_excel` |
+| Production model authoring | VedaLang |
+| Debugging VEDA structure | TableIR (lower friction) |
+
+### Standard Workflow
+
+```bash
+# Compile and validate
+uv run veda_check mymodel.veda.yaml --from-vedalang
+
+# Or step by step:
+uv run vedalang compile mymodel.veda.yaml --out output/
+uv run xl2times output/ --diagnostics-json diag.json
+```
+
+---
+
+## VedaLang Syntax & Structure
+
+### Terminology: VedaLang Fields vs TIMES Attributes vs VEDA Aliases
+
+VedaLang uses **ergonomic field names** that compile to **canonical TIMES attributes**:
+
+| Layer | Example | Description |
+|-------|---------|-------------|
+| **VedaLang field** | `varom`, `invcost`, `efficiency` | Human-readable DSL syntax |
+| **TIMES attribute** | `ACT_COST`, `NCAP_COST`, `EFF` | Canonical names (source of truth) |
+| **VEDA alias** | `VAROM`, `INVCOST` | Legacy shortcuts — **NEVER use** |
+
+**Key insight:** VedaLang fields are NOT aliases. They're a clean abstraction layer that deterministically compiles to canonical TIMES attributes. When debugging compiled Excel or xl2times output, you'll see the canonical TIMES names (like `ACT_COST`), not the VedaLang names (like `varom`).
+
+### Required Top-Level Structure
+
+```yaml
+model:
+  name: <string>           # REQUIRED: Model identifier
+  regions: [<string>, ...] # REQUIRED: At least one region
+  commodities: [...]       # REQUIRED: Commodity definitions
+  processes: [...]         # REQUIRED: Process definitions
+  
+  # Optional sections:
+  description: <string>
+  start_year: <int>
+  time_periods: [<int>, ...]
+  timeslices: {...}
+  scenarios: [...]
+  trade_links: [...]
+  constraints: [...]
+```
+
+### Commodities
+
+Define energy carriers, materials, emissions, and demands.
+
+```yaml
+commodities:
+  - name: ELC
+    type: energy      # energy | material | emission | demand
+    unit: PJ
+    description: Electricity
+
+  - name: CO2
+    type: emission
+    unit: Mt
+    description: Carbon dioxide
+
+  - name: RSD
+    type: demand
+    unit: PJ
+    description: Residential demand
+```
+
+**Valid types:** `energy`, `material`, `emission`, `demand`
+
+### Processes
+
+Define technologies that transform commodities.
+
+```yaml
+processes:
+  # Thermal power plant
+  - name: PP_CCGT
+    description: Combined cycle gas turbine
+    sets: [ELE]
+    primary_commodity_group: NRGO  # REQUIRED
+    inputs:
+      - commodity: NG
+    outputs:
+      - commodity: ELC
+      - commodity: CO2
+        share: 0.05              # Emission factor
+    efficiency: 0.55
+    invcost: 800                 # Investment cost per GW
+    fixom: 20                    # Fixed O&M per GW-year
+    varom: 2                     # Variable O&M per PJ
+    life: 30
+
+  # With bounds
+  - name: PP_WIND
+    sets: [ELE]
+    primary_commodity_group: NRGO
+    outputs:
+      - commodity: ELC
+    invcost: 1200
+    cap_bound:
+      up: 30                     # Max 30 GW total
+      lo: 3                      # Min 3 GW total
+    ncap_bound:
+      up: 2                      # Max 2 GW new per period
+
+  # Time-varying costs
+  - name: PP_SOLAR
+    sets: [ELE]
+    primary_commodity_group: NRGO
+    outputs:
+      - commodity: ELC
+    invcost:
+      values:
+        "2020": 900
+        "2030": 550
+        "2040": 350
+      interpolation: interp_extrap
+```
+
+**Primary Commodity Groups (PCG):**
+- `NRGO` — Energy output (power plants)
+- `DEMO` — Demand output (demand devices)
+- `MATO` — Material output (hydrogen, steel)
+- `NRGI`, `DEMI`, `MATI` — Input variants
+
+**Bound types:** `up` (max), `lo` (min), `fx` (fixed)
+
+### Scenarios
+
+Define time-varying parameters like prices and demand projections.
+
+```yaml
+scenarios:
+  - name: CO2_Price
+    type: commodity_price      # commodity_price | demand_projection
+    commodity: CO2
+    interpolation: interp_extrap
+    values:
+      "2025": 50
+      "2030": 100
+      "2050": 200
+
+  - name: DemandRSD
+    type: demand_projection
+    commodity: RSD
+    interpolation: interp_extrap
+    values:
+      "2020": 100
+      "2030": 120
+```
+
+**Interpolation modes:**
+- `none` — No interpolation
+- `interp_only` — Interpolate, no extrapolation
+- `interp_extrap` — Full interpolation and extrapolation (most common)
+- `interp_extrap_back` — Extrapolate backward only
+- `interp_extrap_forward` — Extrapolate forward only
+
+### Constraints
+
+Define emission caps, renewable targets, etc.
+
+```yaml
+constraints:
+  # Emission cap
+  - name: CO2_CAP
+    type: emission_cap
+    commodity: CO2
+    limtype: up
+    years:
+      "2020": 100
+      "2030": 75
+      "2050": 25
+    interpolation: interp_extrap
+
+  # Renewable share target
+  - name: REN_TARGET
+    type: activity_share
+    commodity: ELC
+    processes: [PP_WIND, PP_SOLAR]
+    minimum_share: 0.30
+```
+
+### Trade Links
+
+Define inter-regional commodity trade.
+
+```yaml
+trade_links:
+  - origin: NORTH
+    destination: SOUTH
+    commodity: ELC
+    bidirectional: true
+    efficiency: 0.97            # 3% transmission loss
+```
+
+### Timeslices
+
+Define intra-annual temporal resolution.
+
+```yaml
+timeslices:
+  season:
+    - code: S
+      name: Summer
+    - code: W
+      name: Winter
+  daynite:
+    - code: D
+      name: Day
+    - code: N
+      name: Night
+  fractions:
+    SD: 0.25
+    SN: 0.22
+    WD: 0.28
+    WN: 0.25    # Must sum to 1.0
+```
+
+---
+
+## Attributes & TIMES Mapping
+
+Reference `veda/attribute-master.json` for the complete list. **Always use canonical TIMES attribute names** (middle column below), never VEDA aliases.
+
+### Common VedaLang → TIMES Mappings
+
+The VedaLang compiler translates ergonomic field names to canonical TIMES attributes:
+
+| VedaLang Field | TIMES Attribute | Description |
+|----------------|-----------------|-------------|
+| `efficiency` | `EFF` / `ACT_EFF` | Process efficiency |
+| `invcost` | `NCAP_COST` | Investment cost |
+| `fixom` | `NCAP_FOM` | Fixed O&M |
+| `varom` | `ACT_COST` | Variable O&M |
+| `life` | `NCAP_TLIFE` | Technical lifetime |
+| `cost` | `ACT_COST` | Activity cost (supply) |
+| `activity_bound.up` | `ACT_BND:UP` | Activity upper bound |
+| `cap_bound.up` | `CAP_BND:UP` | Capacity upper bound |
+| `ncap_bound.up` | `NCAP_BND:UP` | New capacity upper bound |
+| `availability_factor` | `NCAP_AF` | Availability factor |
+
+### Attribute Lookup
+
+```python
+# Check canonical name for an attribute
+import json
+with open("vedalang/schema/attribute-master.json") as f:
+    attrs = json.load(f)["attributes"]
+    
+# Find by alias
+for name, info in attrs.items():
+    if "VAROM" in info.get("aliases", []):
+        print(f"Canonical: {name}")  # ACT_COST
+```
+
+---
+
+## Tag/Table Selection
+
+VedaLang compiles to VEDA tags. Understanding the mapping helps debugging.
+
+### Decision Tree
+
+```
+Is it defining structure?
+├── Commodity → ~FI_COMM
+├── Process definition → ~FI_PROCESS
+└── Process topology/flow → ~FI_T
+
+Is it scenario data?
+├── Single value per row → ~TFM_INS
+└── Time-series (YEAR column) → ~TFM_INS-TS
+```
+
+### Tag Summaries
+
+| Tag | Purpose | Key Columns |
+|-----|---------|-------------|
+| `~FI_COMM` | Define commodities | Csets, CommName, Unit |
+| `~FI_PROCESS` | Define processes | TechName, Sets, Tact, Tcap |
+| `~FI_T` | Process topology | Process, Comm-IN, Comm-OUT, EFF |
+| `~TFM_INS` | Insert parameters | Attribute, Value, (TechName) |
+| `~TFM_INS-TS` | Time-series data | YEAR, Attribute, Value |
+
+See `rules/constraints.yaml` for valid file/field combinations.
+
+---
+
+## Patterns: Reusable Templates
+
+The pattern library (`rules/patterns.yaml`) provides templates for common constructs.
+
+### Available Patterns
+
+| Pattern | Use Case |
+|---------|----------|
+| `add_power_plant` | Thermal generation (CCGT, coal, oil) |
+| `add_renewable_plant` | Wind, solar, hydro |
+| `add_chp_plant` | Combined heat and power |
+| `add_storage` | Battery, pumped hydro |
+| `add_energy_commodity` | Fuel, electricity |
+| `add_emission_commodity` | CO2, NOx |
+| `co2_price_trajectory` | Carbon price scenario |
+
+### Pattern Example
+
+```yaml
+# From patterns.yaml - add_power_plant template
+processes:
+  - name: {{ plant_name }}
+    description: Thermal power plant
+    sets: [ELE]
+    primary_commodity_group: NRGO
+    inputs:
+      - commodity: {{ fuel_commodity }}
+    outputs:
+      - commodity: {{ output_commodity }}
+    efficiency: {{ efficiency }}
+```
+
+### When to Use Patterns
+
+- Starting a new model component
+- Ensuring consistency across similar technologies
+- Learning idiomatic VedaLang structure
+
+---
+
+## Validation Checklist
+
+Before running `veda_check`, verify:
+
+### Structure
+
+- [ ] `model.name` is set
+- [ ] `model.regions` has at least one region
+- [ ] `model.commodities` is non-empty
+- [ ] `model.processes` is non-empty
+
+### Types & Enums
+
+- [ ] Commodity `type` is: `energy`, `material`, `emission`, or `demand`
+- [ ] Process `primary_commodity_group` is valid (NRGO, DEMO, MATO, etc.)
+- [ ] `interpolation` mode is valid when using `values` maps
+- [ ] Bound keys are: `up`, `lo`, or `fx`
+
+### Numeric Ranges
+
+- [ ] `efficiency` is 0-1
+- [ ] `share` values are 0-1
+- [ ] Costs are non-negative
+- [ ] Timeslice fractions sum to 1.0
+
+### Reference Integrity
+
+- [ ] All commodities in process inputs/outputs are defined
+- [ ] All processes in constraints are defined
+- [ ] Trade link regions exist in `model.regions`
+- [ ] Scenario commodities are defined
+
+### Attribute Consistency
+
+- [ ] Using canonical names from attribute-master.json
+- [ ] Time-series have required `interpolation` field
+- [ ] Year keys are valid 4-digit years (e.g., "2020")
+
+---
+
+## Quick Reference
+
+### Minimal Valid Model
+
+```yaml
+model:
+  name: MinimalExample
+  regions: [REG1]
+  
+  commodities:
+    - name: ELC
+      type: energy
+      unit: PJ
+
+  processes:
+    - name: PP_GEN
+      sets: [ELE]
+      primary_commodity_group: NRGO
+      outputs:
+        - commodity: ELC
+```
+
+### Validation Command
+
+```bash
+uv run veda_check model.veda.yaml --from-vedalang
+```
+
+### Common Errors
+
+| Error | Fix |
+|-------|-----|
+| Missing `primary_commodity_group` | Add PCG to process (usually `NRGO`) |
+| Commodity not found | Define commodity before process reference |
+| Invalid interpolation | Use valid enum value |
+| Timeslice fractions don't sum to 1 | Adjust fractions |

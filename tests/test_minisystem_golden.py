@@ -161,7 +161,7 @@ class TestMiniSystemTableIRStructure:
         """Should have ~FI_COMM table with all commodities."""
         comm_rows = self._find_table_rows(tableir, "~FI_COMM")
         assert len(comm_rows) >= 6  # NG, ELC, CO2, RSD, IND, H2
-        names = {r.get("commname") for r in comm_rows}
+        names = {r.get("commodity") for r in comm_rows}
         assert {"NG", "ELC", "CO2", "RSD", "IND", "H2"}.issubset(names)
 
     def test_has_processes(self, tableir):
@@ -169,7 +169,7 @@ class TestMiniSystemTableIRStructure:
         proc_rows = self._find_table_rows(tableir, "~FI_PROCESS")
         # 7 processes: IMP_NG, PP_CCGT, PP_WIND, PP_SOLAR, PP_ELYZ, DMD_RSD, DMD_IND
         assert len(proc_rows) >= 7
-        names = {r.get("techname") for r in proc_rows}
+        names = {r.get("process") for r in proc_rows}
         expected = {
             "IMP_NG", "PP_CCGT", "PP_WIND", "PP_SOLAR",
             "PP_ELYZ", "DMD_RSD", "DMD_IND",
@@ -190,7 +190,7 @@ class TestMiniSystemTableIRStructure:
         """Trade links should create IRE processes."""
         proc_rows = self._find_table_rows(tableir, "~FI_PROCESS")
         # Trade process naming: T_B_COMM_REG1_REG2_01 (bidirectional) or T_U_...
-        trade_procs = [r for r in proc_rows if r.get("techname", "").startswith("T_")]
+        trade_procs = [r for r in proc_rows if r.get("process", "").startswith("T_")]
         assert len(trade_procs) >= 2  # ELC and NG trade
 
     def test_has_user_constraints(self, tableir):

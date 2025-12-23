@@ -1,0 +1,5171 @@
+{
+  "_comment": "Auto-generated from Attribute-master-export.xlsx. Do not edit.",
+  "_source": "tools/convert_attribute_master.py",
+  "attributes": {
+    "ACT_BND": {
+      "column_header": "act_bnd",
+      "column_headers": [
+        "act_bnd",
+        "bound(bd)o",
+        "bndact",
+        "actbnd",
+        "bound(bd)or"
+      ],
+      "description": "Bound on the overall activity a process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "BOUND(BD)O",
+        "BNDACT",
+        "ACTBND",
+        "BOUND(BD)Or"
+      ],
+      "indexes": "(r,datayear,p,s,bd)"
+    },
+    "ACT_COST": {
+      "column_header": "act_cost",
+      "column_headers": [
+        "act_cost",
+        "varom",
+        "actcost"
+      ],
+      "description": "Variable costs associated with the activity of a process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "VAROM",
+        "ACTCOST"
+      ],
+      "indexes": "(r,datayear,p,cur)"
+    },
+    "ACT_CSTPL": {
+      "column_header": "act_cstpl",
+      "column_headers": [
+        "act_cstpl"
+      ],
+      "description": "Partial load cost penalty, defined as an additional cost per activity at the minimum operating level, corresponding to the efficiency loss at that load level. Added as an extra term to variable costs in the objective and reporting.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "indexes": "(r,datayear,p,cur)"
+    },
+    "ACT_CSTRMP": {
+      "column_header": "act_cstrmp",
+      "column_headers": [
+        "act_cstrmp"
+      ],
+      "description": "Defines ramp-up (L=UP) or ramp-down (L=LO) cost per unit of load change (in capacity units). For load-shifting processes defines the cost of shifting one unit of load by one hour, forward (UP) or backward (LO).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": true,
+      "indexes": "(r,datayear,p,bd,cur)"
+    },
+    "ACT_CSTSD": {
+      "column_header": "act_cstsd",
+      "column_headers": [
+        "act_cstsd"
+      ],
+      "description": "Defines start-up (bd=UP) and shutdown costs (bd=LO) per unit of started-up capacity, differentiated by start-up type (upt). The start-up type of a power plant depends on its non-operational time after shut-down, as defined by using ACT_MAXNON.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": true,
+      "indexes": "(r,datayear,p,upt,bd,cur)"
+    },
+    "ACT_CSTUP": {
+      "column_header": "act_cstup",
+      "column_headers": [
+        "act_cstup"
+      ],
+      "description": "Cost of process start-up per unit of started-up capacity. Added as an extra term to variable costs in the objective and reporting.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "DAYNITE",
+      "limtype": "",
+      "currency": true,
+      "indexes": "(r,datayear,p,tslvl,cur)"
+    },
+    "ACT_CUM": {
+      "column_header": "act_cum",
+      "column_headers": [
+        "act_cum",
+        "cum",
+        "bndcum"
+      ],
+      "description": "Bound on the cumulative amount of annual process activity between the years y1 and y2, within a region.",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "CUM",
+        "BNDCUM"
+      ],
+      "indexes": "(r,p,y1,y2,bd)"
+    },
+    "ACT_EFF": {
+      "column_header": "act_eff",
+      "column_headers": [
+        "act_eff"
+      ],
+      "description": "Activity efficiency for process, i.e. amount of activity per unit of commodity flows in the group cg. For more information on usage, see Section 6.3 for details about EQE_ACTEFF.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p,cg,s)"
+    },
+    "ACT_FLO": {
+      "column_header": "act_flo",
+      "column_headers": [
+        "act_flo"
+      ],
+      "description": "Flow of commodities in cg in proportion to activity, in timeslice s.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p,cg,s)"
+    },
+    "ACT_LOSPL": {
+      "column_header": "act_lospl",
+      "column_headers": [
+        "act_lospl"
+      ],
+      "description": "Partial load efficiency parameters. 1) (bd='FX'): Proportional increase in specific fuel con\u00adsumption at minimum operating level 2) (bd='LO'): Minimum operating level of partial load operation 3) (bd='UP'): Fraction of feasible load range above the minimum operating level, below which the efficiency losses are assumed to occur.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "FX",
+      "currency": false,
+      "indexes": "(r,datayear,p,bd)"
+    },
+    "ACT_LOSSD": {
+      "column_header": "act_lossd",
+      "column_headers": [
+        "act_lossd"
+      ],
+      "description": "Used for modeling endogenous partial load efficiency losses during the start-up and shut-down phase. \u00b7\u00a0\u00a0 With bd=UP defines increase in specific fuel con\u00adsump\u00adtion at the start up load level defined by the ratio ACT_MINLD / ACT_SDTIME(upt,'UP') for start-up type upt; \u00b7\u00a0\u00a0 With bd=LO defines the increase in specific fuel consump\u00adtion at the start up load level defined by the ratio ACT_MINLD / ACT_SDTIME('HOT', 'LO').",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,datayear,p,upt,bd)"
+    },
+    "ACT_MAXNON": {
+      "column_header": "act_maxnon",
+      "column_headers": [
+        "act_maxnon"
+      ],
+      "description": "Max. non-operational time before transition to next stand-by condition, by start-up type, in hours \u00b7\u00a0\u00a0 Defines the max. non-operational time before a subsequent start-up of type upt.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p,upt)"
+    },
+    "ACT_MINLD": {
+      "column_header": "act_minld",
+      "column_headers": [
+        "act_minld"
+      ],
+      "description": "Minimum stable operating level of a dispatchable process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p)"
+    },
+    "ACT_SDTIME": {
+      "column_header": "act_sdtime",
+      "column_headers": [
+        "act_sdtime"
+      ],
+      "description": "Defines the duration of start-up (bd=UP) and shut-down (bd=LO) phases, by start-up type, in hours.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,datayear,p,upt,bd)"
+    },
+    "ACT_TIME": {
+      "column_header": "act_time",
+      "column_headers": [
+        "act_time"
+      ],
+      "description": "1) Minimum online  (UP) / offline (LO)  hours of a process  with start-up costs  modeled (lim=LO/UP)  2) Maximum number  of start-up cycles  within process time\u00adslice cycles (lim=N). 3) Maximum delay or advance of load shift (lim=UP/LO/FX) or load balancing time (lim=N) for a load-shifting storage.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,datayear,p,lim)"
+    },
+    "ACT_UPS": {
+      "column_header": "act_ups",
+      "column_headers": [
+        "act_ups"
+      ],
+      "description": "Maximum ramp-rate (down/up) of process activity as a fraction of nominal on-line capacity per hour.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,datayear,p,s,bd)"
+    },
+    "BS_BNDPRS": {
+      "column_header": "bs_bndprs",
+      "column_headers": [
+        "bs_bndprs"
+      ],
+      "description": "Bound on process reserve provision",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false
+    },
+    "BS_CAPACT": {
+      "column_header": "bs_capact",
+      "column_headers": [
+        "bs_capact"
+      ],
+      "description": "Conversion factor from exogenous reserve demand to activity",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_DELTA": {
+      "column_header": "bs_delta",
+      "column_headers": [
+        "bs_delta"
+      ],
+      "description": "Calibration parameters for probabilistic reserve demands",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_DEMDET": {
+      "column_header": "bs_demdet",
+      "column_headers": [
+        "bs_demdet"
+      ],
+      "description": "Deterministic demands of reserves - EXOGEN and WMAXSI",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_DETWT": {
+      "column_header": "bs_detwt",
+      "column_headers": [
+        "bs_detwt"
+      ],
+      "description": "Weights for deterministic reserve demands",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_LAMBDA": {
+      "column_header": "bs_lambda",
+      "column_headers": [
+        "bs_lambda"
+      ],
+      "description": "Fudge factors for dependencies in reserve requirements",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_MAINT": {
+      "column_header": "bs_maint",
+      "column_headers": [
+        "bs_maint"
+      ],
+      "description": "Continuous maintenance duration (hours",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_OMEGA": {
+      "column_header": "bs_omega",
+      "column_headers": [
+        "bs_omega"
+      ],
+      "description": "Indicator of how to define reserve demand from deterministic and probabilistic component",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_RMAX": {
+      "column_header": "bs_rmax",
+      "column_headers": [
+        "bs_rmax"
+      ],
+      "description": "Maximum contribution of process p to provision of reserve c as a fraction of capacity",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_RTYPE": {
+      "column_header": "bs_rtype",
+      "column_headers": [
+        "bs_rtype"
+      ],
+      "description": "Types of reserve commodities, positive or negative 1-4",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_SHARE": {
+      "column_header": "bs_share",
+      "column_headers": [
+        "bs_share"
+      ],
+      "description": "Share of group reserve provision",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "BS_SIGMA": {
+      "column_header": "bs_sigma",
+      "column_headers": [
+        "bs_sigma"
+      ],
+      "description": "Standard deviation of imbalance source ITEM",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "BS_STIME": {
+      "column_header": "bs_stime",
+      "column_headers": [
+        "bs_stime"
+      ],
+      "description": "Minimum times for reserve provision form storage (hours",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "LO",
+      "currency": false
+    },
+    "CAP_BND": {
+      "column_header": "cap_bnd",
+      "column_headers": [
+        "cap_bnd",
+        "bound(bd)",
+        "bndcap"
+      ],
+      "description": "Bound on investment in new capacity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "BOUND(BD)",
+        "BNDCAP"
+      ],
+      "indexes": "(r,datayear,p,bd)"
+    },
+    "CCAP0": {
+      "column_header": "ccap0",
+      "column_headers": [
+        "ccap0"
+      ],
+      "description": "The initial cumulative capacity (starting point on thelearning curve) for a (non-resource) technology that ismodeled as one for which endogenous technologylearning (ETL) applies",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "CCAPM": {
+      "column_header": "ccapm",
+      "column_headers": [
+        "ccapm"
+      ],
+      "description": "The maximum cumulative capacity (ending point onthe learning curve) for a (non-resource) technology that is modeled as one for which endogenous technologylearning (ETL) applies",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "CEFF": {
+      "column_header": "ceff",
+      "column_headers": [
+        "ceff",
+        "ceff-i"
+      ],
+      "description": "Commodity-based Efficiency - Output based",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "CEFF-I"
+      ]
+    },
+    "CLUSTER": {
+      "column_header": "cluster",
+      "column_headers": [
+        "cluster"
+      ],
+      "description": "The \u201ccluster mapping and coupling factor\u201d for atechnology that is modeled as a clustered technology isassociated with a key learning technology to whichendogenous technology learning (ETL) applies",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "CM_CO2GTC": {
+      "column_header": "cm_co2gtc",
+      "column_headers": [
+        "cm_co2gtc"
+      ],
+      "description": "Conversion Factors Between CO2 Commodities",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "CM_CONST": {
+      "column_header": "cm_const",
+      "column_headers": [
+        "cm_const"
+      ],
+      "description": "Various climate module constants, e.g. phi and sigma values between reservoirs.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(item)"
+    },
+    "CM_EXOFORC": {
+      "column_header": "cm_exoforc",
+      "column_headers": [
+        "cm_exoforc"
+      ],
+      "description": "Radiative forcing from exogenous sources",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(year)"
+    },
+    "CM_GHGMAP": {
+      "column_header": "cm_ghgmap",
+      "column_headers": [
+        "cm_ghgmap"
+      ],
+      "description": "Mapping and conversion of regional GHG emissions to global emissions in the climate module",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,c,cm_var)"
+    },
+    "CM_HISTORY": {
+      "column_header": "cm_history",
+      "column_headers": [
+        "cm_history"
+      ],
+      "description": "Calibration values for CO2 and forcing",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(year,item)"
+    },
+    "CM_LINFOR": {
+      "column_header": "cm_linfor",
+      "column_headers": [
+        "cm_linfor"
+      ],
+      "description": "Parameters of linearized forcing functions",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "U",
+      "currency": false,
+      "indexes": "(datayear,item,lim)"
+    },
+    "CM_MAXC": {
+      "column_header": "cm_maxc",
+      "column_headers": [
+        "cm_maxc"
+      ],
+      "description": "Maximum level of climate variable",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(datayear,item)"
+    },
+    "CM_MAXCO2C": {
+      "column_header": "cm_maxco2c",
+      "column_headers": [
+        "cm_maxco2c"
+      ],
+      "description": "Max Allowable Atmospheric CO2 Concentration",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "COM_AGG": {
+      "column_header": "com_agg",
+      "column_headers": [
+        "com_agg",
+        "cagg"
+      ],
+      "description": "Aggregation of commodity NET/PRD production to the production side of the balance of another commodity.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "CAGG"
+      ],
+      "indexes": "(r,dayayear,c1,c2)"
+    },
+    "COM_BNDNET": {
+      "column_header": "com_bndnet",
+      "column_headers": [
+        "com_bndnet",
+        "env_bound(bd)",
+        "envbnd",
+        "cbndnet"
+      ],
+      "description": "Limit on the net amount of a commodity within a region for a particular timeslice.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "ENV_BOUND(BD)",
+        "ENVBND",
+        "CBNDNET"
+      ],
+      "indexes": "(r,datayear,c,s,bd)"
+    },
+    "COM_BNDPRD": {
+      "column_header": "com_bndprd",
+      "column_headers": [
+        "com_bndprd",
+        "cbndprd"
+      ],
+      "description": "Limit on the amount of a commodity produced within a region for a particular timeslice.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "CBNDPRD"
+      ],
+      "indexes": "(r,datayear,c,s,bd)"
+    },
+    "COM_BPRICE": {
+      "column_header": "com_bprice",
+      "column_headers": [
+        "com_bprice",
+        "med-dmbprice",
+        "cbprice"
+      ],
+      "description": "Base price of a demand commodity for the elastic demand formulation.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "MED-DMBPRICE",
+        "CBPRICE"
+      ],
+      "indexes": "(r,t,c,s,cur)"
+    },
+    "COM_CSTBAL": {
+      "column_header": "com_cstbal",
+      "column_headers": [
+        "com_cstbal"
+      ],
+      "description": "for defining a cost for the generation (type=PRD), imports (IMP), exports (EXP), net imports (NTX), consumption (CON), or net positive generation (NPG) at node N, optionally differentiated by timeslice s (unit: currency unit / energy unit).",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true
+    },
+    "COM_CSTNET": {
+      "column_header": "com_cstnet",
+      "column_headers": [
+        "com_cstnet",
+        "env_cost",
+        "envcost",
+        "ccstnet"
+      ],
+      "description": "Cost on the net amount of a commodity within a region for a particular timeslice.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "ENV_COST",
+        "ENVCOST",
+        "CCSTNET"
+      ],
+      "indexes": "(r,datayear,c,s,cur)"
+    },
+    "COM_CSTPRD": {
+      "column_header": "com_cstprd",
+      "column_headers": [
+        "com_cstprd",
+        "ccstprd"
+      ],
+      "description": "Cost on the production of a commodity, within a region for a particular timeslice.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "CCSTPRD"
+      ],
+      "indexes": "(r,datayear,c,s,cur)"
+    },
+    "COM_CUMNET": {
+      "column_header": "com_cumnet",
+      "column_headers": [
+        "com_cumnet",
+        "env_cummax",
+        "envcum"
+      ],
+      "description": "Bound on the cumulative net amount of a commodity between the years y1 and y2, within a region for a particular timeslice.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "ENV_CUMMAX",
+        "ENVCUM"
+      ],
+      "indexes": "(r,y1,y2,bd)"
+    },
+    "COM_CUMPRD": {
+      "column_header": "com_cumprd",
+      "column_headers": [
+        "com_cumprd"
+      ],
+      "description": "Bound on the cumulative production of a commodity between the years y1 and y2 within a region for a particular timeslice.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,y1,y2,bd)"
+    },
+    "COM_ELAST": {
+      "column_header": "com_elast",
+      "column_headers": [
+        "com_elast",
+        "med-elast(bd)",
+        "celast"
+      ],
+      "description": "Elasticity of demand indicating how much the demand rises/falls in response to a unit change in the marginal cost of meeting a demand that is elastic. See also Appendix D for additional details on defining demand functions.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "U",
+      "currency": false,
+      "aliases": [
+        "MED-ELAST(BD)",
+        "CELAST"
+      ],
+      "indexes": "(r,datayear,c,s,lim)"
+    },
+    "COM_ELASTX": {
+      "column_header": "com_elastx",
+      "column_headers": [
+        "com_elastx",
+        "elastx"
+      ],
+      "description": "Shape index for the elasticity of demand",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "U",
+      "currency": false,
+      "aliases": [
+        "ELASTX"
+      ],
+      "indexes": "(r,datayear,c,bd)"
+    },
+    "COM_FR": {
+      "column_header": "com_fr",
+      "column_headers": [
+        "com_fr",
+        "fr(z)(y)",
+        "fraction"
+      ],
+      "description": "Fraction of the annual demand (COM_PROJ) or commodity flow occurring in timeslice s; describes the shape of the load curve.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "FR(Z)(Y)",
+        "Fraction"
+      ],
+      "indexes": "(r,datayear,c,s)"
+    },
+    "COM_IE": {
+      "column_header": "com_ie",
+      "column_headers": [
+        "com_ie",
+        "te(ent)",
+        "te(mat)"
+      ],
+      "description": "Infrastructure or transmission efficiency of a commodity.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "TE(ENT)",
+        "TE(MAT)"
+      ],
+      "indexes": "(r,datayear,c,s)"
+    },
+    "COM_LIM": {
+      "column_header": "com_lim",
+      "column_headers": [
+        "com_lim"
+      ],
+      "description": "Commodity LimType (UP/LO/FX)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "COM_MSHGV": {
+      "column_header": "com_mshgv",
+      "column_headers": [
+        "com_mshgv",
+        "mshgv"
+      ],
+      "description": "Defines commodity com as a market where the market sharing mechanism is to be applied. The parameter value defines the heterogeneity parameter.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "MSHGV"
+      ]
+    },
+    "COM_PEAK": {
+      "column_header": "com_peak",
+      "column_headers": [
+        "com_peak"
+      ],
+      "description": "Set of pairs {r,cg} such that a peaking constraint is to be generated for commodity cg in region r. [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "COM_PKFLX": {
+      "column_header": "com_pkflx",
+      "column_headers": [
+        "com_pkflx",
+        "pkflx"
+      ],
+      "description": "Difference between the average demand and the peak demand in timeslice s, expressed as fraction of the average demand.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "PKFLX"
+      ],
+      "indexes": "(r,datayear,c,s)"
+    },
+    "COM_PKRSV": {
+      "column_header": "com_pkrsv",
+      "column_headers": [
+        "com_pkrsv",
+        "hreserv",
+        "(e)reserv"
+      ],
+      "description": "Peak reserve margin as fraction of peak demand, e.g. if COM_PKRSV = 0.2, the total installed capacity must exceed the peak load by 20%.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "HRESERV",
+        "(E)RESERV"
+      ],
+      "indexes": "(r,datayear,c)"
+    },
+    "COM_PROJ": {
+      "column_header": "com_proj",
+      "column_headers": [
+        "com_proj",
+        "demand"
+      ],
+      "description": "Projected annual demand for a commodity.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "DEMAND"
+      ],
+      "indexes": "(r,datayear,c)"
+    },
+    "COM_STEP": {
+      "column_header": "com_step",
+      "column_headers": [
+        "com_step",
+        "med-step(bd)",
+        "cstep"
+      ],
+      "description": "Number of steps to use for the approximation of change of producer/consumer surplus when using the linearized elastic demand formulations.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "U",
+      "currency": false,
+      "aliases": [
+        "MED-STEP(BD)",
+        "CSTEP"
+      ],
+      "indexes": "(r,c,bd)"
+    },
+    "COM_SUBNET": {
+      "column_header": "com_subnet",
+      "column_headers": [
+        "com_subnet",
+        "csubnet"
+      ],
+      "description": "Subsidy on the net amount of a commodity within a region for a particular timeslice.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "CSUBNET"
+      ],
+      "indexes": "(r,datayear,c,s,cur)"
+    },
+    "COM_SUBPRD": {
+      "column_header": "com_subprd",
+      "column_headers": [
+        "com_subprd",
+        "csubprd"
+      ],
+      "description": "Subsidy on the production of a commodity within a region for a particular timeslice.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "CSUBPRD"
+      ],
+      "indexes": "(r,datayear,c,s,cur)"
+    },
+    "COM_TAXNET": {
+      "column_header": "com_taxnet",
+      "column_headers": [
+        "com_taxnet",
+        "ctaxnet"
+      ],
+      "description": "Tax on the net amount of a commodity within a region for a particular timeslice.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "CTAXNET"
+      ],
+      "indexes": "(r,datayear,c,s,cur)"
+    },
+    "COM_TAXPRD": {
+      "column_header": "com_taxprd",
+      "column_headers": [
+        "com_taxprd",
+        "ctaxprd"
+      ],
+      "description": "Tax on the production of a commodity within a region for a particular timeslice.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "CTAXPRD"
+      ],
+      "indexes": "(r,datayear,c,s,cur)"
+    },
+    "COM_TSL": {
+      "column_header": "com_tsl",
+      "column_headers": [
+        "com_tsl"
+      ],
+      "description": "Commodity TimeSlice Level (ANNUAL/SEASON/WEEKLY/DAYNITE)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "COM_TYPE": {
+      "column_header": "com_type",
+      "column_headers": [
+        "com_type"
+      ],
+      "description": "Commodity Type (ELC or LTHEAT)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "COM_VOC": {
+      "column_header": "com_voc",
+      "column_headers": [
+        "com_voc",
+        "med-var(bd)",
+        "cvoc"
+      ],
+      "description": "Possible variation of demand in both directions when using the elastic demand formulation.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "U",
+      "currency": false,
+      "aliases": [
+        "MED-VAR(BD)",
+        "CVOC"
+      ],
+      "indexes": "(r,datayear,c,bd)"
+    },
+    "CmdF_GAMS": {
+      "column_header": "cmdf_gams",
+      "column_headers": [
+        "cmdf_gams"
+      ],
+      "description": "To append parameters to GAMS Call in VTRun.CMD file (multiple declarations will be concatenated)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "CmdF_Title": {
+      "column_header": "cmdf_title",
+      "column_headers": [
+        "cmdf_title"
+      ],
+      "description": "To append text to command window title; 0 => no title",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "CmdF_bot": {
+      "column_header": "cmdf_bot",
+      "column_headers": [
+        "cmdf_bot"
+      ],
+      "description": "To append statements after GDX2VEDA call in VTRun.CMD",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "CmdF_top": {
+      "column_header": "cmdf_top",
+      "column_headers": [
+        "cmdf_top"
+      ],
+      "description": "To append statements before the GAMS call in VTRun.CMD",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "Com_OFF": {
+      "column_header": "com_off",
+      "column_headers": [
+        "com_off"
+      ],
+      "description": "Specifying that the commodity c in region r is not available between the years y1 and y2 [set of quadruplets {r,c,y1,y2} such that commodity c is unavailable from years y1 to y1 in region r] [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "Com_PKTS": {
+      "column_header": "com_pkts",
+      "column_headers": [
+        "com_pkts"
+      ],
+      "description": "Set of triplets {r,cg,s} such that a peaking constraint for a single commodity or a group of commodities cg [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "",
+      "currency": false
+    },
+    "DAM_BQTY": {
+      "column_header": "dam_bqty",
+      "column_headers": [
+        "dam_bqty",
+        "dbqty"
+      ],
+      "description": "Base quantity of emissions for damage cost accounting",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "DBQTY"
+      ],
+      "indexes": "(r,c)"
+    },
+    "DAM_COST": {
+      "column_header": "dam_cost",
+      "column_headers": [
+        "dam_cost",
+        "damcost"
+      ],
+      "description": "Marginal damage cost of emissions at Base quantity.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "DAMCOST"
+      ],
+      "indexes": "(r,datayear,c,cur)"
+    },
+    "DAM_ELAST": {
+      "column_header": "dam_elast",
+      "column_headers": [
+        "dam_elast",
+        "delast"
+      ],
+      "description": "Elasticity of damage cost in the lower or upper direction from Base quantity.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "U",
+      "currency": false,
+      "aliases": [
+        "DELAST"
+      ],
+      "indexes": "(r,c,lim)"
+    },
+    "DAM_STEP": {
+      "column_header": "dam_step",
+      "column_headers": [
+        "dam_step",
+        "dstep"
+      ],
+      "description": "Number of steps for linearizing damage costs in the lower or upper direction from Base quantity.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "U",
+      "currency": false,
+      "aliases": [
+        "DSTEP"
+      ],
+      "indexes": "(r,c,lim)"
+    },
+    "DAM_VOC": {
+      "column_header": "dam_voc",
+      "column_headers": [
+        "dam_voc",
+        "dvoc"
+      ],
+      "description": "Variance of emissions in the lower or upper direction from Base quantity as a fraction of Base quantity.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "U",
+      "currency": false,
+      "aliases": [
+        "DVOC"
+      ],
+      "indexes": "(r,c,lim)"
+    },
+    "DECAYr": {
+      "column_header": "decayr",
+      "column_headers": [
+        "decayr"
+      ],
+      "description": "NOT TO BE USED IN TIMES. THIS IS ONLY TO MIGRATE MARKAL MODELS.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "EFF": {
+      "column_header": "eff",
+      "column_headers": [
+        "eff",
+        "efficiency",
+        "vda_eff",
+        "eff_i"
+      ],
+      "description": "Technical efficiency",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "EFFICIENCY",
+        "VDA_EFF",
+        "EFF_I"
+      ]
+    },
+    "END": {
+      "column_header": "end",
+      "column_headers": [
+        "end"
+      ],
+      "description": "The last year when a technology is available for Investment",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "EOTIME": {
+      "column_header": "eotime",
+      "column_headers": [
+        "eotime"
+      ],
+      "description": "End-of-Time for Climate equations",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "FLO_BND": {
+      "column_header": "flo_bnd",
+      "column_headers": [
+        "flo_bnd"
+      ],
+      "description": "Bound on the flow of a commodity or the sum of flows within a commodity group.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,datayear,p,cg,s,bd)"
+    },
+    "FLO_COST": {
+      "column_header": "flo_cost",
+      "column_headers": [
+        "flo_cost",
+        "deliv(mat)",
+        "fcost"
+      ],
+      "description": "Variable cost of a process associated with the production/ consumption of a commodity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "DELIV(MAT)",
+        "FCOST"
+      ],
+      "indexes": "(r,datayear,p,c,s,cur)"
+    },
+    "FLO_CUM": {
+      "column_header": "flo_cum",
+      "column_headers": [
+        "flo_cum"
+      ],
+      "description": "Bound on the cumulative amount of annual process activity between the years y1 and y2, within a region.",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,p,c,y1,y2,bd)"
+    },
+    "FLO_DELIV": {
+      "column_header": "flo_deliv",
+      "column_headers": [
+        "flo_deliv",
+        "deliv(ent)",
+        "deliv"
+      ],
+      "description": "Cost of a delivering (consuming) a commodity to a process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "DELIV(ENT)",
+        "DELIV"
+      ],
+      "indexes": "(r,datayear,p,c,s,cur)"
+    },
+    "FLO_EMIS": {
+      "column_header": "flo_emis",
+      "column_headers": [
+        "flo_emis",
+        "femis",
+        "flo_eff"
+      ],
+      "description": "Defines the amount of emissions (c) per unit of process flow(s) or activity (cg).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "FEMIS",
+        "FLO_EFF"
+      ],
+      "indexes": "(r,datayear,p,cg,com,s)"
+    },
+    "FLO_EMIS+": {
+      "column_header": "flo_emis+",
+      "column_headers": [
+        "flo_emis+",
+        "env_act",
+        "envact",
+        "emissionsenv_sep",
+        "envsep"
+      ],
+      "description": "Emissions coefficient - Activity based",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "ENV_ACT",
+        "ENVACT",
+        "EMISSIONSENV_SEP",
+        "ENVSEP"
+      ]
+    },
+    "FLO_FR": {
+      "column_header": "flo_fr",
+      "column_headers": [
+        "flo_fr"
+      ],
+      "description": "1) Bounds the flow of commodity (c) entering or leaving process (p) in a timeslice, in pro\u00adpor\u00adtion to annual flow. 2) If specified also at the ANNUAL level, bounds the flow level in proportion to the average level under the parent timeslice",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,datayear,p,c,s,bd)"
+    },
+    "FLO_FUNC": {
+      "column_header": "flo_func",
+      "column_headers": [
+        "flo_func"
+      ],
+      "description": "A key parameter describing the basic operation of or within a process. Sets the ratio between the sum of flows in commodity group cg2 to the sum of flows in commodity group cg1, thereby defining the efficiency of producing cg2 from cg1 (subject to any FLO_SUM). cg1 and cg2 may be also single commodities.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p,cg1,cg2,s)"
+    },
+    "FLO_FUNCX": {
+      "column_header": "flo_funcx",
+      "column_headers": [
+        "flo_funcx"
+      ],
+      "description": "Age-based shaping curve (SHAPE) to be applied to the flow parameters   (ACT_EFF/ACT_FLO/ FLO_FUNC/FLO_SUM/FLO_EMIS/FLO_EFF)",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p,cg1,cg2)"
+    },
+    "FLO_MARK": {
+      "column_header": "flo_mark",
+      "column_headers": [
+        "flo_mark",
+        "fmshare"
+      ],
+      "description": "Process-wise market share in total commodity production.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "FMSHARE"
+      ],
+      "indexes": "(r,datayear,p,c,bd)"
+    },
+    "FLO_PKCOI": {
+      "column_header": "flo_pkcoi",
+      "column_headers": [
+        "flo_pkcoi",
+        "pkcoi"
+      ],
+      "description": "Factor that permits attributing more (or less) demand to the peaking equation (EQ_PEAK) than the average demand calculated by the model, to handle the situation where peak usage is typically higher (or lower) due to coincidental (or non-coincidental) loads at the time of the peak demand.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "PKCOI"
+      ],
+      "indexes": "(r,datayear,p,c,s)"
+    },
+    "FLO_SHAR": {
+      "column_header": "flo_shar",
+      "column_headers": [
+        "flo_shar",
+        "share-i"
+      ],
+      "description": "Share of flow commodity c based upon the sum of individual flows defined by the commodity group cg belonging to process p.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "FX",
+      "currency": false,
+      "aliases": [
+        "Share-I"
+      ],
+      "indexes": "(r,datayear,p,c,cg,s,bd)"
+    },
+    "FLO_SUB": {
+      "column_header": "flo_sub",
+      "column_headers": [
+        "flo_sub"
+      ],
+      "description": "Subsidy on a process flow.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "indexes": "(r,datayear,p,c,s,cur)"
+    },
+    "FLO_TAX": {
+      "column_header": "flo_tax",
+      "column_headers": [
+        "flo_tax"
+      ],
+      "description": "Tax on a process flow.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "indexes": "(r,datayear,p,c,s,cur)"
+    },
+    "GROWTH": {
+      "column_header": "growth",
+      "column_headers": [
+        "growth"
+      ],
+      "description": "NOT TO BE USED IN TIMES. THIS IS ONLY TO MIGRATE MARKAL MODELS.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "GROWTH_TID": {
+      "column_header": "growth_tid",
+      "column_headers": [
+        "growth_tid"
+      ],
+      "description": "NOT TO BE USED IN TIMES. THIS IS ONLY TO MIGRATE MARKAL MODELS.",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "GROWTH_TIDr": {
+      "column_header": "growth_tidr",
+      "column_headers": [
+        "growth_tidr"
+      ],
+      "description": "NOT TO BE USED IN TIMES. THIS IS ONLY TO MIGRATE MARKAL MODELS.",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "GROWTHr": {
+      "column_header": "growthr",
+      "column_headers": [
+        "growthr"
+      ],
+      "description": "NOT TO BE USED IN TIMES. THIS IS ONLY TO MIGRATE MARKAL MODELS.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "GR_DEMFR": {
+      "column_header": "gr_demfr",
+      "column_headers": [
+        "gr_demfr"
+      ],
+      "description": "Fraction of the total demand (by timeslice) to be allocated to node (Commodity)",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "GR_ENDFR": {
+      "column_header": "gr_endfr",
+      "column_headers": [
+        "gr_endfr"
+      ],
+      "description": "Fraction of a sectoral demand (CommGrp) to be allocated to node (Commodity)",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "GR_GENFR": {
+      "column_header": "gr_genfr",
+      "column_headers": [
+        "gr_genfr"
+      ],
+      "description": "Fraction of the unit type (CommGrp) generation to be allocated to node (Commodity)",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "GR_GENLEV": {
+      "column_header": "gr_genlev",
+      "column_headers": [
+        "gr_genlev"
+      ],
+      "description": "Generation level indicator for a generated electricity commodity",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "GR_GENMAP": {
+      "column_header": "gr_genmap",
+      "column_headers": [
+        "gr_genmap"
+      ],
+      "description": "Mapping of generating technology to unit type or load category (CommGrp)",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "GR_THMIN": {
+      "column_header": "gr_thmin",
+      "column_headers": [
+        "gr_thmin"
+      ],
+      "description": "Minimum level of thermal generation as a fraction of the nominal capacity of process p in year y (3 options - see doc)",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "GR_VARGEN": {
+      "column_header": "gr_vargen",
+      "column_headers": [
+        "gr_vargen"
+      ],
+      "description": "Expected variation of load category lc in timeslice s and direction bd (bd = lo/up)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "LO",
+      "currency": false
+    },
+    "GR_XBND": {
+      "column_header": "gr_xbnd",
+      "column_headers": [
+        "gr_xbnd"
+      ],
+      "description": "Maximum power level of net imports to / exports from a region",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "G_CHNGMONY": {
+      "column_header": "g_chngmony",
+      "column_headers": [
+        "g_chngmony",
+        "currex"
+      ],
+      "description": "Exchange rate for a currency",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "CurrEx"
+      ]
+    },
+    "G_CUREX": {
+      "column_header": "g_curex",
+      "column_headers": [
+        "g_curex"
+      ],
+      "description": "Conversion factor from currency cur1 to currency cur2, with cur2 to be used in the objective function.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(cur1,cur2)"
+    },
+    "G_CYCLE": {
+      "column_header": "g_cycle",
+      "column_headers": [
+        "g_cycle"
+      ],
+      "description": "Defines the total number of cycles on level tslvl, in a year. Provides default values for TS_CYCLE (see entry for that).",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(tslvl)"
+    },
+    "G_DRATE": {
+      "column_header": "g_drate",
+      "column_headers": [
+        "g_drate",
+        "discount"
+      ],
+      "description": "System-wide discount rate in region r for each time-period.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "DISCOUNT"
+      ],
+      "indexes": "(r,allyear,cur)"
+    },
+    "G_DYEAR": {
+      "column_header": "g_dyear",
+      "column_headers": [
+        "g_dyear"
+      ],
+      "description": "Base year for discounting.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "G_OFFTHD": {
+      "column_header": "g_offthd",
+      "column_headers": [
+        "g_offthd"
+      ],
+      "description": "Threshold for considering an *_OFF attribute disabling a process/commodity variable in period.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(datayear)"
+    },
+    "G_OVERLAP": {
+      "column_header": "g_overlap",
+      "column_headers": [
+        "g_overlap"
+      ],
+      "description": "Overlap of stepped solutions (in years).",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "G_RFRIR": {
+      "column_header": "g_rfrir",
+      "column_headers": [
+        "g_rfrir",
+        "rfrir"
+      ],
+      "description": "Risk-free real interest rate",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RFRIR"
+      ]
+    },
+    "G_TLIFE": {
+      "column_header": "g_tlife",
+      "column_headers": [
+        "g_tlife"
+      ],
+      "description": "Default value for the technical lifetime of a process if not provided by the user.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "G_YRFR": {
+      "column_header": "g_yrfr",
+      "column_headers": [
+        "g_yrfr",
+        "qhr(z)(y)",
+        "yrfr",
+        "qhr"
+      ],
+      "description": "Duration of timeslice s as fraction of a year. Used for shaping the load curve and lining up timeslice duration for inter-regional exchanges.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "QHR(Z)(Y)",
+        "YRFR",
+        "QHR"
+      ],
+      "indexes": "(all_r,s)"
+    },
+    "GenUCByReg": {
+      "column_header": "genucbyreg",
+      "column_headers": [
+        "genucbyreg"
+      ],
+      "description": "Special: To flag User Constraints that should be generated by Region",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "IRE_BND": {
+      "column_header": "ire_bnd",
+      "column_headers": [
+        "ire_bnd"
+      ],
+      "description": "Bound on the total import (export) of commodity (c) from (to) region all_r in (out of) region r.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,datayear,c,s,all_r,ie,bd)"
+    },
+    "IRE_CCVT": {
+      "column_header": "ire_ccvt",
+      "column_headers": [
+        "ire_ccvt"
+      ],
+      "description": "Conversion factor between commodity units in region r1 and region r2. Expresses the amount of commodity c2 in region r2 equivalent to 1 unit of commodity c1 in region r1.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r1,c1,r2,c2))"
+    },
+    "IRE_FLO": {
+      "column_header": "ire_flo",
+      "column_headers": [
+        "ire_flo"
+      ],
+      "description": "Efficiency of exchange process from commodity c1 in region r1 to commodity c2 in the region2 in timeslice s2; the timeslice s2 refers to the r2 region.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r1,datayear,p,c1,r2,c2,s2)"
+    },
+    "IRE_FLOSUM": {
+      "column_header": "ire_flosum",
+      "column_headers": [
+        "ire_flosum",
+        "iflosum"
+      ],
+      "description": "Auxiliary consumption (io = IN, owing to the commodity entering the process) or production/ emission (io = OUT, owing to the commodity leaving the process) of commodity c2 due to the IMPort / EXPort (index ie) of the commodity c1 in region r[8]",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "IFLOSUM"
+      ],
+      "indexes": "(r,datayear,p,c1,s,ie,c2,io)"
+    },
+    "IRE_PRICE": {
+      "column_header": "ire_price",
+      "column_headers": [
+        "ire_price",
+        "cost"
+      ],
+      "description": "IMPort/EXPort price (index ie) for to/from an internal region of a commodity (c) originating from/heading to an external region all_r.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "COST"
+      ],
+      "indexes": "(r,datayear,p,c,s,all_r,ie,cur)"
+    },
+    "IRE_TSCVT": {
+      "column_header": "ire_tscvt",
+      "column_headers": [
+        "ire_tscvt",
+        "tscvt"
+      ],
+      "description": "Matrix for mapping timeslices; the value for (r1,s1,r2,s2) gives the fraction of timeslice s2 in region r2 that falls in timeslice s1 in region r1.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "TSCVT"
+      ],
+      "indexes": "(r1,s1,r2,s2)"
+    },
+    "IRE_XBND": {
+      "column_header": "ire_xbnd",
+      "column_headers": [
+        "ire_xbnd"
+      ],
+      "description": "Bound on the total IMPort (EXPort) (index ie) of commodity c in region all_r with all sources (destinations).",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(all_r,datayear,c,s ie,bd)"
+    },
+    "IRE_XXBND": {
+      "column_header": "ire_xxbnd",
+      "column_headers": [
+        "ire_xxbnd"
+      ],
+      "description": "IRE_XBND with Region declaration in Other_Indexes (external regions possible)",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false
+    },
+    "MARKAL-REH": {
+      "column_header": "markal-reh",
+      "column_headers": [
+        "markal-reh",
+        "reh"
+      ],
+      "description": "Ratio of electricity produced to heat produced",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "FX",
+      "currency": false,
+      "aliases": [
+        "REH"
+      ]
+    },
+    "MULTI": {
+      "column_header": "multi",
+      "column_headers": [
+        "multi"
+      ],
+      "description": "Multiplier table used for any shaping parameters (*_*M) to adjust the corresponding technical data as function of the year; the table contains different multiplier curves identified by the index j.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(j,allyear)"
+    },
+    "MakeCorridorPrc": {
+      "column_header": "makecorridorprc",
+      "column_headers": [
+        "makecorridorprc",
+        "mcp"
+      ],
+      "description": "Flag to make declare a process as a corridor process in a region",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "MCP"
+      ]
+    },
+    "NCAP_AF": {
+      "column_header": "ncap_af",
+      "column_headers": [
+        "ncap_af",
+        "cf",
+        "utilization",
+        "cf(z)(y)"
+      ],
+      "description": "Availability factor relating a unit of production (process activity) in timeslice s to the current installed capacity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "FX",
+      "currency": false,
+      "aliases": [
+        "CF",
+        "UTILIZATION",
+        "CF(Z)(Y)"
+      ],
+      "indexes": "(r,datayear,p,s,bd)"
+    },
+    "NCAP_AFA": {
+      "column_header": "ncap_afa",
+      "column_headers": [
+        "ncap_afa",
+        "araf",
+        "afa"
+      ],
+      "description": "Annual availability factor relating the annual activity of a process to the installed capacity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "ARAF",
+        "AFA"
+      ],
+      "indexes": "(r,datayear,p,bd)"
+    },
+    "NCAP_AFAC": {
+      "column_header": "ncap_afac",
+      "column_headers": [
+        "ncap_afac",
+        "afac"
+      ],
+      "description": "Commodity Dependent AF (upper limit)",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "AFAC"
+      ]
+    },
+    "NCAP_AFC": {
+      "column_header": "ncap_afc",
+      "column_headers": [
+        "ncap_afc",
+        "afc"
+      ],
+      "description": "Commodity-specific availability of capacity for commodity group cg, at given timeslice level.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "AFC"
+      ],
+      "indexes": "(r,datayear,p,cg,tsl)"
+    },
+    "NCAP_AFCS": {
+      "column_header": "ncap_afcs",
+      "column_headers": [
+        "ncap_afcs",
+        "afcs"
+      ],
+      "description": "Commodity-specific availability of capacity for commodity group cg, timeslice-specific.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "AFCS"
+      ],
+      "indexes": "(r,datayear,p,cg,ts)"
+    },
+    "NCAP_AFM": {
+      "column_header": "ncap_afm",
+      "column_headers": [
+        "ncap_afm",
+        "afm"
+      ],
+      "description": "Period sensitive multiplier curve (MULTI) to be applied to the availability factor parameters   (NCAP_AF/AFA/AFS) of a process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "AFM"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_AFS": {
+      "column_header": "ncap_afs",
+      "column_headers": [
+        "ncap_afs",
+        "sraf(z)",
+        "sraf",
+        "afs"
+      ],
+      "description": "Availability factor relating the activity of a process in a timeslice s being at or above the process timeslice level (prc_tsl) to the installed capacity. If for example the process timeslice level is \u2018DAYNITE\u2019 and NCAP_AFS is specified for timeslices on the \u2018SEASONAL\u2019 level, the sum of the \u2018DAYNITE\u2019 activities within a season are restricted, but not the \u2018DAYNITE\u2019 activities directly.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "SRAF(Z)",
+        "SRAF",
+        "AFS"
+      ],
+      "indexes": "(r,datayear,p,s,bd)"
+    },
+    "NCAP_AFSX": {
+      "column_header": "ncap_afsx",
+      "column_headers": [
+        "ncap_afsx",
+        "afsx"
+      ],
+      "description": "Change in seasonal capacity availability",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "AFSX"
+      ]
+    },
+    "NCAP_AFX": {
+      "column_header": "ncap_afx",
+      "column_headers": [
+        "ncap_afx",
+        "afx"
+      ],
+      "description": "Age-based shaping curve (SHAPE) to be applied to the availability factor parameters   (NCAP_AF/AFA/AFS) of a process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "AFX"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_BND": {
+      "column_header": "ncap_bnd",
+      "column_headers": [
+        "ncap_bnd",
+        "ibond(bd)",
+        "ibond",
+        "bndinv"
+      ],
+      "description": "Bound on the permitted level on investment in new capacity",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "IBOND(BD)",
+        "IBOND",
+        "BNDINV"
+      ],
+      "indexes": "(r,datayear,p,bd)"
+    },
+    "NCAP_BPME": {
+      "column_header": "ncap_bpme",
+      "column_headers": [
+        "ncap_bpme"
+      ],
+      "description": "Back pressure mode efficiency (or total efficiency in full CHP mode).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_CDME": {
+      "column_header": "ncap_cdme",
+      "column_headers": [
+        "ncap_cdme"
+      ],
+      "description": "Condensing mode efficiency",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_CEH": {
+      "column_header": "ncap_ceh",
+      "column_headers": [
+        "ncap_ceh"
+      ],
+      "description": "Coefficient of electricity to heat along the iso-fuel line in a pass-out CHP technology.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_CHPR": {
+      "column_header": "ncap_chpr",
+      "column_headers": [
+        "ncap_chpr",
+        "chpr"
+      ],
+      "description": "Heat-to-power ratio of a CHP technology (fixed / minimum / maximum ratio). If no ratio equations should be generated, one can define any I/E value with lim='N'.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "FX",
+      "currency": false,
+      "aliases": [
+        "CHPR"
+      ],
+      "indexes": "(r,datayear,p,lim)"
+    },
+    "NCAP_CLAG": {
+      "column_header": "ncap_clag",
+      "column_headers": [
+        "ncap_clag",
+        "clag"
+      ],
+      "description": "Lagtime of a commodity after new capacity is installed.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "CLAG"
+      ],
+      "indexes": "(r,datayear,p,c,io)"
+    },
+    "NCAP_CLED": {
+      "column_header": "ncap_cled",
+      "column_headers": [
+        "ncap_cled",
+        "cled"
+      ],
+      "description": "Lead time requirement for a commodity during construction (NCAP_ICOM), prior to the initial availability of the capacity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "CLED"
+      ],
+      "indexes": "(r,datayear,p,c)"
+    },
+    "NCAP_COM": {
+      "column_header": "ncap_com",
+      "column_headers": [
+        "ncap_com",
+        "env_cap",
+        "envcap"
+      ],
+      "description": "Emission (or land-use) of commodity c associated with the capacity of a process for each year said capacity exists.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "ENV_CAP",
+        "ENVCAP"
+      ],
+      "indexes": "(r,datayear,p,c,io)"
+    },
+    "NCAP_COST": {
+      "column_header": "ncap_cost",
+      "column_headers": [
+        "ncap_cost",
+        "invcost"
+      ],
+      "description": "Investment costs of new installed capacity according to the installation year.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "INVCOST"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_CPX": {
+      "column_header": "ncap_cpx",
+      "column_headers": [
+        "ncap_cpx",
+        "cpx"
+      ],
+      "description": "Defines a shape index for shaping the capacity transfer coefficients by the age of each process vintage. As a result, the capacity will have a survival rate as a function of age.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "CPX"
+      ],
+      "indexes": "(r,datayear,prc)"
+    },
+    "NCAP_DCOST": {
+      "column_header": "ncap_dcost",
+      "column_headers": [
+        "ncap_dcost",
+        "dcost"
+      ],
+      "description": "Cost of dismantling a facility after the end of its lifetime.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "DCOST"
+      ],
+      "indexes": "(r,datayear,p,cur)"
+    },
+    "NCAP_DELIF": {
+      "column_header": "ncap_delif",
+      "column_headers": [
+        "ncap_delif",
+        "delif"
+      ],
+      "description": "Economic lifetime of the decommissioning activity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "DELIF"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_DISC": {
+      "column_header": "ncap_disc",
+      "column_headers": [
+        "ncap_disc"
+      ],
+      "description": "Size of capacity units that can be added.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p,unit)"
+    },
+    "NCAP_DLAG": {
+      "column_header": "ncap_dlag",
+      "column_headers": [
+        "ncap_dlag",
+        "dlag"
+      ],
+      "description": "Number of years delay before decommissioning can begin after the lifetime of a technology has ended.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "DLAG"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_DLAGC": {
+      "column_header": "ncap_dlagc",
+      "column_headers": [
+        "ncap_dlagc",
+        "dlagc"
+      ],
+      "description": "Cost occurring during the lag time after the technical lifetime of a process has ended and before its decommissioning starts.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "DLAGC"
+      ],
+      "indexes": "(r,datayear,p,cur)"
+    },
+    "NCAP_DLIFE": {
+      "column_header": "ncap_dlife",
+      "column_headers": [
+        "ncap_dlife",
+        "dlife"
+      ],
+      "description": "Technical time for dismantling a facility after the end its technical lifetime, plus any lag time (NCAP_DLAG).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "DLIFE"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_DRATE": {
+      "column_header": "ncap_drate",
+      "column_headers": [
+        "ncap_drate",
+        "discrate",
+        "drate"
+      ],
+      "description": "Technology specific discount rate.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "DISCRATE",
+        "DRATE"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_EFFX": {
+      "column_header": "ncap_effx",
+      "column_headers": [
+        "ncap_effx",
+        "effx"
+      ],
+      "description": "Change in efficiency from the year of initial installation based upon the age of the plant.The value entered corresponds to the index into the SHAPE  table.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "EFFX"
+      ]
+    },
+    "NCAP_ELIFE": {
+      "column_header": "ncap_elife",
+      "column_headers": [
+        "ncap_elife",
+        "elife"
+      ],
+      "description": "Economic lifetime of a process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "ELIFE"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_FDR": {
+      "column_header": "ncap_fdr",
+      "column_headers": [
+        "ncap_fdr"
+      ],
+      "description": "Defines an annual rate of additional depreciation in the salvage value.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,prc)"
+    },
+    "NCAP_FOM": {
+      "column_header": "ncap_fom",
+      "column_headers": [
+        "ncap_fom",
+        "fixom"
+      ],
+      "description": "Fixed operating and maintenance cost per unit of capacity according to the installation year.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "FIXOM"
+      ],
+      "indexes": "(r,datayear,p,cur)"
+    },
+    "NCAP_FOMM": {
+      "column_header": "ncap_fomm",
+      "column_headers": [
+        "ncap_fomm",
+        "fomm"
+      ],
+      "description": "Period sensitive multiplier curve (MULTI) applied to the fixed operating and maintenance costs (NCAP_FOM).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "FOMM"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_FOMX": {
+      "column_header": "ncap_fomx",
+      "column_headers": [
+        "ncap_fomx",
+        "fomx"
+      ],
+      "description": "Age-based shaping curve (SHAPE) to be applied to the fixed operating and maintenance cost.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "FOMX"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_FSUB": {
+      "column_header": "ncap_fsub",
+      "column_headers": [
+        "ncap_fsub",
+        "tfsub"
+      ],
+      "description": "Subsidy per unit of installed capacity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "TFSUB"
+      ],
+      "indexes": "(r,datayear,p,cur)"
+    },
+    "NCAP_FSUBM": {
+      "column_header": "ncap_fsubm",
+      "column_headers": [
+        "ncap_fsubm",
+        "fsubm"
+      ],
+      "description": "Period sensitive multiplier curve (MULTI) applied to the subsidy (NCAP_FSUB).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "FSUBM"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_FSUBX": {
+      "column_header": "ncap_fsubx",
+      "column_headers": [
+        "ncap_fsubx",
+        "fsubx"
+      ],
+      "description": "Age-based shaping curve (SHAPE) to be applied to the fixed subsidy (NCAP_FSUB).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "FSUBX"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_FTAX": {
+      "column_header": "ncap_ftax",
+      "column_headers": [
+        "ncap_ftax",
+        "tftax"
+      ],
+      "description": "Tax per unit of installed capacity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "TFTAX"
+      ],
+      "indexes": "(r,datayear,p,cur)"
+    },
+    "NCAP_FTAXM": {
+      "column_header": "ncap_ftaxm",
+      "column_headers": [
+        "ncap_ftaxm",
+        "ftaxm"
+      ],
+      "description": "Period sensitive multiplier curve (MULTI) applied to the tax (NCAP_FTAX).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "FTAXM"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_FTAXX": {
+      "column_header": "ncap_ftaxx",
+      "column_headers": [
+        "ncap_ftaxx",
+        "ftaxx"
+      ],
+      "description": "Age-based shaping curve (SHAPE) to be applied to the fixed tax (NCAP_FTAX).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "FTAXX"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_ICOM": {
+      "column_header": "ncap_icom",
+      "column_headers": [
+        "ncap_icom",
+        "inp(mat)_tidp",
+        "inp(mat)_tidc"
+      ],
+      "description": "Amount of commodity (c) required for the construction of new capacity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "INP(MAT)_TIDp",
+        "INP(MAT)_TIDc"
+      ],
+      "indexes": "(r,datayear,p,c)"
+    },
+    "NCAP_ILED": {
+      "column_header": "ncap_iled",
+      "column_headers": [
+        "ncap_iled",
+        "iled"
+      ],
+      "description": "Lead time between investment decision and actual availability of new capacity (= construction time).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "ILED"
+      ],
+      "indexes": "(r,t,p)"
+    },
+    "NCAP_ISPCT": {
+      "column_header": "ncap_ispct",
+      "column_headers": [
+        "ncap_ispct",
+        "ispct"
+      ],
+      "description": "Subsidy as % of new investment cost",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "ISPCT"
+      ]
+    },
+    "NCAP_ISUB": {
+      "column_header": "ncap_isub",
+      "column_headers": [
+        "ncap_isub",
+        "tisub"
+      ],
+      "description": "Subsidy per unit of new installed capacity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "TISUB"
+      ],
+      "indexes": "(r,datayear,p,cur)"
+    },
+    "NCAP_ITAX": {
+      "column_header": "ncap_itax",
+      "column_headers": [
+        "ncap_itax",
+        "itax"
+      ],
+      "description": "Tax per unit of new installed capacity",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "ITAX"
+      ],
+      "indexes": "(r,datayear,p,cur)"
+    },
+    "NCAP_MSPRF": {
+      "column_header": "ncap_msprf",
+      "column_headers": [
+        "ncap_msprf",
+        "msprf"
+      ],
+      "description": "lim = 'N' : Defines the preference weights \u03b1k in the logit market share formulation for the market com, and technology prc. Default value = 1; lim = 'LO' : Defines the intangible costs as a fraction of the investment costs for the market com, and technology prc. Default value = 0; lim = 'UP' : Defines the dummy penalty costs in proportion to the capacity-related costs for the market com, and technology prc. Default value = 2.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "U",
+      "currency": false,
+      "aliases": [
+        "MSPRF"
+      ]
+    },
+    "NCAP_OCOM": {
+      "column_header": "ncap_ocom",
+      "column_headers": [
+        "ncap_ocom",
+        "ocom",
+        "out(mat)_tidp",
+        "out(mat)_tidc"
+      ],
+      "description": "Amount of commodity c per unit of capacity released during the dismantling of a process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "OCOM",
+        "OUT(MAT)_TIDp",
+        "OUT(MAT)_TIDc"
+      ],
+      "indexes": "(r,datayear,p,c)"
+    },
+    "NCAP_OLIFE": {
+      "column_header": "ncap_olife",
+      "column_headers": [
+        "ncap_olife",
+        "olife"
+      ],
+      "description": "Maximum operating lifetime of a process, in terms of full-load years.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "OLIFE"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_PASTI": {
+      "column_header": "ncap_pasti",
+      "column_headers": [
+        "ncap_pasti",
+        "pasti"
+      ],
+      "description": "Investment in new capacity made before the beginning of the model horizon (in the year specified by pastyear).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "PASTI"
+      ],
+      "indexes": "(r,pastyear,p)"
+    },
+    "NCAP_PASTY": {
+      "column_header": "ncap_pasty",
+      "column_headers": [
+        "ncap_pasty",
+        "pasty"
+      ],
+      "description": "Number of years to go back to calculate a linear build-up of past investments",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "PASTY"
+      ],
+      "indexes": "(r,pastyear,p)"
+    },
+    "NCAP_PKCNT": {
+      "column_header": "ncap_pkcnt",
+      "column_headers": [
+        "ncap_pkcnt",
+        "peak(con)",
+        "peak",
+        "pkcnt"
+      ],
+      "description": "Fraction of capacity that can contribute to peaking equations.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "PEAK(CON)",
+        "PEAK",
+        "PKCNT"
+      ],
+      "indexes": "(r,datayear,p,s)"
+    },
+    "NCAP_SEMI": {
+      "column_header": "ncap_semi",
+      "column_headers": [
+        "ncap_semi"
+      ],
+      "description": "Semi-continuous new capacity, lower bound. (See Section 5.9)",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_START": {
+      "column_header": "ncap_start",
+      "column_headers": [
+        "ncap_start",
+        "start"
+      ],
+      "description": "Start year for new investments",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "START"
+      ],
+      "indexes": "(r,p)"
+    },
+    "NCAP_TLIFE": {
+      "column_header": "ncap_tlife",
+      "column_headers": [
+        "ncap_tlife",
+        "life"
+      ],
+      "description": "Technical lifetime of a process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "LIFE"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "NCAP_VALU": {
+      "column_header": "ncap_valu",
+      "column_headers": [
+        "ncap_valu"
+      ],
+      "description": "Value of a commodity released at decommissioning (NCAP_OCOM).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "indexes": "(r,datayear,p,c,cur)"
+    },
+    "OFFEPS": {
+      "column_header": "offeps",
+      "column_headers": [
+        "offeps"
+      ],
+      "description": "Scenario-level flag to declare $OFFEPS at the top of the DD file; $ONEPS appears by default",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "PRAT": {
+      "column_header": "prat",
+      "column_headers": [
+        "prat"
+      ],
+      "description": "The \u201cprogress ratio\u201d for a technology that is modeledas one for which endogenous technology learning (ETL)applies",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "PRC_ACTFLO": {
+      "column_header": "prc_actflo",
+      "column_headers": [
+        "prc_actflo",
+        "actflo",
+        "act2flo"
+      ],
+      "description": "1) Conversion factor from units of activity to units of those flow variables that define the activity (primary commodity group), or, 2) Conversion multiplier representing the amount of flow(s) in the cg per 1 unit of activity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "ACTFLO",
+        "ACT2FLO"
+      ],
+      "indexes": "(r,datayear,p,cg)"
+    },
+    "PRC_AOFF": {
+      "column_header": "prc_aoff",
+      "column_headers": [
+        "prc_aoff"
+      ],
+      "description": "Set of quadruples {r,p,y1,y2} such that process p cannot operate (activity is zero) between the years y1 and y2 in region r [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "PRC_CAPACT": {
+      "column_header": "prc_capact",
+      "column_headers": [
+        "prc_capact",
+        "capunit",
+        "cap2act"
+      ],
+      "description": "Conversion factor from capacity unit to activity unit assuming that the capacity is used for one year.",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "CAPUNIT",
+        "CAP2ACT"
+      ],
+      "indexes": "(r,p)"
+    },
+    "PRC_FOFF": {
+      "column_header": "prc_foff",
+      "column_headers": [
+        "prc_foff"
+      ],
+      "description": "Set of sextuples specifying that the flow of commodity c at process p and timeslice s is not available between the years y1 and y2 in region r [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "PRC_GMAP": {
+      "column_header": "prc_gmap",
+      "column_headers": [
+        "prc_gmap"
+      ],
+      "description": "User-defined groupings of processes",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "PRC_MARK": {
+      "column_header": "prc_mark",
+      "column_headers": [
+        "prc_mark"
+      ],
+      "description": "Process group-wise market share, which defines a constraint for the combined market share of multiple processes in the total commodity production.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,datayear,p,item,c,bd)"
+    },
+    "PRC_NOFF": {
+      "column_header": "prc_noff",
+      "column_headers": [
+        "prc_noff"
+      ],
+      "description": "Set of quadruples {r,p,y1,y2} such that new capacity of process p cannot be installed between the years y1 and y2 in region r [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "PRC_NSTTS": {
+      "column_header": "prc_nstts",
+      "column_headers": [
+        "prc_nstts",
+        "nstts"
+      ],
+      "description": "Set of triplets {r,p,s} such that process p is a night storage device with charging timeslices s in region r [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "NSTTS"
+      ]
+    },
+    "PRC_PCG": {
+      "column_header": "prc_pcg",
+      "column_headers": [
+        "prc_pcg"
+      ],
+      "description": "Primary Commodity Group (C/CG/NRGO/NRGI/DEMO/DEMI/MAT\u2026)",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "PRC_PKNO": {
+      "column_header": "prc_pkno",
+      "column_headers": [
+        "prc_pkno",
+        "pkno"
+      ],
+      "description": "Set of pairs {all_r,p}such that process p cannot be used in the peaking constraints in region r [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "PKNO"
+      ]
+    },
+    "PRC_REACT": {
+      "column_header": "prc_react",
+      "column_headers": [
+        "prc_react"
+      ],
+      "description": "Reactance of a transmission line (must be IRE)",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "PRC_REFIT": {
+      "column_header": "prc_refit",
+      "column_headers": [
+        "prc_refit"
+      ],
+      "description": "Defines a mapping of host process prc to a retrofit or lifetime extension option p in region r, where p is another process representing the refurbishment option. The value of the parameter determines the type of the refurbishment option (see column on the left).",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,prc,p)"
+    },
+    "PRC_RESID": {
+      "column_header": "prc_resid",
+      "column_headers": [
+        "prc_resid",
+        "resid",
+        "stock"
+      ],
+      "description": "Residual existing capacity stock of process (p) still available in the year specified (datayear). PRC_RESID is most useful for describing the stock of capacity with mixed vintages, while NCAP_PASTI is suited for capacities of a certain vintages, such as an individual power plants.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RESID",
+        "STOCK"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "PRC_STGIPS": {
+      "column_header": "prc_stgips",
+      "column_headers": [
+        "prc_stgips",
+        "stgtss"
+      ],
+      "description": "Set of triplets {r,p,c}such that process p is an inter-period storage for the commodity c in region r [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "STGTSS"
+      ]
+    },
+    "PRC_STGTSS": {
+      "column_header": "prc_stgtss",
+      "column_headers": [
+        "prc_stgtss",
+        "stgips"
+      ],
+      "description": "Set of triplets {r,p,c}such that process p is a storage process between timeslices (e.g., seasonal hydro reservoir, day/night pumped storage) for commodity c in region r [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "STGIPS"
+      ]
+    },
+    "PRC_TSL": {
+      "column_header": "prc_tsl",
+      "column_headers": [
+        "prc_tsl"
+      ],
+      "description": "Process TimeSlice Level (ANNUAL/SEASON/WEEKLY/DAYNITE)",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "PRC_VINT": {
+      "column_header": "prc_vint",
+      "column_headers": [
+        "prc_vint"
+      ],
+      "description": "Process Vintaging (Yes/No)",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "Prc_PKAF": {
+      "column_header": "prc_pkaf",
+      "column_headers": [
+        "prc_pkaf"
+      ],
+      "description": "Set of pairs {all_r,p} such that the availability factor (ncap_af) is to be used as value for the fraction of capacity of process p that can contribute to the peaking constraints (ncap_pkcnt), in region r [this is a switch; >0 => YES]",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "RCAP_BLK": {
+      "column_header": "rcap_blk",
+      "column_headers": [
+        "rcap_blk"
+      ],
+      "description": "Retirement block size.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p)"
+    },
+    "RCAP_BND": {
+      "column_header": "rcap_bnd",
+      "column_headers": [
+        "rcap_bnd"
+      ],
+      "description": "Bound on the retired amount of capacity in a period (same bound for all vintages).",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "LO",
+      "currency": false,
+      "indexes": "(r,datayear,p,bd)"
+    },
+    "REG_BDNCAP": {
+      "column_header": "reg_bdncap",
+      "column_headers": [
+        "reg_bdncap"
+      ],
+      "description": "Defines the year up to which all new capacity variables should be bounded in region\u00a0reg, using the previous solution (LPOINT)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "FX",
+      "currency": false
+    },
+    "REG_BNDCST": {
+      "column_header": "reg_bndcst",
+      "column_headers": [
+        "reg_bndcst",
+        "bndcst"
+      ],
+      "description": "Bound on regional costs by type of cost aggregation.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": true,
+      "aliases": [
+        "BNDCST"
+      ],
+      "indexes": "(r,datayear,agg,cur,bd)"
+    },
+    "REG_CUMCST": {
+      "column_header": "reg_cumcst",
+      "column_headers": [
+        "reg_cumcst",
+        "cumcst"
+      ],
+      "description": "Cumulative bound on regional costs by type of cost aggregation.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": true,
+      "aliases": [
+        "CUMCST"
+      ],
+      "indexes": "(r,y1,y2,agg,cur,bd)"
+    },
+    "REG_FIXT": {
+      "column_header": "reg_fixt",
+      "column_headers": [
+        "reg_fixt"
+      ],
+      "description": "Year up to which periods are fixed by period",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(all_r)"
+    },
+    "RFCmd_DD": {
+      "column_header": "rfcmd_dd",
+      "column_headers": [
+        "rfcmd_dd",
+        "rfcmd_d"
+      ],
+      "description": "To write one line of text in <INCLUDE DD FILES> section of RUN file",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RFCmd_D"
+      ]
+    },
+    "RFCmd_FLAGS": {
+      "column_header": "rfcmd_flags",
+      "column_headers": [
+        "rfcmd_flags",
+        "rfcmd_f"
+      ],
+      "description": "To write one line of text in <SET FLAGS> section of RUN file",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RFCmd_F"
+      ]
+    },
+    "RFCmd_GAMS": {
+      "column_header": "rfcmd_gams",
+      "column_headers": [
+        "rfcmd_gams",
+        "rfcmd_g",
+        "rfcmd"
+      ],
+      "description": "To write one line of text in <GAMSOPTIONS> section of RUN file",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RFCmd_G",
+        "RFCmd"
+      ]
+    },
+    "RFCmd_GLOBAL": {
+      "column_header": "rfcmd_global",
+      "column_headers": [
+        "rfcmd_global",
+        "rfcmd_glb"
+      ],
+      "description": "To write one line of text in <GLOBAL Parameters> section of RUN file",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RFCmd_Glb"
+      ]
+    },
+    "RFCmd_OPTIMIZER": {
+      "column_header": "rfcmd_optimizer",
+      "column_headers": [
+        "rfcmd_optimizer",
+        "rfcmd_o"
+      ],
+      "description": "To write one line of text in <OPTIMIZER> section of RUN file",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RFCmd_O"
+      ]
+    },
+    "RFCmd_bot": {
+      "column_header": "rfcmd_bot",
+      "column_headers": [
+        "rfcmd_bot",
+        "rfcmd_b"
+      ],
+      "description": "To write one line of text at the bottom of RUN file",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RFCmd_B"
+      ]
+    },
+    "RPT_OPT": {
+      "column_header": "rpt_opt",
+      "column_headers": [
+        "rpt_opt"
+      ],
+      "description": "Miscellaneous reporting options",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(item,j)"
+    },
+    "R_CUREX": {
+      "column_header": "r_curex",
+      "column_headers": [
+        "r_curex"
+      ],
+      "description": "Conversion factor from currency cur1 to currency cur2 in region r, in order to use cur2 in the objective function.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,cur1,cur2)"
+    },
+    "RemAtRunTime": {
+      "column_header": "rematruntime",
+      "column_headers": [
+        "rematruntime"
+      ],
+      "description": "Techs will be removed at RUN time (This can be used to remove techs with Stock=0, for example)",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "SC0": {
+      "column_header": "sc0",
+      "column_headers": [
+        "sc0"
+      ],
+      "description": "The investment cost corresponding to the starting point on the learning curve for a technology that ismodeled as one for which endogenous technologylearning (ETL) applies",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "SEG": {
+      "column_header": "seg",
+      "column_headers": [
+        "seg"
+      ],
+      "description": "The number of segments to be used in approximatingthe learning curve for a technology that is modeled asone for which endogenous technology learning (ETL)applies",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "SFCmd_bot": {
+      "column_header": "sfcmd_bot",
+      "column_headers": [
+        "sfcmd_bot",
+        "sfcmd_b"
+      ],
+      "description": "To write one line of text at the BOTTOM of scenario DD file",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "SFCmd_B"
+      ]
+    },
+    "SFCmd_top": {
+      "column_header": "sfcmd_top",
+      "column_headers": [
+        "sfcmd_top",
+        "sfcmd_t",
+        "sfcmd"
+      ],
+      "description": "To write one line of text at the TOP of scenario DD file",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "SFCmd_T",
+        "SFCmd"
+      ]
+    },
+    "SHAPE": {
+      "column_header": "shape",
+      "column_headers": [
+        "shape"
+      ],
+      "description": "Multiplier table used for any shaping parameters (*_*X)  to adjust the corresponding technical data as function of the age; the table can contain different multiplier curves that are identified by the index j.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(j,age)"
+    },
+    "STGIN_BND": {
+      "column_header": "stgin_bnd",
+      "column_headers": [
+        "stgin_bnd",
+        "s_inbnd"
+      ],
+      "description": "Bound on the input flow of a storage process in a timeslice s.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "S_INBND"
+      ],
+      "indexes": "(r,datayear,p,c,s,bd)"
+    },
+    "STGOUT_BND": {
+      "column_header": "stgout_bnd",
+      "column_headers": [
+        "stgout_bnd",
+        "s_outbnd"
+      ],
+      "description": "Bound on the output flow of a storage process in a timeslice s.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "aliases": [
+        "S_OUTBND"
+      ],
+      "indexes": "(r,datayear,p,c,s,bd)"
+    },
+    "STG_CHRG": {
+      "column_header": "stg_chrg",
+      "column_headers": [
+        "stg_chrg",
+        "s_chrg"
+      ],
+      "description": "Annual exogenous charging of a storage technology in a particular timeslice s.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "S_CHRG"
+      ],
+      "indexes": "(r,datayear,p,s)"
+    },
+    "STG_EFF": {
+      "column_header": "stg_eff",
+      "column_headers": [
+        "stg_eff",
+        "s_eff"
+      ],
+      "description": "Efficiency of storage process.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "S_EFF"
+      ],
+      "indexes": "(r,datayear,p)"
+    },
+    "STG_LOSS": {
+      "column_header": "stg_loss",
+      "column_headers": [
+        "stg_loss",
+        "s_loss"
+      ],
+      "description": "Annual loss of a storage process per unit of average energy stored.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "S_LOSS"
+      ],
+      "indexes": "(r,datayear,p,s)"
+    },
+    "STG_MAXCYC": {
+      "column_header": "stg_maxcyc",
+      "column_headers": [
+        "stg_maxcyc"
+      ],
+      "description": "Defines the maximum number of storage cycles over the lifetime. Sets a limit for the total discharge divided by storage capacity.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,p)"
+    },
+    "STG_SIFT": {
+      "column_header": "stg_sift",
+      "column_headers": [
+        "stg_sift"
+      ],
+      "description": "Defines process prc as a load-shifting process, and limits the load shifting of demand com in timeslice ts to at most the fraction specified by the parameter value.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,prc,com,ts)"
+    },
+    "SW_LAMBDA": {
+      "column_header": "sw_lambda",
+      "column_headers": [
+        "sw_lambda"
+      ],
+      "description": "Risk aversion coefficient",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "SW_PROB": {
+      "column_header": "sw_prob",
+      "column_headers": [
+        "sw_prob"
+      ],
+      "description": "The total probability of each SOW at the last stage",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "SW_SPROB": {
+      "column_header": "sw_sprob",
+      "column_headers": [
+        "sw_sprob"
+      ],
+      "description": "The conditional probability of each sub-state at stage j",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "SW_START": {
+      "column_header": "sw_start",
+      "column_headers": [
+        "sw_start"
+      ],
+      "description": "The year corresponding to resolution of Uncertainty",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "SW_SUBS": {
+      "column_header": "sw_subs",
+      "column_headers": [
+        "sw_subs"
+      ],
+      "description": "The number of sub-states of the world for each SOW at stage j",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "S_CAP_BND": {
+      "column_header": "s_cap_bnd",
+      "column_headers": [
+        "s_cap_bnd"
+      ],
+      "description": "Bound on total installed capacity (Absolute)",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "S_CM_CONST": {
+      "column_header": "s_cm_const",
+      "column_headers": [
+        "s_cm_const"
+      ],
+      "description": "Uncertain Climate Sensitivity - Stochastic",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "S_CM_MAXC": {
+      "column_header": "s_cm_maxc",
+      "column_headers": [
+        "s_cm_maxc"
+      ],
+      "description": "Maximum level of Climate variable (upper bound) - Stochastic",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "S_CM_MAXCO2C": {
+      "column_header": "s_cm_maxco2c",
+      "column_headers": [
+        "s_cm_maxco2c"
+      ],
+      "description": "Bound on maximum CO2 concentration (Absolute)",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "S_COM_CUMNET": {
+      "column_header": "s_com_cumnet",
+      "column_headers": [
+        "s_com_cumnet"
+      ],
+      "description": "Cumulative bound on commodity net production (Absolute)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "S_COM_CUMPRD": {
+      "column_header": "s_com_cumprd",
+      "column_headers": [
+        "s_com_cumprd"
+      ],
+      "description": "Cumulative bound on commodity production (Absolute)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "S_COM_FR": {
+      "column_header": "s_com_fr",
+      "column_headers": [
+        "s_com_fr"
+      ],
+      "description": "Non-default fraction of demand for season, time of day (Stoc)",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "",
+      "currency": false
+    },
+    "S_COM_PROJ": {
+      "column_header": "s_com_proj",
+      "column_headers": [
+        "s_com_proj"
+      ],
+      "description": "Demand projection (Relative)",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "S_COM_TAX": {
+      "column_header": "s_com_tax",
+      "column_headers": [
+        "s_com_tax"
+      ],
+      "description": "Tax on commodity (uncertain)",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": true
+    },
+    "S_DAM_COST": {
+      "column_header": "s_dam_cost",
+      "column_headers": [
+        "s_dam_cost",
+        "s_dcost",
+        "sdamcost"
+      ],
+      "description": "Stochastic: Marginal damage cost of emission c at reference emission level",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": true,
+      "aliases": [
+        "S_DCOST",
+        "SDAMCOST"
+      ]
+    },
+    "S_FLO_CUM": {
+      "column_header": "s_flo_cum",
+      "column_headers": [
+        "s_flo_cum"
+      ],
+      "description": "Bound on cumulative process FLO/ACT (uncertain)",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "S_FLO_FUNC": {
+      "column_header": "s_flo_func",
+      "column_headers": [
+        "s_flo_func"
+      ],
+      "description": "Multiplier for process transformation coefficient",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "S_NCAP_AFS": {
+      "column_header": "s_ncap_afs",
+      "column_headers": [
+        "s_ncap_afs"
+      ],
+      "description": "SEASONal availability/utilization factor (Stochastic)",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "",
+      "currency": false
+    },
+    "S_NCAP_COST": {
+      "column_header": "s_ncap_cost",
+      "column_headers": [
+        "s_ncap_cost"
+      ],
+      "description": "Multiplier for process investment cost",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "S_UCOBJ": {
+      "column_header": "s_ucobj",
+      "column_headers": [
+        "s_ucobj"
+      ],
+      "description": "Weight coefficients for the components of the objectivefunction in the first phase of the tradeoff facility, and foreach SOW to be analyzed",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "S_UC_RHS": {
+      "column_header": "s_uc_rhs",
+      "column_headers": [
+        "s_uc_rhs"
+      ],
+      "description": "Stochastic: UC-RHS summed over Region, year and TS",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "S_UC_RHSR": {
+      "column_header": "s_uc_rhsr",
+      "column_headers": [
+        "s_uc_rhsr"
+      ],
+      "description": "Stochastic: UC-RHS summed over year and TS, for each region",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "S_UC_RHSRT": {
+      "column_header": "s_uc_rhsrt",
+      "column_headers": [
+        "s_uc_rhsrt"
+      ],
+      "description": "Stochastic: UC-RHS summed over TS, for each region and year",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "S_UC_RHSRTS": {
+      "column_header": "s_uc_rhsrts",
+      "column_headers": [
+        "s_uc_rhsrts"
+      ],
+      "description": "Stochastic: UC-RHS for each region, year, and TS",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false
+    },
+    "S_UC_RHST": {
+      "column_header": "s_uc_rhst",
+      "column_headers": [
+        "s_uc_rhst"
+      ],
+      "description": "Stochastic: UC-RHS summed over year, for each region and TS",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "S_UC_RHSTS": {
+      "column_header": "s_uc_rhsts",
+      "column_headers": [
+        "s_uc_rhsts"
+      ],
+      "description": "Stochastic: UC-RHS summed over region, for each year and TS",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false
+    },
+    "TM_ARBM": {
+      "column_header": "tm_arbm",
+      "column_headers": [
+        "tm_arbm"
+      ],
+      "description": "Arbitrary multiplier for the last period replication",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "TM_DEFVAL": {
+      "column_header": "tm_defval",
+      "column_headers": [
+        "tm_defval"
+      ],
+      "description": "Default values for regional Macro constants (specify under CommGrp)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "TS_CYCLE": {
+      "column_header": "ts_cycle",
+      "column_headers": [
+        "ts_cycle"
+      ],
+      "description": "Defines the length of the timeslice cycles under timeslice ts, in days, and thereby also the number of timeslice cycles under each parent.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,ts)"
+    },
+    "TS_OFF": {
+      "column_header": "ts_off",
+      "column_headers": [
+        "ts_off"
+      ],
+      "description": "Set of quadruples {r,ts,y1,y2} such that the timeslice branch consisting of the timeslice ts and all the timeslices below it will not be taken into account in the model between the years y1 and y2 in region r; note that y1 may be 'BOH' for first year of first period and y2 may be 'EOH' for last year of last period. The timeslice ts specified in ts_off must be directly below ANNUAL in the timeslice tree specified (usually at the SEASON level).",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "U",
+      "limtype": "",
+      "currency": false
+    },
+    "UC_ACT": {
+      "column_header": "uc_act",
+      "column_headers": [
+        "uc_act"
+      ],
+      "description": "Coefficient of the activity variable VAR_ACT in a user constraint.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,side,r,datayear,p,s)"
+    },
+    "UC_ACT+": {
+      "column_header": "uc_act+",
+      "column_headers": [
+        "uc_act+",
+        "rat_act",
+        "rat_hpl",
+        "rat_sep",
+        "rat_tczy",
+        "rat_tezy"
+      ],
+      "description": "Process Activity Coeff: VEDA UC",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RAT_ACT",
+        "RAT_HPL",
+        "RAT_SEP",
+        "RAT_TCZY",
+        "RAT_TEZY"
+      ]
+    },
+    "UC_ACTBET": {
+      "column_header": "uc_actbet",
+      "column_headers": [
+        "uc_actbet"
+      ],
+      "description": "Risk of Corridor Process",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "UC_ATTR": {
+      "column_header": "uc_attr",
+      "column_headers": [
+        "uc_attr"
+      ],
+      "description": "Allows modifiers to be applied to the variables used in the UC",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "UC_CAP": {
+      "column_header": "uc_cap",
+      "column_headers": [
+        "uc_cap"
+      ],
+      "description": "Coefficient of the activity variable VAR_CAP in a user constraint.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,side,r,datayear,p)"
+    },
+    "UC_CAP+": {
+      "column_header": "uc_cap+",
+      "column_headers": [
+        "uc_cap+",
+        "rat_cap"
+      ],
+      "description": "Process Capacity Coeff: VEDA UC",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RAT_CAP"
+      ]
+    },
+    "UC_CLI": {
+      "column_header": "uc_cli",
+      "column_headers": [
+        "uc_cli"
+      ],
+      "description": "Multiplier of climate variable in user constraint",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,side,r,datayear,item)"
+    },
+    "UC_COMCON": {
+      "column_header": "uc_comcon",
+      "column_headers": [
+        "uc_comcon"
+      ],
+      "description": "Coefficient of the commodity consumption variable VAR_COMCON in a user constraint.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,side,r,datayear,c,s)"
+    },
+    "UC_COMNET": {
+      "column_header": "uc_comnet",
+      "column_headers": [
+        "uc_comnet"
+      ],
+      "description": "UC Multiplier for Net commodity availability",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "UC_COMPRD": {
+      "column_header": "uc_comprd",
+      "column_headers": [
+        "uc_comprd"
+      ],
+      "description": "Coefficient of the net commodity production variable VAR_COMPRD in a user constraint.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,side,r,datayear,c,s)"
+    },
+    "UC_CUMACT": {
+      "column_header": "uc_cumact",
+      "column_headers": [
+        "uc_cumact"
+      ],
+      "description": "Multiplier of cumulative process activity variable in user constraint.",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,r,p,y1,y2)"
+    },
+    "UC_CUMCOM": {
+      "column_header": "uc_cumcom",
+      "column_headers": [
+        "uc_cumcom"
+      ],
+      "description": "Multiplier of cumulative commodity variable in user constraint.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,r,type,c,y1,y2)"
+    },
+    "UC_CUMFLO": {
+      "column_header": "uc_cumflo",
+      "column_headers": [
+        "uc_cumflo"
+      ],
+      "description": "Multiplier of cumulative process flow variable in user constraint.",
+      "time_series": false,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,r,p,c,y1,y2)"
+    },
+    "UC_DYNBND": {
+      "column_header": "uc_dynbnd",
+      "column_headers": [
+        "uc_dynbnd"
+      ],
+      "description": "Flag for process-wise UC creation",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false
+    },
+    "UC_FLO": {
+      "column_header": "uc_flo",
+      "column_headers": [
+        "uc_flo"
+      ],
+      "description": "Coefficient of the flow VAR_FLO variable in a user constraint.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,side,r,datayear,p,c,s)"
+    },
+    "UC_FLOBET": {
+      "column_header": "uc_flobet",
+      "column_headers": [
+        "uc_flobet"
+      ],
+      "description": "Risk of Regular Process",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "UC_IRE": {
+      "column_header": "uc_ire",
+      "column_headers": [
+        "uc_ire"
+      ],
+      "description": "Coefficient of the trade variable VAR_IRE in a user constraint.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,side,r,datayear,p,c,s)"
+    },
+    "UC_IRE-E": {
+      "column_header": "uc_ire-e",
+      "column_headers": [
+        "uc_ire-e"
+      ],
+      "description": "UC Multiplier for IRE variables - Export",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "UC_IRE-I": {
+      "column_header": "uc_ire-i",
+      "column_headers": [
+        "uc_ire-i"
+      ],
+      "description": "UC Multiplier for IRE variables - Import",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false
+    },
+    "UC_NCAP": {
+      "column_header": "uc_ncap",
+      "column_headers": [
+        "uc_ncap"
+      ],
+      "description": "Coefficient of the activity variable VAR_NCAP in a user constraint.",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,side,r,datayear,p)"
+    },
+    "UC_NCAP+": {
+      "column_header": "uc_ncap+",
+      "column_headers": [
+        "uc_ncap+",
+        "rat_inv"
+      ],
+      "description": "Process Investment Coeff: VEDA UC",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "RAT_INV"
+      ]
+    },
+    "UC_RHS": {
+      "column_header": "uc_rhs",
+      "column_headers": [
+        "uc_rhs"
+      ],
+      "description": "RHS constant with bound type of bd of a user constraint.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(uc_n,lim)"
+    },
+    "UC_RHSR": {
+      "column_header": "uc_rhsr",
+      "column_headers": [
+        "uc_rhsr"
+      ],
+      "description": "RHS constant with bound type of bd of a user constraint.",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,uc_n,lim)"
+    },
+    "UC_RHSRS": {
+      "column_header": "uc_rhsrs",
+      "column_headers": [
+        "uc_rhsrs"
+      ],
+      "description": "UC-RHS summed over year, for each region and TS",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false
+    },
+    "UC_RHSRT": {
+      "column_header": "uc_rhsrt",
+      "column_headers": [
+        "uc_rhsrt"
+      ],
+      "description": "RHS constant with bound type of bd of a user constraint.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,uc_n,datayear,lim)"
+    },
+    "UC_RHSRT+": {
+      "column_header": "uc_rhsrt+",
+      "column_headers": [
+        "uc_rhsrt+",
+        "rat__rhs"
+      ],
+      "description": "Coefficient RHS, user-defined constraint",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "U",
+      "currency": false,
+      "aliases": [
+        "RAT__RHS"
+      ]
+    },
+    "UC_RHSRTS": {
+      "column_header": "uc_rhsrts",
+      "column_headers": [
+        "uc_rhsrts"
+      ],
+      "description": "RHS constant with bound type of bd of a user constraint.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(r,uc_n,datayear,s,lim)"
+    },
+    "UC_RHSS": {
+      "column_header": "uc_rhss",
+      "column_headers": [
+        "uc_rhss"
+      ],
+      "description": "UC-RHS summed over region and year, for each TS",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false
+    },
+    "UC_RHST": {
+      "column_header": "uc_rhst",
+      "column_headers": [
+        "uc_rhst"
+      ],
+      "description": "RHS constant with bound type of bd of a user constraint.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(uc_n,datayear,lim)"
+    },
+    "UC_RHSTS": {
+      "column_header": "uc_rhsts",
+      "column_headers": [
+        "uc_rhsts"
+      ],
+      "description": "RHS constant with bound type of bd of a user constraint.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "UP",
+      "currency": false,
+      "indexes": "(uc_n,datayear,s,lim)"
+    },
+    "UC_TIME": {
+      "column_header": "uc_time",
+      "column_headers": [
+        "uc_time"
+      ],
+      "description": "Multiplier for the number of years in model periods (static UCs), or between milestone years (dynamic UCs)",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,r,datayear)"
+    },
+    "UC_UCN": {
+      "column_header": "uc_ucn",
+      "column_headers": [
+        "uc_ucn"
+      ],
+      "description": "Multiplier of user constraint variable in another user constraint.",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(uc_n,side,r,datayear,ucn)"
+    },
+    "VA_Attrib_C": {
+      "column_header": "va_attrib_c",
+      "column_headers": [
+        "va_attrib_c",
+        "va_attrib0"
+      ],
+      "description": "Generic Attribute for FILL Tables  - Comm",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "FX",
+      "currency": false,
+      "aliases": [
+        "VA_Attrib0"
+      ]
+    },
+    "VA_Attrib_T": {
+      "column_header": "va_attrib_t",
+      "column_headers": [
+        "va_attrib_t",
+        "va_attrib1"
+      ],
+      "description": "Generic Attribute for FILL Tables - Tech",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "FX",
+      "currency": false,
+      "aliases": [
+        "VA_Attrib1"
+      ]
+    },
+    "VA_Attrib_TC": {
+      "column_header": "va_attrib_tc",
+      "column_headers": [
+        "va_attrib_tc",
+        "va_attrib2"
+      ],
+      "description": "Generic Attribute for FILL Tables  - Tech+Comm",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "FX",
+      "currency": false,
+      "aliases": [
+        "VA_Attrib2"
+      ]
+    },
+    "VA_CONSTRUCSHARE": {
+      "column_header": "va_construcshare",
+      "column_headers": [
+        "va_construcshare",
+        "va_construcshare"
+      ],
+      "description": "VA_ConstrucShare",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_ConstrucShare"
+      ]
+    },
+    "VA_DELIVPERUNIT": {
+      "column_header": "va_delivperunit",
+      "column_headers": [
+        "va_delivperunit",
+        "va_delivperunit"
+      ],
+      "description": "VA: Delivered Energy per Unit",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_DelivPerUnit"
+      ]
+    },
+    "VA_DEMOLHOUSES": {
+      "column_header": "va_demolhouses",
+      "column_headers": [
+        "va_demolhouses",
+        "va_demolhouses"
+      ],
+      "description": "VA_DemolHouses",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_DemolHouses"
+      ]
+    },
+    "VA_DEMOLSHARE": {
+      "column_header": "va_demolshare",
+      "column_headers": [
+        "va_demolshare",
+        "va_demolshare"
+      ],
+      "description": "VA_DemolShare",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_DemolShare"
+      ]
+    },
+    "VA_HEATNEWVSOLD": {
+      "column_header": "va_heatnewvsold",
+      "column_headers": [
+        "va_heatnewvsold",
+        "va_heatnewvsold"
+      ],
+      "description": "VA_HeatNewVsOld",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_HeatNewVsOld"
+      ]
+    },
+    "VA_HOUSECOOLTARGET": {
+      "column_header": "va_housecooltarget",
+      "column_headers": [
+        "va_housecooltarget",
+        "va_housecooltarget"
+      ],
+      "description": "VA: Share of houses with cooling in the long run",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_HouseCoolTarget"
+      ]
+    },
+    "VA_HOUSEDEMOL": {
+      "column_header": "va_housedemol",
+      "column_headers": [
+        "va_housedemol",
+        "va_housedemol"
+      ],
+      "description": "VA_HouseDemol",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_HouseDemol"
+      ]
+    },
+    "VA_HOUSESHCOOL": {
+      "column_header": "va_houseshcool",
+      "column_headers": [
+        "va_houseshcool",
+        "va_houseshcool",
+        "va_share"
+      ],
+      "description": "VA: Share of Houses with cooling",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_HouseShCool",
+        "VA_Share"
+      ]
+    },
+    "VA_HOUSESTOCK": {
+      "column_header": "va_housestock",
+      "column_headers": [
+        "va_housestock",
+        "va_housestock",
+        "va_stock"
+      ],
+      "description": "VA: Stock of Houses",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_HouseStock",
+        "VA_Stock"
+      ]
+    },
+    "VA_HSCLTRGTYEARS": {
+      "column_header": "va_hscltrgtyears",
+      "column_headers": [
+        "va_hscltrgtyears",
+        "va_hscltrgtyears"
+      ],
+      "description": "VA: Years it will take to get to the long run cooling share",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_HsClTrgtYears"
+      ]
+    },
+    "VA_HSIMPROVOLD": {
+      "column_header": "va_hsimprovold",
+      "column_headers": [
+        "va_hsimprovold",
+        "va_hsimprovold"
+      ],
+      "description": "VA_HsImprovOld",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_HsImprovOld"
+      ]
+    },
+    "VA_PERSPHHOLD": {
+      "column_header": "va_persphhold",
+      "column_headers": [
+        "va_persphhold",
+        "va_persphhold"
+      ],
+      "description": "VA_PersPHHold",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_PersPHHold"
+      ]
+    },
+    "VA_PPHHEVOL": {
+      "column_header": "va_pphhevol",
+      "column_headers": [
+        "va_pphhevol",
+        "va_pphhevol"
+      ],
+      "description": "VA_PphhEvol",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_PphhEvol"
+      ]
+    },
+    "VA_SECTFUELCONS": {
+      "column_header": "va_sectfuelcons",
+      "column_headers": [
+        "va_sectfuelcons",
+        "va_sfc"
+      ],
+      "description": "Sector Fuel Consumption",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_SFC"
+      ]
+    },
+    "VA_TEMPCORR": {
+      "column_header": "va_tempcorr",
+      "column_headers": [
+        "va_tempcorr",
+        "va_tempcorr"
+      ],
+      "description": "VA_TempCorr",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "VA_TempCorr"
+      ]
+    },
+    "VDA_CEH": {
+      "column_header": "vda_ceh",
+      "column_headers": [
+        "vda_ceh",
+        "ceh(z)(y)",
+        "ceh"
+      ],
+      "description": "Ratio of electricity lost to heat gained",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "CEH(Z)(Y)",
+        "CEH"
+      ]
+    },
+    "VDA_EMCB": {
+      "column_header": "vda_emcb",
+      "column_headers": [
+        "vda_emcb"
+      ],
+      "description": "Emissions (com) from the combustion of commodity (c) in region (r).",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false,
+      "indexes": "(r,datayear,c,com)"
+    },
+    "VDA_FLOP": {
+      "column_header": "vda_flop",
+      "column_headers": [
+        "vda_flop",
+        "output",
+        "production",
+        "prod",
+        "mo(enc)",
+        "mo(mat)",
+        "out(elc)_tid",
+        "out(enc)c",
+        "out(enc)p",
+        "out(ent)r",
+        "out(lth)_tid",
+        "out(mat)c",
+        "out(mat)p",
+        "out(mat)r"
+      ],
+      "description": "Process Input/Output tied to activity",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "ANNUAL",
+      "limtype": "",
+      "currency": false,
+      "aliases": [
+        "OUTPUT",
+        "Production",
+        "Prod",
+        "MO(ENC)",
+        "MO(MAT)",
+        "OUT(ELC)_TID",
+        "OUT(ENC)c",
+        "OUT(ENC)p",
+        "OUT(ENT)r",
+        "OUT(LTH)_TID",
+        "OUT(MAT)c",
+        "OUT(MAT)p",
+        "OUT(MAT)r"
+      ]
+    },
+    "VRAT_FLO": {
+      "column_header": "vrat_flo",
+      "column_headers": [
+        "vrat_flo"
+      ],
+      "description": "Process FLO coefficient: VEDA UC",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "YRINPERIOD": {
+      "column_header": "yrinperiod",
+      "column_headers": [
+        "yrinperiod"
+      ],
+      "description": "Number of years per period",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_depr": {
+      "column_header": "tm_depr",
+      "column_headers": [
+        "tm_depr"
+      ],
+      "description": "depreciation rate",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_dmtol": {
+      "column_header": "tm_dmtol",
+      "column_headers": [
+        "tm_dmtol"
+      ],
+      "description": "Lower bound on demand variable (fraction)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_esub": {
+      "column_header": "tm_esub",
+      "column_headers": [
+        "tm_esub"
+      ],
+      "description": "Elasticity of substitution (typically between 0.2 and 0.5)",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_expbnd": {
+      "column_header": "tm_expbnd",
+      "column_headers": [
+        "tm_expbnd"
+      ],
+      "description": "Maximum expansion bound for capacity; used for the cumulated capacity bound tm_captb, above which the penalty is to be applied for new investments in a technology",
+      "time_series": true,
+      "process": true,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_expf": {
+      "column_header": "tm_expf",
+      "column_headers": [
+        "tm_expf"
+      ],
+      "description": "Allowed annual capacity expansion factor",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_gdp0": {
+      "column_header": "tm_gdp0",
+      "column_headers": [
+        "tm_gdp0"
+      ],
+      "description": "Gross domestic product in first period",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_gr": {
+      "column_header": "tm_gr",
+      "column_headers": [
+        "tm_gr"
+      ],
+      "description": "Projected annual GDP growth in period t",
+      "time_series": true,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_ivetol": {
+      "column_header": "tm_ivetol",
+      "column_headers": [
+        "tm_ivetol"
+      ],
+      "description": "Used as upper bound on the investment and energy in equation EQ_IVECBND; also provides lower bound for the capital variable",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_kgdp": {
+      "column_header": "tm_kgdp",
+      "column_headers": [
+        "tm_kgdp"
+      ],
+      "description": "Capital-to-GDP value in first period",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_kpvs": {
+      "column_header": "tm_kpvs",
+      "column_headers": [
+        "tm_kpvs"
+      ],
+      "description": "Share of capital in the sum of all production factors in first period",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_qfac": {
+      "column_header": "tm_qfac",
+      "column_headers": [
+        "tm_qfac"
+      ],
+      "description": "Switch for market penetration penalty function",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_scale_cst": {
+      "column_header": "tm_scale_cst",
+      "column_headers": [
+        "tm_scale_cst"
+      ],
+      "description": "Cost scaling parameter from TIMES costs to MACRO costs",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_scale_nrg": {
+      "column_header": "tm_scale_nrg",
+      "column_headers": [
+        "tm_scale_nrg"
+      ],
+      "description": "Demand scaling parameter from TIMES demand commodity units to MACRO demand units",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    },
+    "tm_scale_util": {
+      "column_header": "tm_scale_util",
+      "column_headers": [
+        "tm_scale_util"
+      ],
+      "description": "Utility scaling parameter and indicator",
+      "time_series": false,
+      "process": false,
+      "commodity": false,
+      "timeslice": "",
+      "limtype": "",
+      "currency": false
+    }
+  }
+}

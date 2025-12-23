@@ -1,5 +1,43 @@
 Use 'bd' for task tracking
 
+---
+
+# Two Distinct Personas
+
+This repository serves **two distinct AI personas** — understanding this distinction is critical:
+
+| Persona | Purpose | Documentation |
+|---------|---------|---------------|
+| **VedaLang User Agent** | Uses VedaLang to author energy system models | `docs/vedalang-user/` and `vedalang/LLMS.md` |
+| **VedaLang Design Agent** | Designs and evolves the VedaLang DSL itself | This file (`AGENTS.md`) and `docs/vedalang-design-agent/` |
+
+## VedaLang User Agent
+
+An AI agent that **uses VedaLang** to create `.veda.yaml` models for energy system analysis. This agent:
+- Reads the VedaLang schema and examples
+- Writes valid VedaLang source files
+- Uses `veda_check` to validate models
+- Does NOT modify the language, compiler, or schema
+
+**User agent documentation:**
+- `docs/vedalang-user/` — User documentation index
+- `docs/vedalang-user/LLMS.md` — LLM guide for authoring VedaLang
+- `vedalang/schema/vedalang.schema.json` — Language schema
+- `vedalang/examples/` — Example models
+- `rules/patterns.yaml` — Pattern "standard library"
+
+## VedaLang Design Agent
+
+An AI agent that **designs and evolves VedaLang** — the DSL, compiler, schemas, and tooling. This agent:
+- Extends the VedaLang schema with new constructs
+- Improves the compiler and emitters
+- Discovers new VEDA patterns through experimentation
+- Validates changes against xl2times (the oracle)
+
+**The rest of this file is for the VedaLang Design Agent.**
+
+---
+
 ## Package Manager
 
 This project uses **uv** as the Python package manager.
@@ -356,7 +394,7 @@ cp failing_input.yaml tests/failures/type_a_missing_column.yaml
 
 ### Schema Evolution Policy
 
-See [docs/schema_evolution.md](docs/schema_evolution.md) for the full policy.
+See [docs/vedalang-design-agent/schema_evolution.md](docs/vedalang-design-agent/schema_evolution.md) for the full policy.
 
 **Quick rules:**
 - **Add** optional fields freely
@@ -385,7 +423,7 @@ uv run veda_check vedalang/examples/mini_plant.veda.yaml --from-vedalang
 
 ## Diagnostic Codes Reference
 
-xl2times emits structured diagnostics. See [docs/baseline_diagnostics.md](docs/baseline_diagnostics.md) for details.
+xl2times emits structured diagnostics. See [docs/vedalang-design-agent/baseline_diagnostics.md](docs/vedalang-design-agent/baseline_diagnostics.md) for details.
 
 ### Quick Reference
 
@@ -411,7 +449,7 @@ cat diag.json | jq '.diagnostics[] | {code, severity, message}'
 
 ## Keeping STATUS.md Updated
 
-The living status document is [`docs/STATUS.md`](docs/STATUS.md). Keep it in sync with `bd` issues.
+The living status document is [`docs/project-status/STATUS.md`](docs/project-status/STATUS.md). Keep it in sync with `bd` issues.
 
 ### When to Update STATUS.md
 

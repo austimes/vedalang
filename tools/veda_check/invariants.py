@@ -114,8 +114,14 @@ def _check_canonical_form(
 
 
 FIELD_ALIASES = {
+    # Commodity input/output aliases
     "comm-in": ["comm-in", "commodity-in"],
     "comm-out": ["comm-out", "commodity-out"],
+    # VEDA/xl2times name mappings (VEDA uses TechName, xl2times uses process)
+    "techname": ["techname", "process"],
+    "commname": ["commname", "commodity"],
+    # Demand attribute (VEDA uses DEMAND, we use lowercase demand)
+    "demand": ["demand"],
 }
 
 

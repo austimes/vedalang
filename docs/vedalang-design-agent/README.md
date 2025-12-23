@@ -1,0 +1,60 @@
+# VedaLang Design Agent Documentation
+
+This documentation is for the AI agent that **designs and evolves VedaLang** — the DSL, compiler, schemas, and tooling.
+
+## Purpose
+
+The VedaLang Design Agent iteratively improves VedaLang through:
+- Schema extensions for new constructs
+- Compiler improvements
+- Pattern discovery through experimentation
+- Validation against xl2times (the oracle)
+
+## Primary Reference
+
+The main instructions for the Design Agent are in the repository root: **`AGENTS.md`**
+
+This directory contains supporting documentation:
+
+## Documentation Index
+
+| Document | Purpose |
+|----------|---------|
+| [exploration_prompt.md](exploration_prompt.md) | Protocol for exploring new VEDA patterns |
+| [schema_evolution.md](schema_evolution.md) | Rules for evolving the VedaLang schema |
+| [pattern_validation.md](pattern_validation.md) | Pattern catalog and validation methodology |
+| [canonical_form.md](canonical_form.md) | Canonical table form and semantics |
+| [baseline_diagnostics.md](baseline_diagnostics.md) | xl2times diagnostic baseline |
+| [minisystem_spec.md](minisystem_spec.md) | MiniSystem stress test specification |
+| [ergonomic_improvements.md](ergonomic_improvements.md) | Proposed language improvements |
+| [pcg_investigation.md](pcg_investigation.md) | PCG research notes |
+
+### Subdirectories
+
+- `design/` — Internal design documents (e.g., `veda-table-schemas.md`)
+- `issues/` — Design epics and task specifications
+
+## Key Workflows
+
+### Design Iteration Loop
+
+```
+1. Prototype at TableIR level
+2. Emit Excel via veda_emit_excel
+3. Validate with xl2times
+4. If valid → lift pattern to VedaLang syntax
+5. If invalid → fix and retry
+```
+
+### Schema Changes
+
+1. Update `vedalang/schema/vedalang.schema.json`
+2. Run `uv run pytest tests/test_schema_compatibility.py`
+3. Update compiler if needed
+4. Add examples and tests
+
+## What This Documentation Does NOT Cover
+
+- How to use VedaLang to author models (see `docs/vedalang-user/`)
+- End-user CLI usage
+- Model authoring patterns (from a user perspective)
