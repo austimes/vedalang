@@ -4,117 +4,95 @@ A typed DSL that compiles to VEDA tables for TIMES energy system models.
 
 VedaLang provides type safety, schema validation, and clear error messages while compiling to VEDA Excel tables that can be processed by xl2times and solved with GAMS/TIMES.
 
-## Quick Start
+```
+VedaLang Source (.veda.yaml) → Compiler → VEDA Excel (.xlsx) → xl2times → TIMES DD files
+```
 
-### Prerequisites
+---
 
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) package manager
-- GAMS with a valid license (for running the solver)
-- TIMES source code
+## Two Ways to Use This Repository
 
-### Installation
+| Goal | You are a... | Start here |
+|------|--------------|------------|
+| **Author energy system models** using VedaLang | Model Developer | [Using VedaLang](#using-vedalang) |
+| **Extend or improve** the VedaLang language itself | Language Designer | [Developing VedaLang](#developing-vedalang) |
+
+---
+
+## Using VedaLang
+
+Write `.veda.yaml` files to define energy system models. The compiler handles Excel generation and validation.
+
+### Documentation
+
+- **[docs/vedalang-user/LLMS.md](docs/vedalang-user/LLMS.md)** — Comprehensive guide for authoring VedaLang models
+- **[vedalang/examples/](vedalang/examples/)** — Example models
+- **[vedalang/schema/vedalang.schema.json](vedalang/schema/vedalang.schema.json)** — Language schema
+- **[rules/patterns.yaml](rules/patterns.yaml)** — Pattern "standard library"
+
+### Quick Start
 
 ```bash
-# Clone the repository
+# Install
 git clone https://github.com/austimes/vedalang.git
 cd vedalang
-
-# Install dependencies and the package in editable mode
 uv sync
-uv pip install -e .
-```
-
-### Environment Setup
-
-Copy the example environment file and configure it:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` to set your TIMES source path:
-
-```bash
-# Path to TIMES source code (required for running GAMS solver)
-TIMES_SRC=/path/to/your/TIMES_model
-
-# Optional: Path to GAMS executable if not in PATH
-# GAMS_BINARY=/opt/gams/gams
-```
-
-#### Getting TIMES Source
-
-TIMES is the energy system model that VedaLang targets. You need a copy of the TIMES source code:
-
-```bash
-# Clone the TIMES model (example - check IEA-ETSAP for current location)
-git clone https://github.com/etsap-TIMES/TIMES_model.git ~/TIMES_model
-```
-
-Then set `TIMES_SRC` in your `.env` file to point to this directory.
-
-## Usage
-
-### Full Pipeline
-
-Run the complete VedaLang → Excel → DD → TIMES pipeline:
-
-```bash
-# Run full pipeline (requires GAMS and TIMES_SRC)
-uv run veda-dev pipeline model.veda.yaml
-
-# Run without solver (stops after generating DD files)
-uv run veda-dev pipeline model.veda.yaml --no-solver
-
-# Verbose output with JSON results
-uv run veda-dev pipeline model.veda.yaml --verbose --json
-```
-
-### Individual Tools
-
-```bash
-# Compile VedaLang to Excel
-uv run vedalang compile src/model.veda.yaml --out output/
 
 # Validate a model
 uv run veda-dev check model.veda.yaml --from-vedalang
 
-# Run xl2times on Excel files
-uv run xl2times excel_dir/ --dd --output_dir dd/ --regions REG1,REG2
-
-# Run TIMES solver on DD files
-uv run veda-dev run-times dd_dir/ --times-src ~/TIMES_model
+# Run full pipeline (VedaLang → Excel → DD → TIMES)
+uv run veda-dev pipeline model.veda.yaml --no-solver
 ```
 
-### Example Model
+### Minimal Example
 
-A comprehensive example model is included:
+```yaml
+model:
+  name: MinimalExample
+  regions: [REG1]
+  
+  commodities:
+    - name: ELC
+      type: energy
+      unit: PJ
 
-```bash
-# Run the MiniSystem stress test model
-uv run veda-dev pipeline vedalang/examples/minisystem.veda.yaml --verbose
+  processes:
+    - name: PP_GEN
+      sets: [ELE]
+      primary_commodity_group: NRGO
+      outputs:
+        - commodity: ELC
 ```
 
-## Project Structure
+---
+
+## Developing VedaLang
+
+Extend the VedaLang DSL, improve the compiler, or discover new VEDA patterns.
+
+### Documentation
+
+- **[AGENTS.md](AGENTS.md)** — Primary instructions for the VedaLang Design Agent
+- **[docs/vedalang-design-agent/](docs/vedalang-design-agent/)** — Design workflows, schema evolution, pattern validation
+
+### Key Concepts
+
+- **xl2times is the oracle** — Its verdict on compiled Excel is final
+- **Schema-first design** — Update JSON Schema before compiler changes
+- **TableIR experimentation** — Prototype at TableIR level, lift to VedaLang when valid
+
+### Design Workflow
 
 ```
-veda-devtools/
-├── vedalang/           # VedaLang compiler and schema
-│   ├── compiler/       # VedaLang → TableIR compiler
-│   ├── schema/         # JSON Schema definitions
-│   └── examples/       # Example VedaLang models
-├── tools/
-│   ├── veda_dev/       # Unified CLI (veda-dev)
-│   ├── veda_check/     # Validation tool
-│   ├── veda_emit_excel/# TableIR → Excel emitter
-│   └── veda_run_times/ # GAMS/TIMES runner
-├── xl2times/           # Local fork of xl2times (Excel → DD)
-├── rules/              # Pattern library
-└── tests/              # Test suite
+1. Prototype at TableIR level (raw YAML tables)
+2. Emit Excel: veda_emit_excel tables.yaml --out test.xlsx
+3. Validate: xl2times test.xlsx --diagnostics-json diag.json
+4. If valid → lift pattern to VedaLang syntax
+5. If invalid → fix and retry
 ```
 
-## Development
+### Development Commands
 
 ```bash
 # Run tests
@@ -123,9 +101,67 @@ uv run pytest
 # Run linter
 uv run ruff check .
 
-# Run type checker (if configured)
-uv run ruff check . --select=E,W,F
+# Validate the mini_plant example
+uv run veda_check vedalang/examples/mini_plant.veda.yaml --from-vedalang
 ```
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) package manager
+- GAMS with a valid license (for running the solver)
+- TIMES source code
+
+### Setup
+
+```bash
+# Clone and install
+git clone https://github.com/austimes/vedalang.git
+cd vedalang
+uv sync
+uv pip install -e .
+
+# Configure environment
+cp .env.example .env
+# Edit .env to set TIMES_SRC=/path/to/your/TIMES_model
+```
+
+### Getting TIMES Source
+
+```bash
+git clone https://github.com/etsap-TIMES/TIMES_model.git ~/TIMES_model
+```
+
+Then set `TIMES_SRC` in your `.env` file to point to this directory.
+
+---
+
+## Project Structure
+
+```
+veda-devtools/
+├── vedalang/              # VedaLang compiler and schema
+│   ├── compiler/          # VedaLang → TableIR compiler
+│   ├── schema/            # JSON Schema definitions
+│   └── examples/          # Example VedaLang models
+├── tools/
+│   ├── veda_dev/          # Unified CLI (veda-dev)
+│   ├── veda_check/        # Validation tool
+│   ├── veda_emit_excel/   # TableIR → Excel emitter
+│   └── veda_run_times/    # GAMS/TIMES runner
+├── xl2times/              # Local fork of xl2times (Excel → DD)
+├── rules/                 # Pattern library
+├── docs/
+│   ├── vedalang-user/     # Documentation for model authors
+│   └── vedalang-design-agent/  # Documentation for language designers
+└── tests/                 # Test suite
+```
+
+---
 
 ## License
 
