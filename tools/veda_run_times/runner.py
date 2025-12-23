@@ -51,12 +51,7 @@ def find_times_source() -> Path | None:
 
 def get_scaffold_dir() -> Path:
     """Get path to the GAMS scaffold directory."""
-    return (
-        Path(__file__).parent.parent.parent
-        / "xl2times"
-        / "xl2times"
-        / "gams_scaffold"
-    )
+    return Path(__file__).parent.parent.parent / "xl2times" / "gams_scaffold"
 
 
 def setup_work_dir(

@@ -5,8 +5,11 @@ import json
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 
 def main():
+    load_dotenv()
     parser = argparse.ArgumentParser(
         prog="veda-dev",
         description="Unified CLI for VedaLang Design Agent",
